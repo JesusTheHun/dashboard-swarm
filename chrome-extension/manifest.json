@@ -1,0 +1,27 @@
+{
+    "manifest_version": 2,
+    "name": "Dashboard swarm",
+    "description": "This extension allows to display a set of tab in multiple browser's windows",
+    "version": "0.1",
+    "browser_action": {
+        "default_icon": "icon.png",
+        "default_popup": "popup.html"
+    },
+    "background": {
+        "scripts": [
+            "build/background.js"
+        ]
+    },
+    "options_ui": {
+        "page": "config.html",
+        "chrome_style": true
+    },
+    "permissions": [
+        "background",
+        "system.display",
+        "activeTab",
+        "tabs",
+        "storage",
+        "http://*/"
+    ]
+}
