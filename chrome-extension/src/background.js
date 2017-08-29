@@ -1,5 +1,7 @@
 import DashboardSwarmNode from './classes/DashboardSwarmNode';
 import DashboardSwarmWebSocket from './classes/DashboardSwarmWebSocket';
+// Import to force load
+import DashboardSwarmListener from './classes/DashboardSwarmListener';
 import WindowsManager from './classes/WindowsManager';
 
 ///////////////////////////////
@@ -15,8 +17,6 @@ chrome.storage.sync.get({
     server: 'localhost:8080',
     master: 0
 }, function(items) {
-    console.log("Config loaded : ");
-    console.log(items);
     DashboardSwarmNode.setMaster(items.master);
     DashboardSwarmWebSocket.setServerUrl(items.server);
     DashboardSwarmWebSocket.onOpen(function () {
@@ -24,11 +24,10 @@ chrome.storage.sync.get({
     });
 });
 
-DashboardSwarmNode.addTab(0, "http://www.google.fr");
+DashboardSwarmNode.openTab(0, "http://www.google.fr");
 
 // Message depuis la popup
 chrome.runtime.onMessage.addListener(function (request) {
-    console.log(request);
     if (request.wm !== undefined) {
         WindowsManager[request.wm].call(this);
     }
