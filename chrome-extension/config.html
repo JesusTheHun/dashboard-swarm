@@ -5,15 +5,22 @@
     <title>Dashboard Swarm Configuration page</title>
 </head>
 <body>
-    <h1>Hello !</h1>
-    <form>
-        <label for="master">
-            <input type="checkbox" id="master" value="1" name="master">
-            Screen master
-        </label>
-        <label for="server">Server</label><input type="text" id="server" name="server">
-    </form>
+    <label for="master">
+        <input type="checkbox" id="master" value="1" name="master">
+        Screen master
+    </label>
+    <br>
+    <br>
+    <label for="server">Server URL </label><input type="text" id="server" name="server">
 
-    <script type="text/javascript" src="config.js"></script>
+    
+
+    <br>
+    <br>
+    <button id="save">Save</button>
+
+    <div id="status"></div>
+
+    <script type="text/javascript" src="build/config.js"></script>
 </body>
 </html>

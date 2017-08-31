@@ -1,74 +1,57 @@
 const Socket = require('simple-websocket');
 
+function defer() {
+    let res, rej;
+
+    let promise = new Promise((resolve, reject) => {
+        res = resolve;
+        rej = reject;
+    });
+
+    promise.resolve = res;
+    promise.reject = rej;
+
+    return promise;
+}
+
 class DashboardSwarmWebSocket {
 
     constructor() {
         if (!DashboardSwarmWebSocket.instance) {
-
-            this.onOpenCallbacks = [];
-            this.onCloseCallbacks = [];
-            this.onErrorCallbacks = [];
-            this.onDataCallbacks = [];
-
+            this.wsReady = defer();
             DashboardSwarmWebSocket.instance = this;
         }
         return DashboardSwarmWebSocket.instance;
     }
 
-    setServerUrl(url) {
-        if (this.ws !== undefined) {
-            this.ws.destroy();
-        }
-
-        this.ws = new Socket('ws://' + url);
-
+    setServerUrl(url, errorCallback) {
         let ds = this;
 
-        this.ws.on('connect', function () {
-            for (let i in ds.onOpenCallbacks) {
-                ds.onOpenCallbacks[i].call(ds);
-            }
+        ds.ws = new Socket('ws://' + url);
+        ds.ws.on('connect', () => {
+            ds.wsReady.resolve(ds.ws);
         });
 
-        this.ws.on('close', function () {
-            for (let i in ds.onCloseCallbacks) {
-                ds.onCloseCallbacks[i].call(ds);
-            }
-        });
-
-        this.ws.on('error', function (err) {
-            for (let i in ds.onErrorCallbacks) {
-                ds.onErrorCallbacks[i].call(ds, err);
-            }
-        });
-
-        this.ws.on('data', function (data) {
-            for (let i in ds.onDataCallbacks) {
-                ds.onDataCallbacks[i].call(ds, data);
-            }
-        })
-    }
-
-    onOpen(callback) {
-        this.onOpenCallbacks.push(callback);
-    }
-
-    onClose(callback) {
-        this.onCloseCallbacks.push(callback);
-    }
-
-    onError(callback) {
-        this.onErrorCallbacks.push(callback);
-    }
-
-    onData(callback) {
-        this.onDataCallbacks.push(callback);
+        if (typeof errorCallback === 'function') {
+            ds.ws.on('error', err => {
+                errorCallback.call(ds, err);
+            });
+        }
     }
 
     getWebSocket() {
         return this.ws;
     }
 
+    getWebSocketReady() {
+        return this.wsReady;
+    }
+
+    /**
+     * Cast a command throught the websocket to the server
+     * @param cmd Command name
+     * @param args Array of arguments
+     */
     sendCommand(cmd, args) {
         let data = {};
         data.cmd = cmd;
@@ -77,10 +60,26 @@ class DashboardSwarmWebSocket {
             data.args = args;
         }
 
-        console.log(this);
+        this.getWebSocketReady().then(function (ws) {
+            ws.send(JSON.stringify(data));
+        });
+    }
 
-        this.onOpen(function () {
-            this.ws.send(JSON.stringify(data));
+    /**
+     * Cast an event throught the websocket to the server
+     * @param event Event name
+     * @param args Array of arguments
+     */
+    sendEvent(event, args) {
+        let data = {};
+        data.event = event;
+
+        if (args !== undefined) {
+            data.args = args;
+        }
+
+        this.getWebSocketReady().then(function (ws) {
+            ws.send(JSON.stringify(data));
         });
     }
 }

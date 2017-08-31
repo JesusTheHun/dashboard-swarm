@@ -30,5 +30,5 @@ module.exports = {
     stats: {
         warnings: false
     },
-    devtool: 'eval-source-map'
+    devtool: 'source-map'
 };

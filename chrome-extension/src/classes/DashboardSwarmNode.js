@@ -1,4 +1,5 @@
 import DashboardSwarmWebSocket from "./DashboardSwarmWebSocket";
+import WindowsManager from "./WindowsManager";
 
 class DashboardSwarmNode {
 
@@ -18,18 +19,28 @@ class DashboardSwarmNode {
     }
 
     isMaster() {
-        return this.master == 1;
+        return this.master === true;
     }
 
     refresh() {
-        this.tabs = DashboardSwarmWebSocket.sendCommand('getTabs');
+        DashboardSwarmWebSocket.sendCommand('getTabs');
     }
 
-    addTab(screenIndex, tabUrl) {
-        DashboardSwarmWebSocket.sendCommand('addTab', {
-            screen: screenIndex,
-            url: tabUrl
-        });
+    openTab(screenIndex, tabUrl) {
+        DashboardSwarmWebSocket.sendCommand('openTab', [screenIndex, tabUrl]);
+    }
+
+    closeTab(tabId) {
+        DashboardSwarmWebSocket.sendCommand('closeTab', [tabId]);
+    }
+
+    setTabs(tabs) {
+        this.tabs = tabs;
+        WindowsManager.setTabs(tabs.map(tab => [tab.screen, tab.url]));
+    }
+
+    getTabs() {
+        return this.tabs;
     }
 }
 
