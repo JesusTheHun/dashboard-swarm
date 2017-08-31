@@ -1,28 +1,81 @@
+import DashboardSwarmNode from './DashboardSwarmNode';
 import DashboardSwarmWebSocket from './DashboardSwarmWebSocket';
+import WindowsManager from "./WindowsManager";
 
-export class DashboardSwarmListener {
+class DashboardSwarmListener {
 
     constructor() {
-        DashboardSwarmWebSocket.onData(function (message) {
-            console.log("DashboardSwarmListener received data : ");
-            console.log(message);
-            try {
-                let data = JSON.parse(message);
+        if (!DashboardSwarmListener.instance) {
 
-                switch (true) {
-                    case data.hasOwnProperty('cmd'):
-                        handleCommand(data);
-                    break;
+            DashboardSwarmWebSocket.getWebSocketReady().then(function (ws) {
+                ws.on('data', function (message) {
+                    console.log("DashboardSwarmListener received data");
+                    try {
+                        let data = JSON.parse(message);
 
-                    case data.hasOwnProperty('err'):
-                        handleError(data);
-                        break;
-                }
+                        switch (true) {
+                            case data.hasOwnProperty('cmd'):
+                                handleCommand(data);
+                            break;
 
-            } catch (err) {
-                console.log(err);
+                            case data.hasOwnProperty('event'):
+                                handleEvent(data);
+                                break;
+
+                            case data.hasOwnProperty('err'):
+                                handleError(data);
+                            break;
+                        }
+
+                    } catch (err) {
+                        console.log(err);
+                    }
+                })
+            });
+
+            DashboardSwarmListener.instance = this;
+        }
+        return DashboardSwarmListener.instance;
+    }
+}
+
+function handleCommand(data) {
+    switch (data.cmd) {
+        case 'openTab':
+            if (DashboardSwarmNode.isMaster()) {
+                WindowsManager.openTab(data.args[0], data.args[1]).then(function (tabId) {
+                    DashboardSwarmWebSocket.sendEvent('tabOpened', [
+                        tabId, // id returned by the WM
+                        data.args[0], // args from the emited command, 0 is the screen ; openTab(screen, url)
+                        data.args[1] // args from the emited command, 1 is the url ; openTab(screen, url)
+                    ]);
+                });
             }
-        });
+        break;
+
+        case 'closeTab':
+            if (DashboardSwarmNode.isMaster()) {
+                WindowsManager.closeTab(data.args[0]).then(function (tabId) {
+                    DashboardSwarmWebSocket.sendEvent('tabClosed', [tabId]);
+                });
+            }
+        break;
+    }
+}
+
+function handleEvent(data) {
+    switch (data.event) {
+        case 'tabOpened':
+            DashboardSwarmNode.getTabs()[data.args[0]];
+        break;
+
+        case 'tabOpened':
+            DashboardSwarmNode.getTabs();
+            break;
+
+        case 'serverTabs':
+            DashboardSwarmNode.setTabs(data.args.tabs);
+        break;
     }
 }
 
@@ -30,33 +83,7 @@ function handleError(data) {
     console.log(data.err);
 }
 
-function handleCommand(data) {
-    console.log("COMMAND RECEIVED : ");
-    console.log(data);
-}
+const instance = new DashboardSwarmListener();
+Object.freeze(instance.instance);
 
-function addTab(screenIndex, tabUrl) {
-    if (this.isMaster()) {
-        WindowsManager.openTab(screenIndex, tabUrl).then(tabId => {
-            tabs[tabId] = {
-                id: tabId,
-                screen: screenIndex,
-                url: tabUrl
-            };
-        });
-    }
-}
-
-function removeTab(tabId) {
-    if (this.isMaster()) {
-        WindowsManager.closeTab(tabId);
-    }
-}
-
-function shutdown() {
-    this.tabs = {};
-
-    if (this.isMaster()) {
-        WindowsManager.closeEverything();
-    }
-}
+export default instance;

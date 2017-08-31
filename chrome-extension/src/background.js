@@ -1,8 +1,9 @@
 import DashboardSwarmNode from './classes/DashboardSwarmNode';
 import DashboardSwarmWebSocket from './classes/DashboardSwarmWebSocket';
+import WindowsManager from './classes/WindowsManager';
+
 // Import to force load
 import DashboardSwarmListener from './classes/DashboardSwarmListener';
-import WindowsManager from './classes/WindowsManager';
 
 ///////////////////////////////
 // Load displays information //
@@ -15,16 +16,22 @@ chrome.browserAction.setBadgeText({"text": "OFF"});
 
 chrome.storage.sync.get({
     server: 'localhost:8080',
-    master: 0
+    master: false
 }, function(items) {
     DashboardSwarmNode.setMaster(items.master);
-    DashboardSwarmWebSocket.setServerUrl(items.server);
-    DashboardSwarmWebSocket.onOpen(function () {
-        chrome.browserAction.setBadgeText({"text": "ON"});
+    DashboardSwarmWebSocket.setServerUrl(items.server, err => {
+        chrome.browserAction.setBadgeText({"text": "ERR"});
     });
 });
 
-DashboardSwarmNode.openTab(0, "http://www.google.fr");
+DashboardSwarmWebSocket.getWebSocketReady().then((ws) => {
+    chrome.browserAction.setBadgeText({"text": "ON"});
+    DashboardSwarmNode.refresh();
+
+    ws.on('close', () => {
+        chrome.browserAction.setBadgeText({"text": "OFF"});
+    });
+});
 
 // Message depuis la popup
 chrome.runtime.onMessage.addListener(function (request) {

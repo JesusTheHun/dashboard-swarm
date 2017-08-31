@@ -3,11 +3,12 @@ const fs = require('fs');
 
 let wss;
 let storageFilePath = 'storage.json';
+let storage;
 
 fs.readFile(storageFilePath, (err, storageContent) => {
     if (err) throw err;
 
-    let storage = JSON.parse(storageContent);
+    storage = JSON.parse(storageContent);
 
     wss = new WebSocket.Server({ port: 8080 });
     wss.on('connection', function (ws, req) {
@@ -16,18 +17,36 @@ fs.readFile(storageFilePath, (err, storageContent) => {
 
             try {
                 let data = JSON.parse(message);
-                broadcast(message);
+
+                if (data.hasOwnProperty('cmd')) {
+                    switch (data.cmd) {
+                        case 'getTabs':
+                            let event = {
+                                event: 'serverTabs',
+                                args: {
+                                    tabs: storage.tabs
+                                }
+                            };
+                            ws.send(JSON.stringify(event));
+                        break;
+                    }
+                }
 
                 if (data.hasOwnProperty('event')) {
+                    broadcast(message);
+
                     switch (data.event) {
-                        case 'tabCreated':
-                            if (Number.isInteger(data.args.screen) && typeof data.args.url === 'string') {
-                                broadcast(message);
-                                storage.tabs[data.args.screen].push(data.args.url);
-                                writeStorage();
-                            } else {
-                                ws.send(JSON.stringify({err: "Invalid arguments for `addTab` command"}));
+                        case 'tabOpened':
+                            if (storage.tabs === undefined) {
+                                storage.tabs = [];
                             }
+
+                            storage.tabs.push({
+                                id: data.args[0],
+                                screen: data.args[1],
+                                url: data.args[2]
+                            });
+                            writeStorage();
                         break;
                     }
                 }
@@ -44,7 +63,6 @@ function writeStorage() {
 }
 
 function broadcast(msg) {
-    // On ne broadcast que les messages valides (parsable)
     wss.clients.forEach(function each(client) {
         if (client.readyState === WebSocket.OPEN) {
             client.send(msg);

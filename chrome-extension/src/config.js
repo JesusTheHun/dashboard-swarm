@@ -1,13 +1,19 @@
+import DashboardSwarmNode from './classes/DashboardSwarmNode';
+
 // Saves options to chrome.storage.sync.
 function save_options() {
     let data = {
         master: document.getElementById('master').checked,
-        server: document.getElementById('master').value
+        server: document.getElementById('server').value
     };
 
-    DashboardSwarm.setMaster(data.master);
+    DashboardSwarmNode.setMaster(data.master);
 
-    chrome.storage.sync.set(data);
+    chrome.storage.sync.set(data, () => {
+        let status = document.getElementById('status');
+        status.textContent = 'Options saved.';
+        setTimeout(() => status.textContent = '', 750);
+    });
 }
 
 // Restores select box and checkbox state using the preferences
@@ -15,7 +21,7 @@ function save_options() {
 function restore_options() {
     // Use default value color = 'red' and likesColor = true.
     chrome.storage.sync.get({
-        master: 0,
+        master: false,
         server: 'localhost:8080'
     }, function(items) {
         document.getElementById('master').checked = items.master;
@@ -24,5 +30,4 @@ function restore_options() {
 }
 
 document.addEventListener('DOMContentLoaded', restore_options);
-document.getElementById('master').addEventListener('click', save_options);
-document.getElementById('server').addEventListener('change', save_options);
+document.getElementById('save').addEventListener('click', save_options);
