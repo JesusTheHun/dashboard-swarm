@@ -1,14 +1,40 @@
 <!doctype html>
 <html>
-  <head>
+<head>
     <title>Dashboard swarm</title>
-      <script src="build/popup.js"></script>
-  </head>
-  <body>
-    <div>
-        <button id="identify">Identify displays</button>
-        <div id="status"></div>
+    <script src="build/popup.js"></script>
+    <link rel="stylesheet" href="node_modules/spectre.css/dist/spectre.min.css">
+    <link rel="stylesheet" href="node_modules/spectre.css/dist/spectre-icons.min.css">
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+    <!-- Templates -->
+    <div id="empty" class="empty">
+        <p class="empty-title h5">You have no dashboard on this screen</p>
+        <p class="empty-subtitle">Fill the form below to add one.</p>
     </div>
-  </body>
+
+    <!-- Live scene -->
+    <div id="screens">
+        <div class="panel">
+            <div class="panel-header text-center">
+                <i class="icon icon-emoji"></i>
+                <div class="panel-title h5 mt-10">Dashboard Swarm</div>
+            </div>
+            <div class="panel-nav">
+                <ul class="tab tab-block"></ul>
+            </div>
+            <div class="panel-body"></div>
+            <div class="panel-footer">
+                <div class="input-group">
+                    <input type="text" class="form-input" placeholder="Dashboard URL" id="dashboardUrl">
+                    <button class="btn btn-primary input-group-btn" id="addDashboard">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
 </html>
 

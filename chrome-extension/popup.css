@@ -1,0 +1,18 @@
+/** Template */
+#empty {
+    display: none;
+}
+
+#screens .empty {
+    min-width: 300px;
+    margin-top: 16px;
+}
+
+div#screens {
+    min-width: 300px;
+}
+
+.panel .panel-body {
+    padding-top: 0.1rem;
+    padding-bottom: 0.1rem;
+}
