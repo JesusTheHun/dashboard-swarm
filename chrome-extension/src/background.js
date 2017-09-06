@@ -1,16 +1,12 @@
 import DashboardSwarmNode from './classes/DashboardSwarmNode';
 import DashboardSwarmWebSocket from './classes/DashboardSwarmWebSocket';
-import WindowsManager from './classes/WindowsManager';
 
-// Import to force load
-import DashboardSwarmListener from './classes/DashboardSwarmListener';
+// Init listeners
+import WindowsManager from './classes/WindowsManager';
 
 ///////////////////////////////
 // Load displays information //
 ///////////////////////////////
-
-// swarm = new DashboardSwarm;
-// wm = new WindowsManager;
 
 chrome.browserAction.setBadgeText({"text": "OFF"});
 
@@ -26,20 +22,8 @@ chrome.storage.sync.get({
 
 DashboardSwarmWebSocket.getWebSocketReady().then((ws) => {
     chrome.browserAction.setBadgeText({"text": "ON"});
-    DashboardSwarmNode.refresh();
 
     ws.on('close', () => {
         chrome.browserAction.setBadgeText({"text": "OFF"});
     });
-});
-
-// Message depuis la popup
-chrome.runtime.onMessage.addListener(function (request) {
-    if (request.wm !== undefined) {
-        WindowsManager[request.wm].call(this);
-    }
-
-    if (request.ds !== undefined) {
-        DashboardSwarmNode[request.ds].apply(this, request.params);
-    }
 });

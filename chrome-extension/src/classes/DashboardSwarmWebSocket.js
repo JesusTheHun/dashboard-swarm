@@ -1,29 +1,21 @@
 const Socket = require('simple-websocket');
-
-function defer() {
-    let res, rej;
-
-    let promise = new Promise((resolve, reject) => {
-        res = resolve;
-        rej = reject;
-    });
-
-    promise.resolve = res;
-    promise.reject = rej;
-
-    return promise;
-}
+import defer from '../function/defer';
 
 class DashboardSwarmWebSocket {
 
     constructor() {
         if (!DashboardSwarmWebSocket.instance) {
-            this.wsReady = defer();
+            this.wsReady = new defer();
             DashboardSwarmWebSocket.instance = this;
         }
         return DashboardSwarmWebSocket.instance;
     }
 
+    /**
+     * Set the WebSocket server url and initialize a connection
+     * @param {string} url
+     * @param {function} errorCallback
+     */
     setServerUrl(url, errorCallback) {
         let ds = this;
 
@@ -39,26 +31,29 @@ class DashboardSwarmWebSocket {
         }
     }
 
+    /**
+     * @returns {Socket} A raw WebSocket, whatever its state is (can be undefined)
+     */
     getWebSocket() {
         return this.ws;
     }
 
+    /**
+     * @returns {Promise} A promise resolved with a connected WebSocket
+     */
     getWebSocketReady() {
         return this.wsReady;
     }
 
     /**
-     * Cast a command throught the websocket to the server
-     * @param cmd Command name
-     * @param args Array of arguments
+     * Cast a command throught the WebSocket to the server
+     * @param {string} cmd Command name
+     * @param {Array} args Array of arguments
      */
     sendCommand(cmd, args) {
         let data = {};
         data.cmd = cmd;
-
-        if (args !== undefined) {
-            data.args = args;
-        }
+        data.args = args === undefined ? [] : args;
 
         this.getWebSocketReady().then(function (ws) {
             ws.send(JSON.stringify(data));
@@ -66,17 +61,14 @@ class DashboardSwarmWebSocket {
     }
 
     /**
-     * Cast an event throught the websocket to the server
-     * @param event Event name
-     * @param args Array of arguments
+     * Cast an event throught the WebSocket to the server
+     * @param {string} event Event name
+     * @param {Array} args Array of arguments
      */
     sendEvent(event, args) {
         let data = {};
         data.event = event;
-
-        if (args !== undefined) {
-            data.args = args;
-        }
+        data.args = args === undefined ? [] : args;
 
         this.getWebSocketReady().then(function (ws) {
             ws.send(JSON.stringify(data));

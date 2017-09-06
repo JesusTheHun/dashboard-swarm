@@ -1,3 +1,7 @@
+import DashboardSwarmListener from "./DashboardSwarmListener";
+import DashboardSwarmNode from "./DashboardSwarmNode";
+import DashboardSwarmWebSocket from "./DashboardSwarmWebSocket";
+
 class WindowsManager {
 
     constructor() {
@@ -5,12 +9,46 @@ class WindowsManager {
             this.windows = {};
             this.windowsPromises = {};
             this.tabs = {};
+
+            let wm = this;
+
+            DashboardSwarmListener.subscribeEvent('serverTabs', tabs => {
+                if (DashboardSwarmNode.isMaster()) wm.setTabs(tabs);
+            });
+
+            DashboardSwarmListener.subscribeCommand('openTab', (screen, url) => {
+                if (DashboardSwarmNode.isMaster()) {
+                    wm.openTab(screen, url).then(tabId => {
+                        DashboardSwarmWebSocket.sendEvent('tabOpened', [tabId, screen, url]);
+                    });
+                }
+            });
+
+            DashboardSwarmListener.subscribeCommand('closeTab', tabId => {
+                if (DashboardSwarmNode.isMaster()) {
+                    wm.closeTab(tabId).then(tabId => {
+                        DashboardSwarmWebSocket.sendEvent('tabClosed', [tabId]);
+                    });
+                }
+            });
+
+            DashboardSwarmListener.subscribeCommand('getDisplays', () => {
+                if (DashboardSwarmNode.isMaster()) {
+                    wm.getDisplays().then(displays => {
+                        DashboardSwarmWebSocket.sendEvent('masterDisplays', [displays]);
+                    });
+                }
+            });
+
             WindowsManager.instance = this;
         }
 
         return WindowsManager.instance;
     }
 
+    /**
+     * @returns {Promise} A promise that resolve the displays list
+     */
     getDisplays() {
         return new Promise((resolve, reject) => {
             try {
@@ -23,6 +61,10 @@ class WindowsManager {
         });
     }
 
+    /**
+     * @param {number} id Tab ID you want
+     * @returns {Tab} Chrome's Tab object
+     */
     getTab(id) {
         return this.tabs[id];
     }
@@ -32,30 +74,27 @@ class WindowsManager {
      * @param tabs [][screen, url]
      */
     setTabs(tabs) {
+        let wm = this;
 
-        this.closeEverything();
+        wm.closeEverything();
 
-        for (let i in tabs) {
-            if (tabs.hasOwnProperty(i)) {
-                this.openTab(tabs[i][0], tabs[i][1]);
-            }
-        }
-
-        this.tabs = tabs;
+        tabs.forEach(tab => {
+            wm.openTab(tab.screen, tab.url);
+        });
     }
 
     /**
-     * Will resolve the tab ID
-     * @param screen
-     * @param tabUrl
+     * Open the tab and update WM's tab list. Will resolve the opened tab ID
+     * @param {number} display
+     * @param {string} tabUrl
      * @returns {Promise}
      */
-    openTab(screen, tabUrl) {
+    openTab(display, tabUrl) {
         let wm = this;
 
         return new Promise((resolve, reject) => {
             try {
-                this.getWindowForScreen(screen).then((window) => {
+                this.getWindowForScreen(display).then((window) => {
                     chrome.tabs.create({
                         windowId: window.id,
                         url: tabUrl,
@@ -74,8 +113,8 @@ class WindowsManager {
 
     /**
      * Return a promise that resolve the Window
-     * @param display
-     * @returns Promise
+     * @param {number} display
+     * @returns {Promise} A promise that resolve the Window
      */
     getWindowForScreen(display) {
         let wm = this;
@@ -94,18 +133,25 @@ class WindowsManager {
                     chrome.windows.create({
                         'left': displays[display].workArea.left
                     }, createdWindow => {
-                        console.log("Window " + createdWindow.id + " created");
                         wm.windows[display] = createdWindow;
 
                         let newWindowTabsId = createdWindow.tabs.map(tab => tab.id);
 
-                        chrome.tabs.onCreated.addListener(tab => {
+                        let removeDefaultTabListener = tab => {
                             if (tab.windowId === createdWindow.id) {
                                 chrome.tabs.remove(newWindowTabsId);
+                                chrome.tabs.onCreated.removeListener(removeDefaultTabListener);
                             }
-                        });
+                        };
 
-                        chrome.windows.onRemoved(window => delete wm.windowsPromises[window.id]);
+                        chrome.tabs.onCreated.addListener(removeDefaultTabListener);
+
+                        let deleteWindowPromiseListener = window => {
+                            delete wm.windowsPromises[window.id];
+                            chrome.windows.onRemoved.removeListener(deleteWindowPromiseListener);
+                        };
+
+                        chrome.windows.onRemoved.addListener(deleteWindowPromiseListener);
 
                         resolve(createdWindow);
 
@@ -122,27 +168,38 @@ class WindowsManager {
         });
 
         return this.windowsPromises[display];
-    };
+    }
 
+    /**
+     * @param {number} tabId
+     * @returns {Promise}
+     */
     closeTab(tabId) {
         return new Promise((resolve, reject) => chrome.tabs.remove(tabId, () => resolve(tabId)));
-    };
+    }
 
+    /**
+     * Close everything :D Send a tabClosed event for each tab closed.
+     */
     closeEverything() {
-        for (windowId in this.windows) {
+        for (let windowId in this.windows) {
             if (this.windows.hasOwnProperty(windowId)) {
                 chrome.windows.remove(windowId, () => {
                     console.log("Window " + windowId + " removed");
+
+                    this.windows[windowId].tabs.forEach(tab => {
+                        DashboardSwarmWebSocket.sendEvent('tabClosed', [tab.id]);
+                    });
                 });
             }
         }
-    };
+    }
 
     dumpInternal() {
         this.getDisplays().then((data) => console.log(data));
         console.log(this.tabs);
         console.log(this.windows);
-    };
+    }
 }
 
 const instance = new WindowsManager();

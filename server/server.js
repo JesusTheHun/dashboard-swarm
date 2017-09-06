@@ -23,11 +23,13 @@ fs.readFile(storageFilePath, (err, storageContent) => {
                         case 'getTabs':
                             let event = {
                                 event: 'serverTabs',
-                                args: {
-                                    tabs: storage.tabs
-                                }
+                                args: [storage.tabs]
                             };
                             ws.send(JSON.stringify(event));
+                        break;
+
+                        case 'getDisplays':
+                            broadcast(message);
                         break;
                     }
                 }
@@ -46,6 +48,20 @@ fs.readFile(storageFilePath, (err, storageContent) => {
                                 screen: data.args[1],
                                 url: data.args[2]
                             });
+
+                            console.log("Tab opened, new storage :");
+                            console.log(storage);
+
+                            writeStorage();
+                        break;
+
+                        case 'tabClosed':
+                            if (storage.tabs === undefined) {
+                                storage.tabs = [];
+                            }
+
+                            let tabIndex = storage.tabs.find(tab => tab.id === data.args[0]);
+                            delete storage.tabs[tabIndex];
                             writeStorage();
                         break;
                     }
@@ -59,7 +75,12 @@ fs.readFile(storageFilePath, (err, storageContent) => {
 });
 
 function writeStorage() {
-    fs.writeFile(storageFilePath, JSON.stringify(storage));
+    fs.writeFile(storageFilePath, JSON.stringify(storage), err => {
+        if (err) console.log(err);
+
+        console.log("Storage written : ");
+        console.log(JSON.stringify(storage));
+    });
 }
 
 function broadcast(msg) {
