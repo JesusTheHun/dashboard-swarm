@@ -1,31 +1,18 @@
-import DashboardSwarmNode from './DashboardSwarmNode';
 import DashboardSwarmWebSocket from './DashboardSwarmWebSocket';
-import WindowsManager from "./WindowsManager";
 
 class DashboardSwarmListener {
 
     constructor() {
         if (!DashboardSwarmListener.instance) {
 
+            let listener = this;
+            listener.handlers = {'event': [], 'command': []};
+
             DashboardSwarmWebSocket.getWebSocketReady().then(function (ws) {
                 ws.on('data', function (message) {
-                    console.log("DashboardSwarmListener received data");
                     try {
                         let data = JSON.parse(message);
-
-                        switch (true) {
-                            case data.hasOwnProperty('cmd'):
-                                handleCommand(data);
-                            break;
-
-                            case data.hasOwnProperty('event'):
-                                handleEvent(data);
-                                break;
-
-                            case data.hasOwnProperty('err'):
-                                handleError(data);
-                            break;
-                        }
+                        listener.dispatch(data);
 
                     } catch (err) {
                         console.log(err);
@@ -37,50 +24,69 @@ class DashboardSwarmListener {
         }
         return DashboardSwarmListener.instance;
     }
-}
 
-function handleCommand(data) {
-    switch (data.cmd) {
-        case 'openTab':
-            if (DashboardSwarmNode.isMaster()) {
-                WindowsManager.openTab(data.args[0], data.args[1]).then(function (tabId) {
-                    DashboardSwarmWebSocket.sendEvent('tabOpened', [
-                        tabId, // id returned by the WM
-                        data.args[0], // args from the emited command, 0 is the screen ; openTab(screen, url)
-                        data.args[1] // args from the emited command, 1 is the url ; openTab(screen, url)
-                    ]);
-                });
-            }
-        break;
 
-        case 'closeTab':
-            if (DashboardSwarmNode.isMaster()) {
-                WindowsManager.closeTab(data.args[0]).then(function (tabId) {
-                    DashboardSwarmWebSocket.sendEvent('tabClosed', [tabId]);
-                });
-            }
-        break;
+    subscribeEvent(eventName, callback) {
+        return subscribe.call(this, 'event', eventName, callback);
     }
-}
 
-function handleEvent(data) {
-    switch (data.event) {
-        case 'tabOpened':
-            DashboardSwarmNode.getTabs()[data.args[0]];
-        break;
+    unsubscribeEvent(eventName, callback) {
+        return unsubscribe.call(this, 'event', eventName, callback);
+    }
 
-        case 'tabOpened':
-            DashboardSwarmNode.getTabs();
+    subscribeCommand(commandName, callback) {
+        return subscribe.call(this, 'command', commandName, callback);
+    }
+
+    unsubscribeCommand(commandName, callback) {
+        return unsubscribe.call(this, 'command', commandName, callback);
+    }
+
+    dispatch(data) {
+        let namespace;
+        let name;
+
+        switch (true) {
+            case data.hasOwnProperty('cmd'):
+                namespace = 'command';
+                name = data.cmd;
             break;
 
-        case 'serverTabs':
-            DashboardSwarmNode.setTabs(data.args.tabs);
-        break;
+            case data.hasOwnProperty('event'):
+                namespace = 'event';
+                name = data.event;
+            break;
+        }
+
+        if (namespace !== undefined) {
+            this.handlers[namespace][name].forEach(function (callback) {
+                callback.apply(undefined, data.args);
+            });
+        }
     }
 }
 
-function handleError(data) {
-    console.log(data.err);
+function subscribe(namespace, name, callback) {
+    if (this.handlers[namespace][name] === undefined) {
+        this.handlers[namespace][name] = [];
+    }
+
+    this.handlers[namespace][name].push(callback);
+    return true;
+}
+
+function unsubscribe(namespace, name, callback) {
+    if (this.handlers[namespace][name] === undefined) {
+        return false;
+    }
+
+    let foundCallback = this.handlers[namespace][name].find(cb => cb === callback);
+
+    if (foundCallback !== undefined) {
+        delete this.handlers[namespace][name][foundCallback];
+    }
+
+    return foundCallback !== undefined;
 }
 
 const instance = new DashboardSwarmListener();
