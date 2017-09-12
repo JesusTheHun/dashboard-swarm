@@ -9,6 +9,7 @@ class WindowsManager {
             this.windows = {};
             this.windowsPromises = {};
             this.tabs = {};
+            this.intervals = {};
 
             let wm = this;
 
@@ -16,19 +17,67 @@ class WindowsManager {
                 if (DashboardSwarmNode.isMaster()) wm.setTabs(tabs);
             });
 
-            DashboardSwarmListener.subscribeCommand('openTab', (screen, url) => {
+            DashboardSwarmListener.subscribeCommand('openTab', (display, url) => {
                 if (DashboardSwarmNode.isMaster()) {
-                    wm.openTab(screen, url).then(tabId => {
-                        DashboardSwarmWebSocket.sendEvent('tabOpened', [tabId, screen, url]);
+                    wm.openTab(display, url).then(tabId => {
+                        let updateWhenTitleIsReady = (changedTabId, changeInfo, tab) => {
+                            if (changedTabId === tabId && changeInfo.title !== undefined && changeInfo.title !== '') {
+                                DashboardSwarmWebSocket.sendEvent('tabOpened', [tabId, display, url, changeInfo.title, tab.index]);
+                                chrome.tabs.onUpdated.removeListener(updateWhenTitleIsReady);
+                            }
+                        };
+
+                        chrome.tabs.onUpdated.addListener(updateWhenTitleIsReady);
                     });
                 }
             });
 
             DashboardSwarmListener.subscribeCommand('closeTab', tabId => {
-                if (DashboardSwarmNode.isMaster()) {
+                if (DashboardSwarmNode.isMaster() && wm.tabs[tabId] !== undefined) {
                     wm.closeTab(tabId).then(tabId => {
                         DashboardSwarmWebSocket.sendEvent('tabClosed', [tabId]);
                     });
+                }
+            });
+
+            DashboardSwarmListener.subscribeCommand('updateTab', (tabId, newProps) => {
+                if (DashboardSwarmNode.isMaster() && wm.getTab(tabId) !== undefined) {
+                    if (newProps.position !== undefined) {
+                        chrome.tabs.move(tabId, {index: newProps.position}, movedTab => {
+                            chrome.windows.get(movedTab.windowId, {populate: true}, window => {
+                                window.tabs.filter(wTab => wTab.index !== wm.getTab(wTab.id).position).forEach(wTab => {
+                                    DashboardSwarmWebSocket.sendEvent('tabUpdated', [wTab.id, {position: wTab.index}]);
+                                })
+                            });
+                        });
+                    }
+
+                    if (newProps.url !== undefined) {
+                        chrome.tabs.update(tabId, {url: newProps.url}, tab => {
+                            if (newProps.title === undefined) {
+                                let updateWhenTitleIsReady = (changedTabId, changeInfo, tab) => {
+                                    if (changedTabId === tabId && changeInfo.title !== undefined && changeInfo.title !== '') {
+                                        newProps.title = changeInfo.title;
+                                        DashboardSwarmWebSocket.sendEvent('tabUpdated', [tabId, newProps]);
+                                        chrome.tabs.onUpdated.removeListener(updateWhenTitleIsReady);
+                                    }
+                                };
+
+                                chrome.tabs.onUpdated.addListener(updateWhenTitleIsReady);
+                            } else {
+                                DashboardSwarmWebSocket.sendEvent('tabUpdated', [tabId, newProps]);
+                            }
+                        });
+                    }
+
+                    if (newProps.display !== undefined) {
+                        wm.getWindowForDisplay(newProps.display).then(window => {
+                            chrome.tabs.move(tabId, {windowId: window.id, index: -1}, tab => {
+                                newProps.position = tab.index;
+                                DashboardSwarmWebSocket.sendEvent('tabUpdated', [tabId, newProps]);
+                            });
+                        });
+                    }
                 }
             });
 
@@ -37,6 +86,34 @@ class WindowsManager {
                     wm.getDisplays().then(displays => {
                         DashboardSwarmWebSocket.sendEvent('masterDisplays', [displays]);
                     });
+                }
+            });
+
+            DashboardSwarmListener.subscribeCommand('startRotation', interval => {
+                if (DashboardSwarmNode.isMaster()) {
+                    wm.getDisplays().then(displays => {
+                        Object.keys(displays).forEach(display => {
+                            if (wm.windows[display] !== undefined) {
+                                wm.startRotation(display, interval);
+                            }
+                        })
+                    });
+
+                    DashboardSwarmWebSocket.sendEvent('rotationStarted', [interval]);
+                }
+            });
+
+            DashboardSwarmListener.subscribeCommand('stopRotation', () => {
+                if (DashboardSwarmNode.isMaster()) {
+                    wm.getDisplays().then(displays => {
+                        Object.keys(displays).forEach(display => {
+                            if (wm.windows[display] !== undefined) {
+                                wm.stopRotation(display);
+                            }
+                        })
+                    });
+
+                    DashboardSwarmWebSocket.sendEvent('rotationStopped', []);
                 }
             });
 
@@ -70,16 +147,25 @@ class WindowsManager {
     }
 
     /**
-     * Close everything and open those tabs
-     * @param tabs [][screen, url]
+     * @returns {Tab[]} Return all tabs
+     */
+    getTabs() {
+        return this.tabs;
+    }
+
+    /**
+     * Close everything and open those tabs. Tabs are sorted by position.
+     * @param {Array<{display: number, url: string}>} tabs
      */
     setTabs(tabs) {
         let wm = this;
-
         wm.closeEverything();
 
+        tabs.sort((a, b) => a.position - b.position);
         tabs.forEach(tab => {
-            wm.openTab(tab.screen, tab.url);
+            wm.openTab(tab.display, tab.url).then(tabId => {
+                DashboardSwarmWebSocket.sendEvent('tabUpdated', [tab.id, {id: tabId}]);
+            });
         });
     }
 
@@ -87,19 +173,15 @@ class WindowsManager {
      * Open the tab and update WM's tab list. Will resolve the opened tab ID
      * @param {number} display
      * @param {string} tabUrl
-     * @returns {Promise}
+     * @returns {Promise<number>} A promise that resolve the tab ID
      */
     openTab(display, tabUrl) {
         let wm = this;
 
         return new Promise((resolve, reject) => {
             try {
-                this.getWindowForScreen(display).then((window) => {
-                    chrome.tabs.create({
-                        windowId: window.id,
-                        url: tabUrl,
-                        active: true
-                    }, tab => {
+                this.getWindowForDisplay(display).then((window) => {
+                    chrome.tabs.create({ windowId: window.id, url: tabUrl, active: true}, tab => {
                         wm.tabs[tab.id] = tab;
                         resolve(tab.id);
                     });
@@ -114,9 +196,9 @@ class WindowsManager {
     /**
      * Return a promise that resolve the Window
      * @param {number} display
-     * @returns {Promise} A promise that resolve the Window
+     * @returns {Promise<Window>} A promise that resolve the Window
      */
-    getWindowForScreen(display) {
+    getWindowForDisplay(display) {
         let wm = this;
 
         if (wm.windows[display] !== undefined) {
@@ -137,21 +219,31 @@ class WindowsManager {
 
                         let newWindowTabsId = createdWindow.tabs.map(tab => tab.id);
 
-                        let removeDefaultTabListener = tab => {
+                        let onCreateRemoveDefaultTabListener = tab => {
                             if (tab.windowId === createdWindow.id) {
                                 chrome.tabs.remove(newWindowTabsId);
-                                chrome.tabs.onCreated.removeListener(removeDefaultTabListener);
+                                chrome.tabs.onCreated.removeListener(onCreateRemoveDefaultTabListener);
+                                chrome.tabs.onAttached.removeListener(onAttachedRemoveDefaultTabListener);
                             }
                         };
 
-                        chrome.tabs.onCreated.addListener(removeDefaultTabListener);
-
-                        let deleteWindowPromiseListener = window => {
-                            delete wm.windowsPromises[window.id];
-                            chrome.windows.onRemoved.removeListener(deleteWindowPromiseListener);
+                        let onAttachedRemoveDefaultTabListener = (tabId, attachInfo) => {
+                            if (attachInfo.newWindowId === createdWindow.id) {
+                                chrome.tabs.remove(newWindowTabsId);
+                                chrome.tabs.onCreated.removeListener(onCreateRemoveDefaultTabListener);
+                                chrome.tabs.onAttached.removeListener(onAttachedRemoveDefaultTabListener);
+                            }
                         };
 
-                        chrome.windows.onRemoved.addListener(deleteWindowPromiseListener);
+                        chrome.tabs.onCreated.addListener(onCreateRemoveDefaultTabListener);
+                        chrome.tabs.onAttached.addListener(onAttachedRemoveDefaultTabListener);
+
+                        chrome.windows.onRemoved.addListener(windowId => {
+                            if (windowId === createdWindow.id) {
+                                delete wm.windowsPromises[display];
+                                delete wm.windows[display];
+                            }
+                        });
 
                         resolve(createdWindow);
 
@@ -175,22 +267,35 @@ class WindowsManager {
      * @returns {Promise}
      */
     closeTab(tabId) {
-        return new Promise((resolve, reject) => chrome.tabs.remove(tabId, () => resolve(tabId)));
+        let wm = this;
+
+        return new Promise((resolve, reject) => {
+            try {
+                chrome.tabs.remove(tabId, () => {
+                    resolve(tabId);
+                })
+
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    getWindowDisplay(windowId) {
+        for (let i in this.windows) {
+            if (this.windows.hasOwnProperty(i) && this.windows[i].id === windowId) {
+                return i;
+            }
+        }
     }
 
     /**
-     * Close everything :D Send a tabClosed event for each tab closed.
+     * Close everything. No event is emited
      */
     closeEverything() {
         for (let windowId in this.windows) {
             if (this.windows.hasOwnProperty(windowId)) {
-                chrome.windows.remove(windowId, () => {
-                    console.log("Window " + windowId + " removed");
-
-                    this.windows[windowId].tabs.forEach(tab => {
-                        DashboardSwarmWebSocket.sendEvent('tabClosed', [tab.id]);
-                    });
-                });
+                chrome.windows.remove(windowId);
             }
         }
     }
@@ -199,6 +304,46 @@ class WindowsManager {
         this.getDisplays().then((data) => console.log(data));
         console.log(this.tabs);
         console.log(this.windows);
+    }
+
+    /**
+     * Start the rotation of tabs for a particular display
+     * @param {number} display Display you want to make rotate
+     * @param {number} interval Pause duration between two tabs. In milliseconds
+     */
+    startRotation(display, interval) {
+        let wm = this;
+
+        console.log("WM rotation started");
+
+        wm.intervals[display] = setInterval(() => {
+            if (wm.windows[display] !== undefined) { // Prevent re-opening a closed window
+                wm.getWindowForDisplay(display).then(w => {
+                    chrome.windows.get(w.id, {populate: true}, window => {
+                        let tabs = window.tabs.sort((a, b) => a.index - b.index);
+                        let maxIndex = tabs[tabs.length - 1].index;
+                        let activeTabIndex = tabs.findIndex(t => t.active === true);
+
+                        let tabToActivate = activeTabIndex === maxIndex ? 0 : activeTabIndex + 1;
+
+                        chrome.tabs.update(tabs[tabToActivate].id, {active: true});
+                    });
+                });
+            }
+        }, interval);
+    }
+
+    /**
+     * Stop the rotation of thabs for a particular display
+     * @param display Display you want to stop rotating
+     */
+    stopRotation(display) {
+        let wm = this;
+
+        if (wm.intervals[display] !== undefined) {
+            clearInterval(wm.intervals[display]);
+            delete wm.intervals[display];
+        }
     }
 }
 

@@ -39,7 +39,7 @@ class DashboardSwarmWebSocket {
     }
 
     /**
-     * @returns {Promise} A promise resolved with a connected WebSocket
+     * @returns {Promise<Socket>} A promise resolved with a connected WebSocket
      */
     getWebSocketReady() {
         return this.wsReady;

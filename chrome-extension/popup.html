@@ -5,18 +5,19 @@
     <script src="build/popup.js"></script>
     <link rel="stylesheet" href="node_modules/spectre.css/dist/spectre.min.css">
     <link rel="stylesheet" href="node_modules/spectre.css/dist/spectre-icons.min.css">
+    <link rel="stylesheet" href="node_modules/font-awesome/css/font-awesome.min.css">
     <link rel="stylesheet" href="popup.css">
 </head>
 <body>
 
     <!-- Templates -->
     <div id="empty" class="empty">
-        <p class="empty-title h5">You have no dashboard on this screen</p>
+        <p class="empty-title h5">You have no dashboard on this display</p>
         <p class="empty-subtitle">Fill the form below to add one.</p>
     </div>
 
     <!-- Live scene -->
-    <div id="screens">
+    <div id="displays">
         <div class="panel">
             <div class="panel-header text-center">
                 <i class="icon icon-emoji"></i>
@@ -28,8 +29,14 @@
             <div class="panel-body"></div>
             <div class="panel-footer">
                 <div class="input-group">
-                    <input type="text" class="form-input" placeholder="Dashboard URL" id="dashboardUrl">
+                    <input type="text" class="form-input" placeholder="New dashboard url" id="dashboardUrl">
                     <button class="btn btn-primary input-group-btn" id="addDashboard">Add</button>
+                </div>
+
+                <div id="player">
+                    <button class="btn btn-link" id="playPause">
+                        <i class="fa fa-play"></i>
+                    </button>
                 </div>
             </div>
         </div>

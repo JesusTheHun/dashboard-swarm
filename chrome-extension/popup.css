@@ -3,16 +3,55 @@
     display: none;
 }
 
-#screens .empty {
+#displays .empty {
     min-width: 300px;
     margin-top: 16px;
 }
 
-div#screens {
+.hide {
+    display: none;
+}
+
+.hover-only {
+    visibility: hidden;
+}
+
+.tile:hover .hover-only {
+    visibility: visible;
+}
+
+.tile .icon-column > div {
+    height: 15px;
+}
+
+.tile .icon-column i {
+    font-size: 0.7em;
+}
+
+div#displays {
     min-width: 300px;
 }
 
 .panel .panel-body {
-    padding-top: 0.1rem;
-    padding-bottom: 0.1rem;
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+}
+.panel .panel-body .tile .tile-content .tile-subtitle {
+    font-style: italic;
+    font-size: 0.6rem;
+}
+
+.menu {
+    position: absolute;
+    right: 1rem;
+    box-shadow: 0 0.05rem 0.2rem rgba(87,100,198,0.6);
+}
+
+#player {
+    margin-top: 20px;
+    text-align: center;
+}
+
+#player i {
+    font-size: 1.3rem;
 }
