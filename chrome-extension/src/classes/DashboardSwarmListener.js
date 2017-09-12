@@ -58,7 +58,7 @@ class DashboardSwarmListener {
             break;
         }
 
-        if (namespace !== undefined) {
+        if (namespace !== undefined && this.handlers[namespace][name] !== undefined) {
             this.handlers[namespace][name].forEach(function (callback) {
                 callback.apply(undefined, data.args);
             });
@@ -83,7 +83,7 @@ function unsubscribe(namespace, name, callback) {
     let foundCallback = this.handlers[namespace][name].find(cb => cb === callback);
 
     if (foundCallback !== undefined) {
-        delete this.handlers[namespace][name][foundCallback];
+        this.handlers[namespace][name].splice(foundCallback, 1);
     }
 
     return foundCallback !== undefined;

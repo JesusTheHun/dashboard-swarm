@@ -10,9 +10,13 @@ fs.readFile(storageFilePath, (err, storageContent) => {
 
     storage = JSON.parse(storageContent);
 
+    if (storage.tabs === undefined) {
+        storage.tabs = [];
+    }
+
     wss = new WebSocket.Server({ port: 8080 });
-    wss.on('connection', function (ws, req) {
-        ws.on('message', function (message) {
+    wss.on('connection', (ws, req) => {
+        ws.on('message', message => {
             console.log("Received : " + message);
 
             try {
@@ -28,7 +32,7 @@ fs.readFile(storageFilePath, (err, storageContent) => {
                             ws.send(JSON.stringify(event));
                         break;
 
-                        case 'getDisplays':
+                        default:
                             broadcast(message);
                         break;
                     }
@@ -39,29 +43,32 @@ fs.readFile(storageFilePath, (err, storageContent) => {
 
                     switch (data.event) {
                         case 'tabOpened':
-                            if (storage.tabs === undefined) {
-                                storage.tabs = [];
-                            }
-
                             storage.tabs.push({
                                 id: data.args[0],
-                                screen: data.args[1],
-                                url: data.args[2]
+                                display: data.args[1],
+                                url: data.args[2],
+                                title: data.args[3],
+                                position: data.args[4]
                             });
-
-                            console.log("Tab opened, new storage :");
-                            console.log(storage);
 
                             writeStorage();
                         break;
 
                         case 'tabClosed':
-                            if (storage.tabs === undefined) {
-                                storage.tabs = [];
+                            let closedTabIndex = storage.tabs.findIndex(tab => tab.id === data.args[0]);
+                            if (closedTabIndex === -1) {
+                                return;
                             }
+                            storage.tabs.splice(closedTabIndex, 1);
+                            writeStorage();
+                        break;
 
-                            let tabIndex = storage.tabs.find(tab => tab.id === data.args[0]);
-                            delete storage.tabs[tabIndex];
+                        case 'tabUpdated':
+                            let updatedTab = storage.tabs.find(tab => tab.id === data.args[0]);
+                            if (updatedTab === undefined) {
+                                return;
+                            }
+                            Object.assign(updatedTab, data.args[1]);
                             writeStorage();
                         break;
                     }
@@ -84,7 +91,7 @@ function writeStorage() {
 }
 
 function broadcast(msg) {
-    wss.clients.forEach(function each(client) {
+    wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
             client.send(msg);
         }

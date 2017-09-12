@@ -13,32 +13,62 @@ class DashboardSwarmNode {
             let node = this;
 
             DashboardSwarmListener.subscribeEvent('serverTabs', tabs => {
-                node.setTabs(tabs);
+                node.tabs = tabs;
+                chrome.runtime.sendMessage({ target: 'popup', action: 'getTabs', data: tabs});
             });
 
             DashboardSwarmListener.subscribeEvent('masterDisplays', displays => {
                 node.displays = displays;
             });
 
-            DashboardSwarmListener.subscribeEvent('tabOpened', tab => {
-                node.getTabs().push(tab);
+            DashboardSwarmListener.subscribeEvent('tabOpened', (id, display, url, title, position) => {
+                let tab = {
+                    id: id,
+                    display: display,
+                    url: url,
+                    title: title,
+                    position: position
+                };
+                node.tabs.push(tab);
+                chrome.runtime.sendMessage({ target: 'popup', action: 'tabOpened', data: tab});
             });
 
-            DashboardSwarmListener.subscribeEvent('tabClosed', tab => {
-                let tabIdx = node.getTabs().find(t => t.id === tab.id);
-                delete node.tabs[tabIdx];
+            DashboardSwarmListener.subscribeEvent('tabClosed', tabId => {
+                let tabIdx = node.getTabs().findIndex(t => t.id === tabId);
+                if (tabIdx === -1) {
+                    return;
+                }
+                node.tabs.splice(tabIdx, 1);
+                chrome.runtime.sendMessage({ target: 'popup', action: 'tabClosed', data: tabId});
             });
 
+            DashboardSwarmListener.subscribeEvent('tabUpdated', (tabId, newProps) => {
+                let currentTab = node.getTabs().find(t => t.id === tabId);
+                if (currentTab === undefined) {
+                    return;
+                }
+                Object.assign(currentTab, newProps);
+                chrome.runtime.sendMessage({ target: 'popup', action: 'tabUpdated', data: [tabId, newProps]});
+            });
+
+            DashboardSwarmListener.subscribeEvent('rotationStarted', interval => {
+                chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStarted', data: [interval]});
+            });
+
+            DashboardSwarmListener.subscribeEvent('rotationStopped', () => {
+                chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStopped', data: []});
+            });
 
             /**
              * Bridge for the popup
              */
             chrome.runtime.onMessage.addListener(request => {
                 if (request.hasOwnProperty('node') && typeof node[request.node] === 'function') {
+                    let result = node[request.node].apply(node, request.args);
                     chrome.runtime.sendMessage({
                         target: 'popup',
                         action: request.node,
-                        data: node[request.node].apply(node, request.args)
+                        data: result
                     });
                 }
             });
@@ -79,37 +109,49 @@ class DashboardSwarmNode {
      * Ask to open a new tab
      * @param {number} display index
      * @param {string} tabUrl the urb of the tab you want to open
+     * @param {string} tabTitle custom title for the tab in the user panel
      */
-    openTab(display, tabUrl) {
-        DashboardSwarmWebSocket.sendCommand('openTab', [display, tabUrl]);
+    openTab(display, tabUrl, tabTitle) {
+        DashboardSwarmWebSocket.sendCommand('openTab', [display, tabUrl, tabTitle]);
     }
 
     /**
      * Ask to close a tab based on its id
-     * @param tabId
+     * @param {number} tabId
      */
     closeTab(tabId) {
         DashboardSwarmWebSocket.sendCommand('closeTab', [tabId]);
     }
 
     /**
-     * Set node tabs. Do no reflect on the WindowManager
-     * @param {array} tabs
+     * Ask to update the tab
+     * @param {number} tabId
+     * @param {*} newProps
      */
-    setTabs(tabs) {
-        this.tabs = tabs;
+    updateTab(tabId, newProps) {
+        DashboardSwarmWebSocket.sendCommand('updateTab', [tabId, newProps]);
     }
 
     /**
-     * Return the node tabs
-     * @returns {array} tabs
+     * @returns {Array} A copy of node's tabs.
      */
     getTabs() {
-        return this.tabs;
+        return this.tabs.slice(0);
     }
 
+    /**
+     * @returns {*} A copy of displays details
+     */
     getDisplays() {
-        return this.displays;
+        return Object.assign({}, this.displays);
+    }
+
+    startRotation(interval) {
+        DashboardSwarmWebSocket.sendCommand('startRotation', [interval]);
+    }
+
+    stopRotation() {
+        DashboardSwarmWebSocket.sendCommand('stopRotation', []);
     }
 }
 

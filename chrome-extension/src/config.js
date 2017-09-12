@@ -4,7 +4,8 @@ import DashboardSwarmNode from './classes/DashboardSwarmNode';
 function save_options() {
     let data = {
         master: document.getElementById('master').checked,
-        server: document.getElementById('server').value
+        server: document.getElementById('server').value,
+        interval: document.getElementById('interval').value
     };
 
     DashboardSwarmNode.setMaster(data.master);
@@ -22,10 +23,12 @@ function restore_options() {
     // Use default value color = 'red' and likesColor = true.
     chrome.storage.sync.get({
         master: false,
-        server: 'localhost:8080'
+        server: 'localhost:8080',
+        interval: 5000
     }, function(items) {
         document.getElementById('master').checked = items.master;
         document.getElementById('server').value = items.server;
+        document.getElementById('interval').value = items.interval;
     });
 }
 
