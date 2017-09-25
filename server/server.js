@@ -1,7 +1,21 @@
-const WebSocket = require('ws');
+const WebSocketServer = require('websocket').server;
+const http = require('http');
 const fs = require('fs');
+const webSocketsServerPort = 8080;
+const webSocketsServerHostname = '10.7.75.4';
+
+let server = http.createServer((req, res) => {
+    console.log((new Date()) + " http connection");
+    res.write("Hello.");
+    res.end();
+});
+server.listen(webSocketsServerPort, webSocketsServerHostname, () => {
+    console.log((new Date()) + " Server is listening on port " + webSocketsServerPort);
+});
+
 
 let wss;
+let clients = [];
 let storageFilePath = 'storage.json';
 let storage;
 
@@ -14,9 +28,25 @@ fs.readFile(storageFilePath, (err, storageContent) => {
         storage.tabs = [];
     }
 
-    wss = new WebSocket.Server({ port: 8080 });
-    wss.on('connection', (ws, req) => {
-        ws.on('message', message => {
+    setInterval(removeExpiredFlashTabs, 60 * 1000, storage.tabs);
+
+    wss = new WebSocketServer({ httpServer: server });
+    wss.on('request', request => {
+
+        console.log((new Date()) + ' Connection from origin ' + request.origin + '.');
+
+        let conn = request.accept(null, request.origin);
+        let clientIndex = clients.push(conn);
+
+        console.log((new Date()) + ' Connection accepted.');
+
+        conn.on('close', conn => {
+            clients.splice(clientIndex, 1);
+        });
+
+        conn.on('message', packet => {
+            let message = packet.utf8Data;
+
             console.log("Received : " + message);
 
             try {
@@ -29,7 +59,7 @@ fs.readFile(storageFilePath, (err, storageContent) => {
                                 event: 'serverTabs',
                                 args: [storage.tabs]
                             };
-                            ws.send(JSON.stringify(event));
+                            conn.send(JSON.stringify(event));
                         break;
 
                         default:
@@ -43,16 +73,24 @@ fs.readFile(storageFilePath, (err, storageContent) => {
 
                     switch (data.event) {
                         case 'tabOpened':
-                            storage.tabs.push({
+                            let tabToPush = {
                                 id: data.args[0],
                                 display: data.args[1],
                                 url: data.args[2],
                                 title: data.args[3],
                                 position: data.args[4]
-                            });
+                            };
+
+                            if (data.args[5] === true) {
+                                let endDate = new Date();
+                                endDate.setDate(endDate.getDate() + 1);
+                                tabToPush.flash = endDate;
+                            }
+
+                            storage.tabs.push(tabToPush);
 
                             writeStorage();
-                        break;
+                            break;
 
                         case 'tabClosed':
                             let closedTabIndex = storage.tabs.findIndex(tab => tab.id === data.args[0]);
@@ -61,16 +99,17 @@ fs.readFile(storageFilePath, (err, storageContent) => {
                             }
                             storage.tabs.splice(closedTabIndex, 1);
                             writeStorage();
-                        break;
+                            break;
 
                         case 'tabUpdated':
                             let updatedTab = storage.tabs.find(tab => tab.id === data.args[0]);
                             if (updatedTab === undefined) {
                                 return;
                             }
+
                             Object.assign(updatedTab, data.args[1]);
                             writeStorage();
-                        break;
+                            break;
                     }
                 }
 
@@ -91,9 +130,27 @@ function writeStorage() {
 }
 
 function broadcast(msg) {
-    wss.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
+    clients.forEach(client => {
+        if (client.connected) {
             client.send(msg);
         }
     });
+}
+
+function removeExpiredFlashTabs(tabs) {
+    let removedTabId = [];
+
+    tabs.map(tab => {
+        if (tab.flash instanceof Date && tab.flash < new Date()) {
+            removedTabId.push(tab.id);
+            clients.forEach(client => {
+                client.send(JSON.stringify({
+                    'cmd': 'closeTab',
+                    'args': [tab.id]
+                }));
+            });
+        }
+    });
+
+    return removedTabId;
 }

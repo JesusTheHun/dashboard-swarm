@@ -85,24 +85,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+
         domPanelTabBlock.querySelector('.tab-item:first-child a').dispatchEvent(new Event('click'));
     });
 
-    document.getElementById('addDashboard').addEventListener('click', () => {
-        askOpenTab();
-    });
+    chrome.tabs.query({active: true, currentWindow: true}, tabs => {
+        let tab = tabs[0];
 
-    chrome.tabs.getCurrent(tab => {
-        console.log("popup loaded, current tab :");
-        console.log(tab);
-        if (tab !== undefined) {
+        if (tab !== undefined && tab.url !== undefined) {
             document.getElementById('dashboardUrl').value = tab.url;
         }
     });
 
+    document.getElementById('addDashboard').addEventListener('click', () => {
+        askOpenTab(false);
+    });
+
+    document.getElementById('addDashboardFlash').addEventListener('click', () => {
+        askOpenTab(true);
+    });
+
     document.getElementById('dashboardUrl').addEventListener('keydown', (e) => {
         if (e.keyCode === 13) {
-            askOpenTab();
+            askOpenTab(false);
         }
     });
 
@@ -128,11 +133,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-function askOpenTab() {
+function askOpenTab(isFlash) {
+    if (isFlash === undefined) {
+        isFlash = false;
+    }
+
     console.log("Open tab in display #" + activePanelTab);
     let dashboardUrl = document.getElementById('dashboardUrl').value;
     if (dashboardUrl !== "") {
-        chrome.runtime.sendMessage({node: "openTab", args: [activePanelTab, dashboardUrl]});
+        chrome.runtime.sendMessage({node: "openTab", args: [activePanelTab, dashboardUrl, isFlash]});
         document.getElementById('dashboardUrl').value = '';
     }
 }
@@ -240,7 +249,9 @@ function addTabToPanel(tabId, tabUrl, tabTitle) {
     domTabTileContent.appendChild(domTabTileContentSubtitle);
 
     domTabTileContentTitle.textContent = tabTitle;
+    domTabTileContentTitle.setAttribute('title', tabTitle);
     domTabTileContentSubtitle.textContent = tabUrl;
+    domTabTileContentSubtitle.setAttribute('title', tabUrl);
 
     domTabTileAction.appendChild(domTabTileForwardMenuButton);
     domTabTileAction.appendChild(domTabTileDeleteButton);
@@ -315,6 +326,7 @@ function editableTextNode(domElement, saveFunction) {
                 saveFunction.call(undefined, domElement.textContent, input.value);
             }
             domElement.textContent = input.value;
+            domElement.setAttribute('title', input.value);
             domElement.style.display = previousDisplay;
             domParent.removeChild(input);
         };

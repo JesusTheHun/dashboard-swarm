@@ -8,8 +8,11 @@ class DashboardSwarmListener {
             let listener = this;
             listener.handlers = {'event': [], 'command': []};
 
-            DashboardSwarmWebSocket.getWebSocketReady().then(function (ws) {
-                ws.on('data', function (message) {
+            DashboardSwarmWebSocket.getWebSocketSubject().subscribe(ws => {
+                if (ws === null) return;
+                ws.onmessage = event => {
+                    let message = event.data;
+
                     try {
                         let data = JSON.parse(message);
                         listener.dispatch(data);
@@ -17,7 +20,7 @@ class DashboardSwarmListener {
                     } catch (err) {
                         console.log(err);
                     }
-                })
+                }
             });
 
             DashboardSwarmListener.instance = this;

@@ -17,12 +17,13 @@ class WindowsManager {
                 if (DashboardSwarmNode.isMaster()) wm.setTabs(tabs);
             });
 
-            DashboardSwarmListener.subscribeCommand('openTab', (display, url) => {
+            DashboardSwarmListener.subscribeCommand('openTab', (display, url, isFlash) => {
                 if (DashboardSwarmNode.isMaster()) {
                     wm.openTab(display, url).then(tabId => {
                         let updateWhenTitleIsReady = (changedTabId, changeInfo, tab) => {
                             if (changedTabId === tabId && changeInfo.title !== undefined && changeInfo.title !== '') {
-                                DashboardSwarmWebSocket.sendEvent('tabOpened', [tabId, display, url, changeInfo.title, tab.index]);
+                                wm.getTab(tabId).isFlash = true;
+                                DashboardSwarmWebSocket.sendEvent('tabOpened', [tabId, display, url, changeInfo.title, tab.index, isFlash]);
                                 chrome.tabs.onUpdated.removeListener(updateWhenTitleIsReady);
                             }
                         };
@@ -314,21 +315,28 @@ class WindowsManager {
     startRotation(display, interval) {
         let wm = this;
 
-        console.log("WM rotation started");
+        let flashPause = {};
 
         wm.intervals[display] = setInterval(() => {
-            if (wm.windows[display] !== undefined) { // Prevent re-opening a closed window
-                wm.getWindowForDisplay(display).then(w => {
-                    chrome.windows.get(w.id, {populate: true}, window => {
-                        let tabs = window.tabs.sort((a, b) => a.index - b.index);
-                        let maxIndex = tabs[tabs.length - 1].index;
-                        let activeTabIndex = tabs.findIndex(t => t.active === true);
+            if (!flashPause[display]) {
+                if (wm.windows[display] !== undefined) { // Prevent re-opening a closed window
+                    wm.getWindowForDisplay(display).then(w => {
+                        chrome.windows.get(w.id, {populate: true}, window => {
+                            let tabs = window.tabs.sort((a, b) => a.index - b.index);
+                            let maxIndex = tabs[tabs.length - 1].index;
+                            let activeTabIndex = tabs.findIndex(t => t.active === true);
 
-                        let tabToActivate = activeTabIndex === maxIndex ? 0 : activeTabIndex + 1;
+                            let tabToActivate = activeTabIndex === maxIndex ? 0 : activeTabIndex + 1;
 
-                        chrome.tabs.update(tabs[tabToActivate].id, {active: true});
+                            if (wm.getTab(tabs[tabToActivate].id).flash) {
+                                flashPause[display] = 1;
+                                setTimeout(() => flashPause[display] = 0, 2 * interval);
+                            }
+
+                            chrome.tabs.update(tabs[tabToActivate].id, {active: true});
+                        });
                     });
-                });
+                }
             }
         }, interval);
     }

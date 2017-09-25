@@ -20,8 +20,12 @@
     <div id="displays">
         <div class="panel">
             <div class="panel-header text-center">
-                <i class="icon icon-emoji"></i>
                 <div class="panel-title h5 mt-10">Dashboard Swarm</div>
+                <div id="player">
+                    <div class="btn btn-link" id="playPause">
+                        <i class="fa fa-play"></i>
+                    </div>
+                </div>
             </div>
             <div class="panel-nav">
                 <ul class="tab tab-block"></ul>
@@ -31,12 +35,7 @@
                 <div class="input-group">
                     <input type="text" class="form-input" placeholder="New dashboard url" id="dashboardUrl">
                     <button class="btn btn-primary input-group-btn" id="addDashboard">Add</button>
-                </div>
-
-                <div id="player">
-                    <button class="btn btn-link" id="playPause">
-                        <i class="fa fa-play"></i>
-                    </button>
+                    <button class="btn input-group-btn" id="addDashboardFlash"><i class="fa fa-bolt"></i></button>
                 </div>
             </div>
         </div>
