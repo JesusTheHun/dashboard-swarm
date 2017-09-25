@@ -12,6 +12,12 @@ class DashboardSwarmNode {
 
             let node = this;
 
+            DashboardSwarmListener.subscribeCommand('updateTab', (tabId, newProps) => {
+                if (newProps.title !== undefined) {
+                    DashboardSwarmWebSocket.sendEvent('tabUpdated', [tabId, newProps]);
+                }
+            });
+
             DashboardSwarmListener.subscribeEvent('serverTabs', tabs => {
                 node.tabs = tabs;
                 chrome.runtime.sendMessage({ target: 'popup', action: 'getTabs', data: tabs});
@@ -109,10 +115,10 @@ class DashboardSwarmNode {
      * Ask to open a new tab
      * @param {number} display index
      * @param {string} tabUrl the urb of the tab you want to open
-     * @param {string} tabTitle custom title for the tab in the user panel
+     * @param {string} isFlash If true the tab will be automatically removed after programmed delay
      */
-    openTab(display, tabUrl, tabTitle) {
-        DashboardSwarmWebSocket.sendCommand('openTab', [display, tabUrl, tabTitle]);
+    openTab(display, tabUrl, isFlash) {
+        DashboardSwarmWebSocket.sendCommand('openTab', [display, tabUrl, isFlash]);
     }
 
     /**

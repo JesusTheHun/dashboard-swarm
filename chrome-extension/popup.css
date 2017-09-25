@@ -16,6 +16,26 @@
     visibility: hidden;
 }
 
+#displays .panel {
+    min-width: 400px;
+}
+
+.tile .tile-title {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    height: 20px;
+    width: 250px;
+}
+
+.tile .tile-subtitle {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    height: 20px;
+    width: 250px;
+}
+
 .tile:hover .hover-only {
     visibility: visible;
 }
@@ -28,12 +48,8 @@
     font-size: 0.7em;
 }
 
-div#displays {
-    min-width: 300px;
-}
-
 .panel .panel-body {
-    padding-top: 0.3rem;
+    padding-top: 1rem;
     padding-bottom: 0.3rem;
 }
 .panel .panel-body .tile .tile-content .tile-subtitle {

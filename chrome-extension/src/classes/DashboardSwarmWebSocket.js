@@ -1,41 +1,65 @@
-const Socket = require('simple-websocket');
 import defer from '../function/defer';
+import Rx from 'rxjs/Rx';
+
+const WebSocketClient = require('websocket').w3cwebsocket;
+const WebSocketConnection = require('websocket').connection;
+const reconnectIntervalDelay = 5000;
 
 class DashboardSwarmWebSocket {
 
     constructor() {
         if (!DashboardSwarmWebSocket.instance) {
-            this.wsReady = new defer();
             DashboardSwarmWebSocket.instance = this;
+
+            this.wsReady = new defer();
+            this.wsSubject = new Rx.BehaviorSubject(null);
+
+            this.getWebSocketSubject().subscribe(ws => {
+                if (ws === null) return;
+
+                this.reconnectionInterval = setInterval(() => {
+                    if (this.ws.readyState === WebSocket.CLOSED) {
+                        this.connect();
+                    }
+                }, reconnectIntervalDelay);
+            });
         }
         return DashboardSwarmWebSocket.instance;
     }
 
     /**
-     * Set the WebSocket server url and initialize a connection
-     * @param {string} url
-     * @param {function} errorCallback
+     * Establish WebSocket connection with stored configuration. Will close any previous connection
      */
-    setServerUrl(url, errorCallback) {
-        let ds = this;
+    connect() {
 
-        ds.ws = new Socket('ws://' + url);
-        ds.ws.on('connect', () => {
-            ds.wsReady.resolve(ds.ws);
-        });
-
-        if (typeof errorCallback === 'function') {
-            ds.ws.on('error', err => {
-                errorCallback.call(ds, err);
-            });
+        if (this.ws) {
+            this.ws.close();
+            this.wsReady = new defer();
         }
+
+        let ws = new WebSocketClient('ws://' + this.serverUrl);
+        ws.onopen = () => {
+            this.wsReady.resolve(ws);
+            this.wsSubject.next(ws);
+        };
+
+        if (typeof this.serverErrorHandler === 'function') {
+            ws.onerror = err => {
+                this.serverErrorHandler.call(this, err);
+            };
+        }
+
+        this.ws = ws;
     }
 
     /**
-     * @returns {Socket} A raw WebSocket, whatever its state is (can be undefined)
+     * Set the WebSocket server url and error handler
+     * @param {string} url
+     * @param {function} errorCallback
      */
-    getWebSocket() {
-        return this.ws;
+    setServerConfig(url, errorCallback) {
+        this.serverUrl = url;
+        this.serverErrorHandler = errorCallback;
     }
 
     /**
@@ -43,6 +67,10 @@ class DashboardSwarmWebSocket {
      */
     getWebSocketReady() {
         return this.wsReady;
+    }
+
+    getWebSocketSubject() {
+        return this.wsSubject;
     }
 
     /**

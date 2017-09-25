@@ -15,15 +15,17 @@ chrome.storage.sync.get({
     master: false
 }, function(items) {
     DashboardSwarmNode.setMaster(items.master);
-    DashboardSwarmWebSocket.setServerUrl(items.server, err => {
+    DashboardSwarmWebSocket.setServerConfig(items.server, err => {
         chrome.browserAction.setBadgeText({"text": "ERR"});
     });
+    DashboardSwarmWebSocket.connect();
 });
 
-DashboardSwarmWebSocket.getWebSocketReady().then((ws) => {
+DashboardSwarmWebSocket.getWebSocketSubject().subscribe(ws => {
+    if (ws === null) return;
     chrome.browserAction.setBadgeText({"text": "ON"});
 
-    ws.on('close', () => {
+    ws.onclose = () => {
         chrome.browserAction.setBadgeText({"text": "OFF"});
-    });
+    };
 });
