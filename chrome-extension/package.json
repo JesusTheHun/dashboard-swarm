@@ -1,30 +1,34 @@
 {
-  "name": "dashboard-swarm-chrome-extension",
-  "version": "0.0.1",
-  "description": "This extension allows to display a set of tab in multiple browser's windows",
-  "main": "FrontController.js",
-  "author": "Jonathan MASSUCHETTI",
-  "dependencies": {
-    "font-awesome": "^4.7.0",
-    "rxjs": "^5.4.3",
-    "spectre.css": "^0.4.0",
-    "websocket": "^1.0.24"
-  },
-  "scripts": {
-    "dev": "webpack --watch"
-  },
-  "devDependencies": {
-    "babel-core": "^6.26.0",
-    "babel-loader": "^7.1.2",
-    "babel-preset-env": "^1.6.0",
-    "clean-webpack-plugin": "^0.1.16",
-    "css-loader": "^0.28.7",
-    "extract-loader": "^1.0.1",
-    "extract-text-webpack-plugin": "^3.0.0",
-    "file-loader": "^0.11.2",
-    "less": "^2.7.2",
-    "less-loader": "^4.0.5",
-    "style-loader": "^0.18.2",
-    "webpack": "^3.5.5"
-  }
+    "name": "dashboard-swarm-chrome-extension",
+    "version": "0.0.1",
+    "description": "This extension allows to display a set of tab in multiple browser's windows",
+    "main": "FrontController.js",
+    "author": "Jonathan MASSUCHETTI",
+    "dependencies": {
+        "font-awesome": "^4.7.0",
+        "rxjs": "^5.4.3",
+        "spectre.css": "^0.4.0",
+        "websocket": "^1.0.24"
+    },
+    "scripts": {
+        "dev": "webpack --watch",
+        "dist": "webpack && node build"
+    },
+    "devDependencies": {
+        "babel-core": "^6.26.0",
+        "babel-loader": "^7.1.2",
+        "babel-preset-env": "^1.6.0",
+        "clean-webpack-plugin": "^0.1.16",
+        "css-loader": "^0.28.7",
+        "extract-loader": "^1.0.1",
+        "extract-text-webpack-plugin": "^3.0.0",
+        "file-loader": "^0.11.2",
+        "less": "^2.7.2",
+        "less-loader": "^4.0.5",
+        "style-loader": "^0.18.2",
+        "webpack": "^3.5.5"
+    },
+    "engines": {
+        "node": ">=8.5"
+    }
 }
