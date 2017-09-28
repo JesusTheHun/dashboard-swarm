@@ -2,7 +2,6 @@ import defer from '../function/defer';
 import Rx from 'rxjs/Rx';
 
 const WebSocketClient = require('websocket').w3cwebsocket;
-const WebSocketConnection = require('websocket').connection;
 const reconnectIntervalDelay = 5000;
 
 class DashboardSwarmWebSocket {
@@ -53,12 +52,18 @@ class DashboardSwarmWebSocket {
     }
 
     /**
-     * Set the WebSocket server url and error handler
+     * Set the WebSocket server url
      * @param {string} url
+     */
+    setServerUrl(url) {
+        this.serverUrl = url;
+    }
+
+    /**
+     * Set the WebSocket error handler
      * @param {function} errorCallback
      */
-    setServerConfig(url, errorCallback) {
-        this.serverUrl = url;
+    setServerConnectionErrorHandler(errorCallback) {
         this.serverErrorHandler = errorCallback;
     }
 

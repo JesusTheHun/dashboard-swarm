@@ -15,7 +15,8 @@ chrome.storage.sync.get({
     master: false
 }, function(items) {
     DashboardSwarmNode.setMaster(items.master);
-    DashboardSwarmWebSocket.setServerConfig(items.server, err => {
+    DashboardSwarmWebSocket.setServerUrl(items.server);
+    DashboardSwarmWebSocket.setServerConnectionErrorHandler(err => {
         chrome.browserAction.setBadgeText({"text": "ERR"});
     });
     DashboardSwarmWebSocket.connect();
