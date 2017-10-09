@@ -1,14 +1,15 @@
 const WebSocketServer = require('websocket').server;
 const http = require('http');
 const fs = require('fs');
-const webSocketsServerPort = 8080;
-const webSocketsServerHostname = '10.7.75.4';
+const webSocketsServerPort = parseInt(process.argv[3]);
+const webSocketsServerHostname = process.argv[2];
 
 let server = http.createServer((req, res) => {
     console.log((new Date()) + " http connection");
     res.write("Hello.");
     res.end();
 });
+
 server.listen(webSocketsServerPort, webSocketsServerHostname, () => {
     console.log((new Date()) + " Server is listening on port " + webSocketsServerPort);
 });
