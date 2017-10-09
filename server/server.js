@@ -29,7 +29,7 @@ fs.readFile(storageFilePath, (err, storageContent) => {
         storage.tabs = [];
     }
 
-    setInterval(removeExpiredFlashTabs, 60 * 1000, storage.tabs);
+    setInterval(removeExpiredFlashTabs, process.argv[4] * 1000, storage.tabs);
 
     wss = new WebSocketServer({ httpServer: server });
     wss.on('request', request => {
