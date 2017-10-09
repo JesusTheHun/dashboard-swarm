@@ -13,3 +13,11 @@ This will watch your modifications and bundle everything into the build director
 ```bash
 npm start -- <BIND_IP> <BIND_PORT>
 ```
+
+# Build extension
+
+```bash
+npm run dist
+```
+
+The script will execute `build.js` which will copy required files into the dist directory.
