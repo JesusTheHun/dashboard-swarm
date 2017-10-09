@@ -11,7 +11,7 @@ let server = http.createServer((req, res) => {
 });
 
 server.listen(webSocketsServerPort, webSocketsServerHostname, () => {
-    console.log((new Date()) + " Server is listening on port " + webSocketsServerPort);
+    console.log((new Date()) + " Server is listening on " + webSocketsServerHostname + ":" + webSocketsServerPort);
 });
 
 
