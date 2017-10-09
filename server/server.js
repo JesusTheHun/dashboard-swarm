@@ -4,6 +4,8 @@ const fs = require('fs');
 const webSocketsServerPort = parseInt(process.argv[3]);
 const webSocketsServerHostname = process.argv[2];
 
+const flashTabDuration = parseInt(process.argv[4]);
+
 let server = http.createServer((req, res) => {
     console.log((new Date()) + " http connection");
     res.write("Hello.");
@@ -29,7 +31,7 @@ fs.readFile(storageFilePath, (err, storageContent) => {
         storage.tabs = [];
     }
 
-    setInterval(removeExpiredFlashTabs, process.argv[4] * 1000, storage.tabs);
+    setInterval(removeExpiredFlashTabs, flashTabDuration * 1000, storage.tabs);
 
     wss = new WebSocketServer({ httpServer: server });
     wss.on('request', request => {

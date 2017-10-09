@@ -11,7 +11,7 @@ This will watch your modifications and bundle everything into the build director
 # Start WebSocket server
 
 ```bash
-npm start -- <BIND_IP> <BIND_PORT>
+npm start -- <BIND_IP> <BIND_PORT> <FLASH_LIFETIME_SECONDS>
 ```
 
 # Build extension
