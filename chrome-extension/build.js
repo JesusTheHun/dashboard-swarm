@@ -12,6 +12,9 @@ let buildComponents = [
     'icon.png',
     'popup.html',
     'popup.css',
+    'node_modules/spectre.css/dist/spectre.min.css',
+    'node_modules/spectre.css/dist/spectre-icons.min.css',
+    'node_modules/font-awesome/css/font-awesome.min.css',
     'config.html',
     'build/background.js',
     'build/config.js',
@@ -45,19 +48,20 @@ fs.mkdir(dest, err => {
             }
 
             try {
-                fs.mkdirSync(dest + '/' + dirTower.join('/') + dir);
+                fs.mkdirSync(dest + '/' + dirTower.join('/') + '/' + dir);
             } catch (err) {
-                dirTower.push(dir);
-
                 if (err.code !== 'EEXIST') {
                     console.error(err);
                 }
+            } finally {
+                dirTower.push(dir);
             }
         });
 
         fs.copyFile(filepath, dest + '/' + filepath, err => {
             if (err) {
                 console.log("Failed to copy file : " + filepath);
+                console.log(err);
                 return;
             }
 
