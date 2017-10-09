@@ -11,5 +11,5 @@ This will watch your modifications and bundle everything into the build director
 # Start WebSocket server
 
 ```bash
-npm start
+npm start -- <BIND_IP> <BIND_PORT>
 ```
