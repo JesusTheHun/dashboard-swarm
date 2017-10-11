@@ -138,7 +138,6 @@ function askOpenTab(isFlash) {
         isFlash = false;
     }
 
-    console.log("Open tab in display #" + activePanelTab);
     let dashboardUrl = document.getElementById('dashboardUrl').value;
     if (dashboardUrl !== "") {
         chrome.runtime.sendMessage({node: "openTab", args: [activePanelTab, dashboardUrl, isFlash]});
