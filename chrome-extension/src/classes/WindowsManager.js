@@ -131,6 +131,7 @@ class WindowsManager {
         return new Promise((resolve, reject) => {
             try {
                 chrome.system.display.getInfo(displayInfos => {
+                    console.log(displayInfos);
                     resolve(displayInfos);
                 });
             } catch (err) {
@@ -214,6 +215,7 @@ class WindowsManager {
             wm.getDisplays().then(displays => {
                 try {
                     chrome.windows.create({
+                        'top': displays[display].workArea.top,
                         'left': displays[display].workArea.left
                     }, createdWindow => {
                         wm.windows[display] = createdWindow;
