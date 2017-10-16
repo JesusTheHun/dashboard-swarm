@@ -27,13 +27,15 @@ class DashboardSwarmNode {
                 node.displays = displays;
             });
 
-            DashboardSwarmListener.subscribeEvent('tabOpened', (id, display, url, title, position) => {
+            DashboardSwarmListener.subscribeEvent('tabOpened', (id, display, url, title, position, isFlash, zoom) => {
                 let tab = {
                     id: id,
                     display: display,
                     url: url,
                     title: title,
-                    position: position
+                    position: position,
+                    isFlash: isFlash,
+                    zoom: zoom
                 };
                 node.tabs.push(tab);
                 chrome.runtime.sendMessage({ target: 'popup', action: 'tabOpened', data: tab});

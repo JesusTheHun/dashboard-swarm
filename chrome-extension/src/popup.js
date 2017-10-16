@@ -128,8 +128,8 @@ document.addEventListener('DOMContentLoaded', () => {
     globalPlayerSubject.subscribe(isPlaying => {
         let icon = document.getElementById('playPause').querySelector('i');
         icon.classList.remove('fa-play');
-        icon.classList.remove('fa-pause');
-        icon.classList.add(isPlaying === true ? 'fa-pause' : 'fa-play');
+        icon.classList.remove('fa-stop');
+        icon.classList.add(isPlaying === true ? 'fa-stop' : 'fa-play');
     });
 });
 
@@ -202,17 +202,11 @@ function addTabToPanel(tabId, tabUrl, tabTitle) {
     let domTabTileAction = document.createElement('div');
     domTabTileAction.classList.add('tile-action');
 
-    let domTabTileDeleteButton = document.createElement('div');
-    domTabTileDeleteButton.classList.add('btn', 'btn-link', 'btn-action', 'btn-lg');
+    let domTabTileParamMenuButton = document.createElement('div');
+    domTabTileParamMenuButton.classList.add('btn', 'btn-link', 'btn-action', 'btn-lg');
 
-    let domTabTileDeleteButtonIcon = document.createElement('i');
-    domTabTileDeleteButtonIcon.classList.add('icon', 'icon-cross');
-
-    let domTabTileForwardMenuButton = document.createElement('div');
-    domTabTileForwardMenuButton.classList.add('btn', 'btn-link', 'btn-action', 'btn-lg');
-
-    let DomTabTileForwardMenuButtonIcon = document.createElement('i');
-    DomTabTileForwardMenuButtonIcon.classList.add('icon', 'icon-apps');
+    let DomTabTileParamMenuButtonIcon = document.createElement('i');
+    DomTabTileParamMenuButtonIcon.classList.add('icon', 'icon-more-vert');
 
     domTabTileMoveUpIconWrapper.appendChild(domTabTileMoveUpIcon);
     domTabTileMoveDownIconWrapper.appendChild(domTabTileMoveDownIcon);
@@ -238,8 +232,7 @@ function addTabToPanel(tabId, tabUrl, tabTitle) {
     domTabTileMoveIconsBox.appendChild(domTabTileMoveUpIconWrapper);
     domTabTileMoveIconsBox.appendChild(domTabTileMoveDownIconWrapper);
 
-    domTabTileForwardMenuButton.appendChild(DomTabTileForwardMenuButtonIcon);
-    domTabTileDeleteButton.appendChild(domTabTileDeleteButtonIcon);
+    domTabTileParamMenuButton.appendChild(DomTabTileParamMenuButtonIcon);
 
     domTabTile.appendChild(domTabTileMoveIconsBox);
     domTabTile.appendChild(domTabTileContent);
@@ -252,58 +245,103 @@ function addTabToPanel(tabId, tabUrl, tabTitle) {
     domTabTileContentSubtitle.textContent = tabUrl;
     domTabTileContentSubtitle.setAttribute('title', tabUrl);
 
-    domTabTileAction.appendChild(domTabTileForwardMenuButton);
-    domTabTileAction.appendChild(domTabTileDeleteButton);
+    domTabTileAction.appendChild(domTabTileParamMenuButton);
     domPanelBody.appendChild(domTabTile);
 
-    let domTabTileForwardMenu = document.createElement('ul');
-    domTabTileForwardMenu.classList.add('menu', 'hide');
+    let domTabTileParamMenu = document.createElement('ul');
+    domTabTileParamMenu.classList.add('menu', 'hide');
 
-    domPanelBody.insertBefore(domTabTileForwardMenu, domTabTile.nextSibling);
+    domPanelBody.insertBefore(domTabTileParamMenu, domTabTile.nextSibling);
 
     let body = document.querySelector('body');
     let bodyOriginalHeight = body.offsetHeight;
 
-    domTabTileForwardMenuButton.addEventListener('click', e => {
+    domTabTileParamMenuButton.addEventListener('click', e => {
         e.preventDefault();
 
         let bodyHeight = body.offsetHeight;
 
-        if (domTabTileForwardMenu.classList.contains('hide')) {
-            domTabTileForwardMenu.classList.remove('hide');
+        if (domTabTileParamMenu.classList.contains('hide')) {
+            domTabTileParamMenu.classList.remove('hide');
 
-            let menuBottom = domTabTileForwardMenu.offsetTop + domTabTileForwardMenu.offsetHeight;
+            let menuBottom = domTabTileParamMenu.offsetTop + domTabTileParamMenu.offsetHeight;
 
             if (menuBottom > bodyHeight) {
                 body.style.height = (menuBottom + 10) + 'px';
             }
 
         } else {
-            domTabTileForwardMenu.classList.add('hide');
+            domTabTileParamMenu.classList.add('hide');
             body.style.height = bodyOriginalHeight + 'px';
         }
     });
 
     getDisplays.then(displays => {
+
+        let currentZoom = 1.00;
+
+        tabsSubject.subscribe(tabs => {
+            let tab = tabs.find(tab => tab.id === tabId);
+            currentZoom = tab.zoom;
+        });
+
+        let zoomDividerText = zoom => "ZOOM - " + parseInt(zoom * 100) + " %";
+
+        let domTabTileZoomDivider = createMenuDivider(zoomDividerText(currentZoom));
+        domTabTileParamMenu.appendChild(domTabTileZoomDivider);
+
+        tabsSubject.subscribe(tabs => {
+            let tab = tabs.find(tab => tab.id === tabId);
+            domTabTileZoomDivider.setAttribute('data-content', zoomDividerText(tab.zoom));
+        });
+
+        let domTabTileZoomInLink = createMenuElement("Zoom In", e => {
+            e.preventDefault();
+            chrome.runtime.sendMessage({node: "updateTab", args: [tabId, {zoom: currentZoom + 0.05}]});
+        });
+
+        domTabTileParamMenu.appendChild(domTabTileZoomInLink);
+
+        let domTabTileZoomOutLink = createMenuElement("Zoom Out", e => {
+            e.preventDefault();
+            chrome.runtime.sendMessage({node: "updateTab", args: [tabId, {zoom: currentZoom - 0.05}]});
+        });
+
+        domTabTileParamMenu.appendChild(domTabTileZoomOutLink);
+
+        let domTabTileZoomResetLink = createMenuElement("Zoom Reset", e => {
+            e.preventDefault();
+            chrome.runtime.sendMessage({node: "updateTab", args: [tabId, {zoom: 1}]});
+        });
+
+        domTabTileParamMenu.appendChild(domTabTileZoomResetLink);
+
+        let domTabTileDisplayDivider = createMenuDivider("SEND TO DISPLAY");
+        domTabTileParamMenu.appendChild(domTabTileDisplayDivider);
+
         for (let i in displays) {
             if (displays.hasOwnProperty(i) && parseInt(i) !== activePanelTab) {
-                let domTabTileMenuElement = document.createElement('li');
-                domTabTileMenuElement.classList.add('menu-item');
-
-                let domTabTileMenuElementLink = document.createElement('a');
-                domTabTileMenuElementLink.textContent = getDisplayName(i);
-
-                domTabTileMenuElementLink.addEventListener('click', e => {
+                let displayLink = createMenuElement(getDisplayName(i), e => {
                     e.preventDefault();
                     chrome.runtime.sendMessage({node: "updateTab", args: [tabId, {display: parseInt(i)}]});
-                    domTabTileForwardMenu.classList.add('hide');
+                    domTabTileParamMenu.classList.add('hide');
                 });
-                domTabTileMenuElementLink.setAttribute('href', 'javascript::');
 
-                domTabTileMenuElement.appendChild(domTabTileMenuElementLink);
-                domTabTileForwardMenu.appendChild(domTabTileMenuElement);
+                domTabTileParamMenu.appendChild(displayLink);
             }
         }
+
+
+        let domTabTileCarefulDivider = createMenuDivider("CAREFUL");
+        domTabTileParamMenu.appendChild(domTabTileCarefulDivider);
+
+        let domTabTileDeleteLink = createMenuElement("Supprimer", e => {
+            e.preventDefault();
+            chrome.runtime.sendMessage({node: "closeTab", args: [tabId]});
+            domTabTileParamMenu.classList.add('hide');
+        });
+
+        domTabTileParamMenu.appendChild(domTabTileDeleteLink);
     });
 
     editableTextNode(domTabTileContentTitle, (oldValue, newValue) => {
@@ -316,10 +354,6 @@ function addTabToPanel(tabId, tabUrl, tabTitle) {
         if (oldValue !== newValue) {
             chrome.runtime.sendMessage({node: "updateTab", args: [tabId, {url: newValue}]});
         }
-    });
-
-    domTabTileDeleteButton.addEventListener('click', () => {
-        chrome.runtime.sendMessage({node: "closeTab", args: [tabId]});
     });
 }
 
@@ -388,4 +422,27 @@ function removeTabFromPanel(tabId) {
 
 function getDisplayName(i) {
     return "Display " + i;
+}
+
+function createMenuElement(text, clickCallback) {
+    let domTabTileMenuElement = document.createElement('li');
+    domTabTileMenuElement.classList.add('menu-item');
+
+    let domTabTileMenuElementLink = document.createElement('a');
+    domTabTileMenuElementLink.textContent = text;
+
+    domTabTileMenuElementLink.addEventListener('click', clickCallback);
+    domTabTileMenuElementLink.setAttribute('href', 'javascript::');
+
+    domTabTileMenuElement.appendChild(domTabTileMenuElementLink);
+
+    return domTabTileMenuElement;
+}
+
+function createMenuDivider(text) {
+    let domTabTileMenuElement = document.createElement('li');
+    domTabTileMenuElement.classList.add('divider');
+    domTabTileMenuElement.setAttribute('data-content', text);
+
+    return domTabTileMenuElement;
 }
