@@ -22,8 +22,9 @@ class WindowsManager {
                     wm.openTab(display, url).then(tabId => {
                         let updateWhenTitleIsReady = (changedTabId, changeInfo, tab) => {
                             if (changedTabId === tabId && changeInfo.title !== undefined && changeInfo.title !== '') {
-                                wm.getTab(tabId).isFlash = true;
-                                DashboardSwarmWebSocket.sendEvent('tabOpened', [tabId, display, url, changeInfo.title, tab.index, isFlash]);
+                                chrome.tabs.getZoom(tabId, zoom => {
+                                    DashboardSwarmWebSocket.sendEvent('tabOpened', [tabId, display, url, changeInfo.title, tab.index, isFlash, zoom]);
+                                });
                                 chrome.tabs.onUpdated.removeListener(updateWhenTitleIsReady);
                             }
                         };
@@ -79,6 +80,14 @@ class WindowsManager {
                             });
                         });
                     }
+
+                    if (newProps.zoom !== undefined) {
+                        chrome.tabs.setZoom(tabId, parseFloat(newProps.zoom), tab => {
+                            if (newProps.title === undefined) {
+                                DashboardSwarmWebSocket.sendEvent('tabUpdated', [tabId, newProps]);
+                            }
+                        });
+                    }
                 }
             });
 
@@ -131,7 +140,6 @@ class WindowsManager {
         return new Promise((resolve, reject) => {
             try {
                 chrome.system.display.getInfo(displayInfos => {
-                    console.log(displayInfos);
                     resolve(displayInfos);
                 });
             } catch (err) {
@@ -341,6 +349,8 @@ class WindowsManager {
                 }
             }
         }, interval);
+
+        DashboardSwarmWebSocket.sendEvent('rotationStarted', [interval]);
     }
 
     /**
@@ -354,6 +364,8 @@ class WindowsManager {
             clearInterval(wm.intervals[display]);
             delete wm.intervals[display];
         }
+
+        DashboardSwarmWebSocket.sendEvent('rotationStopped');
     }
 }
 
