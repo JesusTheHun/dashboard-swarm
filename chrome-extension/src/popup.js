@@ -138,7 +138,6 @@ function askOpenTab(isFlash) {
         isFlash = false;
     }
 
-    console.log("Open tab in display #" + activePanelTab);
     let dashboardUrl = document.getElementById('dashboardUrl').value;
     if (dashboardUrl !== "") {
         chrome.runtime.sendMessage({node: "openTab", args: [activePanelTab, dashboardUrl, isFlash]});
@@ -262,13 +261,26 @@ function addTabToPanel(tabId, tabUrl, tabTitle) {
 
     domPanelBody.insertBefore(domTabTileForwardMenu, domTabTile.nextSibling);
 
+    let body = document.querySelector('body');
+    let bodyOriginalHeight = body.offsetHeight;
+
     domTabTileForwardMenuButton.addEventListener('click', e => {
         e.preventDefault();
 
+        let bodyHeight = body.offsetHeight;
+
         if (domTabTileForwardMenu.classList.contains('hide')) {
             domTabTileForwardMenu.classList.remove('hide');
+
+            let menuBottom = domTabTileForwardMenu.offsetTop + domTabTileForwardMenu.offsetHeight;
+
+            if (menuBottom > bodyHeight) {
+                body.style.height = (menuBottom + 10) + 'px';
+            }
+
         } else {
             domTabTileForwardMenu.classList.add('hide');
+            body.style.height = bodyOriginalHeight + 'px';
         }
     });
 
