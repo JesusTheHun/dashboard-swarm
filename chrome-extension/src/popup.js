@@ -278,6 +278,13 @@ function addTabToPanel(tabId, tabUrl, tabTitle) {
 
     getDisplays.then(displays => {
 
+        let domTabTileReloadLink = createMenuElement("Reload", e => {
+            e.preventDefault();
+            chrome.runtime.sendMessage({node: "reloadTab", args: [tabId]});
+        });
+
+        domTabTileParamMenu.appendChild(domTabTileReloadLink);
+
         let currentZoom = 1.00;
 
         tabsSubject.subscribe(tabs => {
