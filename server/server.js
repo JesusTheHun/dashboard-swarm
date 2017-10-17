@@ -1,10 +1,19 @@
 const WebSocketServer = require('websocket').server;
 const http = require('http');
 const fs = require('fs');
-const webSocketsServerPort = parseInt(process.argv[3]);
-const webSocketsServerHostname = process.argv[2];
 
-const flashTabDuration = parseInt(process.argv[4]);
+const defaultConfig = {
+    hostname: 'localhost',
+    port: 8080,
+    flashTabDuration: 2880
+};
+
+let config = Object.assign({}, defaultConfig);
+
+if (process.argv[2] !== undefined) config.hostname = process.argv[2];
+if (process.argv[3] !== undefined) config.port = process.argv[3];
+if (process.argv[4] !== undefined) config.flashTabDuration = process.argv[4];
+
 
 let server = http.createServer((req, res) => {
     console.log((new Date()) + " http connection");
@@ -12,8 +21,8 @@ let server = http.createServer((req, res) => {
     res.end();
 });
 
-server.listen(webSocketsServerPort, webSocketsServerHostname, () => {
-    console.log((new Date()) + " Server is listening on " + webSocketsServerHostname + ":" + webSocketsServerPort);
+server.listen(config.port, config.hostname, () => {
+    console.log((new Date()) + " Server is listening on " + config.hostname + ":" + config.port);
 });
 
 
@@ -31,7 +40,7 @@ fs.readFile(storageFilePath, (err, storageContent) => {
         storage.tabs = [];
     }
 
-    setInterval(removeExpiredFlashTabs, flashTabDuration * 1000, storage.tabs);
+    setInterval(removeExpiredFlashTabs, config.flashTabDuration * 1000, storage.tabs);
 
     wss = new WebSocketServer({ httpServer: server });
     wss.on('request', request => {
