@@ -127,6 +127,12 @@ class WindowsManager {
                 }
             });
 
+            DashboardSwarmListener.subscribeCommand('reloadTab', tabId => {
+                if (DashboardSwarmNode.isMaster()) {
+                    chrome.tabs.reload(tabId);
+                }
+            });
+
             WindowsManager.instance = this;
         }
 

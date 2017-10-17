@@ -161,6 +161,10 @@ class DashboardSwarmNode {
     stopRotation() {
         DashboardSwarmWebSocket.sendCommand('stopRotation', []);
     }
+
+    reloadTab(tabId) {
+        DashboardSwarmWebSocket.sendCommand('reloadTab', [tabId]);
+    }
 }
 
 const instance = new DashboardSwarmNode();
