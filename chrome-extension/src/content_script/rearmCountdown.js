@@ -9,14 +9,14 @@
 
     if (countdownBar === undefined) {
         countdownBar = document.createElement('div');
-        countdownBar.id = "countdown";
+        countdownBar.id = "dashboardSwarmChromeExtensionCountdown";
         countdownBar.style.width = "100%";
         countdownBar.style.position = 'absolute';
         countdownBar.style.top = (height - barHeight) + "px";
         countdownBar.style.zIndex = 9999;
 
         countdownBarItem = document.createElement('div');
-        countdownBarItem.id = "progressbar";
+        countdownBarItem.id = "dashboardSwarmChromeExtensionCountdownBar";
         countdownBarItem.style.width = "0";
         countdownBarItem.style.borderBottomRightRadius = (barHeight/2) + "px";
         countdownBarItem.style.borderTopRightRadius = (barHeight/2) + "px";
