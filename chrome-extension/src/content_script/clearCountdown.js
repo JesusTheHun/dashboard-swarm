@@ -1,5 +1,5 @@
 (function(){
     'use strict';
 
-    document.querySelector('#countdown').remove();
+    document.querySelector('#dashboardSwarmChromeExtensionCountdown').remove();
 })();
