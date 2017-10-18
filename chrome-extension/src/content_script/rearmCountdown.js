@@ -1,7 +1,7 @@
 (function(){
     'use strict';
 
-    let barHeight = 16;
+    let barHeight = 8;
     let height = window.innerHeight;
 
     let countdownBar;
