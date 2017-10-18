@@ -16,6 +16,10 @@ chrome.runtime.onMessage.addListener(function(data) {
         getDisplays.resolve(data.data);
     }
 
+    if (data.target === 'popup' && data.action === 'rotationStatus') {
+        globalPlayerSubject.next(data.data);
+    }
+
     if (data.target === 'popup' && data.action === 'tabOpened') {
         let currentTabs = tabsSubject.getValue();
         currentTabs.push(data.data);
@@ -53,6 +57,7 @@ chrome.runtime.onMessage.addListener(function(data) {
 
 chrome.runtime.sendMessage({node: "getDisplays"});
 chrome.runtime.sendMessage({node: "getTabs"});
+chrome.runtime.sendMessage({node: "getRotationStatus"});
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -114,6 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('playPause').addEventListener('click', () => {
         let isPlaying = globalPlayerSubject.getValue();
 
+        console.log(isPlaying);
+
         if (isPlaying) {
             chrome.runtime.sendMessage({node: "stopRotation", args: []});
         } else {
@@ -126,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     globalPlayerSubject.subscribe(isPlaying => {
+        console.log(isPlaying);
         let icon = document.getElementById('playPause').querySelector('i');
         icon.classList.remove('fa-play');
         icon.classList.remove('fa-stop');

@@ -67,6 +67,10 @@ class DashboardSwarmNode {
                 chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStopped', data: []});
             });
 
+            DashboardSwarmListener.subscribeEvent('rotationStatus', isPlaying => {
+                chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStatus', data: isPlaying});
+            });
+
             /**
              * Bridge for the popup
              */
@@ -159,7 +163,11 @@ class DashboardSwarmNode {
     }
 
     stopRotation() {
-        DashboardSwarmWebSocket.sendCommand('stopRotation', []);
+        DashboardSwarmWebSocket.sendCommand('stopRotation');
+    }
+
+    getRotationStatus() {
+        DashboardSwarmWebSocket.sendCommand('getRotationStatus');
     }
 
     reloadTab(tabId) {
