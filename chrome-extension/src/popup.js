@@ -119,8 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('playPause').addEventListener('click', () => {
         let isPlaying = globalPlayerSubject.getValue();
 
-        console.log(isPlaying);
-
         if (isPlaying) {
             chrome.runtime.sendMessage({node: "stopRotation", args: []});
         } else {
@@ -133,7 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     globalPlayerSubject.subscribe(isPlaying => {
-        console.log(isPlaying);
         let icon = document.getElementById('playPause').querySelector('i');
         icon.classList.remove('fa-play');
         icon.classList.remove('fa-stop');
@@ -300,7 +297,7 @@ function addTabToPanel(tabId, tabUrl, tabTitle) {
             currentZoom = tab.zoom;
         });
 
-        let zoomDividerText = zoom => "ZOOM - " + parseInt(zoom * 100) + " %";
+        let zoomDividerText = zoom => "ZOOM - " + Math.round(zoom * 100) + " %";
 
         let domTabTileZoomDivider = createMenuDivider(zoomDividerText(currentZoom));
         domTabTileParamMenu.appendChild(domTabTileZoomDivider);
