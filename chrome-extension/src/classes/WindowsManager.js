@@ -108,8 +108,6 @@ class WindowsManager {
                             }
                         })
                     });
-
-                    DashboardSwarmWebSocket.sendEvent('rotationStarted', [interval]);
                 }
             });
 
@@ -122,8 +120,12 @@ class WindowsManager {
                             }
                         })
                     });
+                }
+            });
 
-                    DashboardSwarmWebSocket.sendEvent('rotationStopped', []);
+            DashboardSwarmListener.subscribeCommand('getRotationStatus', () => {
+                if (DashboardSwarmNode.isMaster()) {
+                    DashboardSwarmWebSocket.sendEvent('rotationStatus', [wm.intervals[0] !== undefined]);
                 }
             });
 
@@ -330,33 +332,53 @@ class WindowsManager {
      */
     startRotation(display, interval) {
         let wm = this;
+        let w = wm.windows[display];
 
         let flashPause = {};
+
+        chrome.tabs.query({active: true, windowId: w.id}, tabs => {
+            let tab = tabs[0];
+            let tabDuration = interval;
+
+            if (wm.getTab(tab.id).flash) {
+                tabDuration = 2 * interval;
+            }
+
+            chrome.tabs.insertCSS(tab.id, {file: "build/content_script/keyframe.css"});
+            chrome.tabs.executeScript(tab.id, {code: "countdownInterval = " + tabDuration});
+            chrome.tabs.executeScript(tab.id, {file: "build/content_script/rearmCountdown.js"});
+        });
 
         wm.intervals[display] = setInterval(() => {
             if (!flashPause[display]) {
                 if (wm.windows[display] !== undefined) { // Prevent re-opening a closed window
-                    wm.getWindowForDisplay(display).then(w => {
-                        chrome.windows.get(w.id, {populate: true}, window => {
-                            let tabs = window.tabs.sort((a, b) => a.index - b.index);
-                            let maxIndex = tabs[tabs.length - 1].index;
-                            let activeTabIndex = tabs.findIndex(t => t.active === true);
 
-                            let tabToActivate = activeTabIndex === maxIndex ? 0 : activeTabIndex + 1;
+                    chrome.windows.get(w.id, {populate: true}, window => {
+                        let tabs = window.tabs.sort((a, b) => a.index - b.index);
+                        let maxIndex = tabs[tabs.length - 1].index;
+                        let activeTabIndex = tabs.findIndex(t => t.active === true);
 
-                            if (wm.getTab(tabs[tabToActivate].id).flash) {
-                                flashPause[display] = 1;
-                                setTimeout(() => flashPause[display] = 0, 2 * interval);
-                            }
+                        let tabToActivate = activeTabIndex === maxIndex ? 0 : activeTabIndex + 1;
+                        let tabId = tabs[tabToActivate].id;
+                        let tabDuration = interval;
 
-                            chrome.tabs.update(tabs[tabToActivate].id, {active: true});
+                        if (wm.getTab(tabId).flash) {
+                            tabDuration = 2 * interval;
+                            flashPause[display] = 1;
+                            setTimeout(() => flashPause[display] = 0, tabDuration);
+                        }
+
+                        chrome.tabs.update(tabId, {active: true}, tab => {
+                            chrome.tabs.insertCSS(tabId, {file: "build/content_script/keyframe.css"});
+                            chrome.tabs.executeScript(tabId, {code: "countdownInterval = " + tabDuration});
+                            chrome.tabs.executeScript(tabId, {file: "build/content_script/rearmCountdown.js"});
                         });
                     });
                 }
             }
         }, interval);
 
-        DashboardSwarmWebSocket.sendEvent('rotationStarted', [interval]);
+        DashboardSwarmWebSocket.sendEvent('rotationStarted', [display, interval]);
     }
 
     /**
@@ -365,10 +387,16 @@ class WindowsManager {
      */
     stopRotation(display) {
         let wm = this;
+        let w = wm.windows[display];
 
         if (wm.intervals[display] !== undefined) {
             clearInterval(wm.intervals[display]);
             delete wm.intervals[display];
+
+            chrome.tabs.query({active: true, windowId: w.id}, tabs => {
+                let tab = tabs[0];
+                chrome.tabs.executeScript(tab.id, {file: "build/content_script/clearCountdown.js"});
+            });
         }
 
         DashboardSwarmWebSocket.sendEvent('rotationStopped');
