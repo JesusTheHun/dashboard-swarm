@@ -91,7 +91,8 @@ fs.readFile(storageFilePath, (err, storageContent) => {
                                 url: data.args[2],
                                 title: data.args[3],
                                 position: data.args[4],
-                                zoom: data.args[6]
+                                zoom: data.args[6],
+                                scroll: data.args[7]
                             };
 
                             if (data.args[5] === true) {
