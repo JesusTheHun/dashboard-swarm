@@ -22,8 +22,10 @@ class WindowsManager {
                     wm.openTab(display, url).then(tabId => {
                         let updateWhenTitleIsReady = (changedTabId, changeInfo, tab) => {
                             if (changedTabId === tabId && changeInfo.title !== undefined && changeInfo.title !== '') {
+                                let scroll = {top: 0, left: 0};
+
                                 chrome.tabs.getZoom(tabId, zoom => {
-                                    DashboardSwarmWebSocket.sendEvent('tabOpened', [tabId, display, url, changeInfo.title, tab.index, isFlash, zoom]);
+                                    DashboardSwarmWebSocket.sendEvent('tabOpened', [tabId, display, url, changeInfo.title, tab.index, isFlash, zoom, scroll]);
                                 });
                                 chrome.tabs.onUpdated.removeListener(updateWhenTitleIsReady);
                             }
@@ -87,6 +89,10 @@ class WindowsManager {
                                 DashboardSwarmWebSocket.sendEvent('tabUpdated', [tabId, newProps]);
                             }
                         });
+                    }
+
+                    if (newProps.scroll !== undefined) {
+                        DashboardSwarmWebSocket.sendEvent('tabUpdated', [tabId, newProps]);
                     }
                 }
             });
