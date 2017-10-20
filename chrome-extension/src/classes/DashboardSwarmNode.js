@@ -39,7 +39,7 @@ class DashboardSwarmNode {
                     scroll: scroll
                 };
                 node.tabs.push(tab);
-                chrome.runtime.sendMessage({ target: 'popup', action: 'tabOpened', data: tab});
+                chrome.runtime.sendMessage({target: 'popup', action: 'tabOpened', data: tab});
             });
 
             DashboardSwarmListener.subscribeEvent('tabClosed', tabId => {
@@ -173,6 +173,10 @@ class DashboardSwarmNode {
 
     reloadTab(tabId) {
         DashboardSwarmWebSocket.sendCommand('reloadTab', [tabId]);
+    }
+
+    displayStateFullscreen(display) {
+        DashboardSwarmWebSocket.sendCommand('displayStateFullscreen', [display]);
     }
 }
 

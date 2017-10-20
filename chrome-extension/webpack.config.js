@@ -18,7 +18,8 @@ module.exports = {
     entry: {
         background: './background.js',
         config: './config.js',
-        popup: './popup.js'
+        popup: './popup.js',
+        contentScript: './contentScript.js'
     },
     output: {
         filename: '[name].js',
