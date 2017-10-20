@@ -1,6 +1,7 @@
 import DashboardSwarmListener from "./DashboardSwarmListener";
 import DashboardSwarmNode from "./DashboardSwarmNode";
 import DashboardSwarmWebSocket from "./DashboardSwarmWebSocket";
+import TabScript from "../channels/TabScript";
 
 class WindowsManager {
 
@@ -207,6 +208,8 @@ class WindowsManager {
                 this.getWindowForDisplay(display).then((window) => {
                     chrome.tabs.create({ windowId: window.id, url: tabUrl, active: true}, tab => {
                         wm.tabs[tab.id] = tab;
+                        chrome.tabs.executeScript(tab.id, {file: "build/contentScript.js"});
+                        chrome.tabs.insertCSS(tab.id, {file: "build/content_script/keyframe.css"});
                         resolve(tab.id);
                     });
                 });
@@ -350,9 +353,8 @@ class WindowsManager {
                 tabDuration = 2 * interval;
             }
 
-            chrome.tabs.insertCSS(tab.id, {file: "build/content_script/keyframe.css"});
-            chrome.tabs.executeScript(tab.id, {code: "countdownInterval = " + tabDuration});
-            chrome.tabs.executeScript(tab.id, {file: "build/content_script/rearmCountdown.js"});
+            let tabScript = new TabScript(tab.id);
+            tabScript.rearmCountdown(tabDuration);
         });
 
         wm.intervals[display] = setInterval(() => {
@@ -375,9 +377,8 @@ class WindowsManager {
                         }
 
                         chrome.tabs.update(tabId, {active: true}, tab => {
-                            chrome.tabs.insertCSS(tabId, {file: "build/content_script/keyframe.css"});
-                            chrome.tabs.executeScript(tabId, {code: "countdownInterval = " + tabDuration});
-                            chrome.tabs.executeScript(tabId, {file: "build/content_script/rearmCountdown.js"});
+                            let tabScript = new TabScript(tab.id);
+                            tabScript.rearmCountdown(tabDuration);
                         });
                     });
                 }
@@ -401,7 +402,8 @@ class WindowsManager {
 
             chrome.tabs.query({active: true, windowId: w.id}, tabs => {
                 let tab = tabs[0];
-                chrome.tabs.executeScript(tab.id, {file: "build/content_script/clearCountdown.js"});
+                let tabScript = new TabScript(tab.id);
+                tabScript.clearCountdown();
             });
         }
 

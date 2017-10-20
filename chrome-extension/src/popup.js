@@ -299,7 +299,7 @@ function addTabToPanel(tabId, tabUrl, tabTitle) {
         tabsSubject.subscribe(tabs => {
             let tab = tabs.find(tab => tab.id === tabId);
             currentZoom = tab.zoom;
-            currentScroll = tab.scroll;
+            Object.assign(currentScroll, tab.scroll);
         });
 
         let domTabTileScrollDivider = createMenuDivider("SCROLL");
@@ -328,15 +328,15 @@ function addTabToPanel(tabId, tabUrl, tabTitle) {
             chrome.runtime.sendMessage({node: "updateTab", args: [tabId, {scroll: scroll}]});
         };
 
-        let domTabTileScrollLeft = createMenuElement("Scroll Left");
-        let domTabTileScrollRight = createMenuElement("Scroll Right");
-        let domTabTileScrollUp = createMenuElement("Scroll Up");
-        let domTabTileScrollDown = createMenuElement("Scroll Down");
+        let domTabTileScrollLeft = createMenuElement("Scroll Left", () => scroll('left'));
+        let domTabTileScrollRight = createMenuElement("Scroll Right", () => scroll('right'));
+        let domTabTileScrollUp = createMenuElement("Scroll Up", () => scroll('top'));
+        let domTabTileScrollDown = createMenuElement("Scroll Down", () => scroll('bottom'));
 
-        domTabTileParamMenu.appendChild(domTabTileScrollLeft, scroll('left'));
-        domTabTileParamMenu.appendChild(domTabTileScrollRight, scroll('right'));
-        domTabTileParamMenu.appendChild(domTabTileScrollUp, scroll('top'));
-        domTabTileParamMenu.appendChild(domTabTileScrollDown, scroll('bottom'));
+        domTabTileParamMenu.appendChild(domTabTileScrollLeft);
+        domTabTileParamMenu.appendChild(domTabTileScrollRight);
+        domTabTileParamMenu.appendChild(domTabTileScrollUp);
+        domTabTileParamMenu.appendChild(domTabTileScrollDown);
 
         let zoomDividerText = zoom => "ZOOM - " + Math.round(zoom * 100) + " %";
 
