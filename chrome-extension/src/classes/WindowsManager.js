@@ -1,7 +1,7 @@
 import DashboardSwarmListener from "./DashboardSwarmListener";
 import DashboardSwarmNode from "./DashboardSwarmNode";
 import DashboardSwarmWebSocket from "./DashboardSwarmWebSocket";
-import TabScript from "../channels/TabScript";
+import TabProxy from "../channels/TabProxy";
 
 class WindowsManager {
 
@@ -353,7 +353,7 @@ class WindowsManager {
                 tabDuration = 2 * interval;
             }
 
-            let tabScript = new TabScript(tab.id);
+            let tabScript = new TabProxy(tab.id);
             tabScript.rearmCountdown(tabDuration);
         });
 
@@ -377,7 +377,7 @@ class WindowsManager {
                         }
 
                         chrome.tabs.update(tabId, {active: true}, tab => {
-                            let tabScript = new TabScript(tab.id);
+                            let tabScript = new TabProxy(tab.id);
                             tabScript.rearmCountdown(tabDuration);
                         });
                     });
@@ -402,7 +402,7 @@ class WindowsManager {
 
             chrome.tabs.query({active: true, windowId: w.id}, tabs => {
                 let tab = tabs[0];
-                let tabScript = new TabScript(tab.id);
+                let tabScript = new TabProxy(tab.id);
                 tabScript.clearCountdown();
             });
         }

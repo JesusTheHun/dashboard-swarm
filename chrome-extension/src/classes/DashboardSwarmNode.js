@@ -75,14 +75,10 @@ class DashboardSwarmNode {
             /**
              * Bridge for the popup
              */
-            chrome.runtime.onMessage.addListener(request => {
+            chrome.runtime.onMessage.addListener((request, sender, response) => {
                 if (request.hasOwnProperty('node') && typeof node[request.node] === 'function') {
                     let result = node[request.node].apply(node, request.args);
-                    chrome.runtime.sendMessage({
-                        target: 'popup',
-                        action: request.node,
-                        data: result
-                    });
+                    response(result);
                 }
             });
 

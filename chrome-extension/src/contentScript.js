@@ -3,19 +3,16 @@ class ContentScript {
         let barHeight = 8;
         let height = window.innerHeight;
 
-        let countdownBar;
         let countdownBarItem;
 
-        if (countdownBar === undefined) {
-            countdownBar = document.createElement('div');
-            countdownBar.id = "dashboardSwarmChromeExtensionCountdown";
-            countdownBar.style.width = "100%";
-            countdownBar.style.position = 'absolute';
-            countdownBar.style.top = (height - barHeight) + "px";
-            countdownBar.style.zIndex = 9999;
+        if (this.countdownBar === undefined) {
+            this.countdownBar = document.createElement('div');
+            this.countdownBar.style.width = "100%";
+            this.countdownBar.style.position = 'absolute';
+            this.countdownBar.style.top = (height - barHeight) + "px";
+            this.countdownBar.style.zIndex = 9999;
 
             countdownBarItem = document.createElement('div');
-            countdownBarItem.id = "dashboardSwarmChromeExtensionCountdownBar";
             countdownBarItem.style.width = "0";
             countdownBarItem.style.borderBottomRightRadius = (barHeight/2) + "px";
             countdownBarItem.style.borderTopRightRadius = (barHeight/2) + "px";
@@ -25,17 +22,18 @@ class ContentScript {
             countdownBarItem.style.animationDuration =  countdownInterval + "ms";
             countdownBarItem.style.animationTimingFunction =  "linear";
 
-            countdownBar.appendChild(countdownBarItem);
-            document.querySelector('body').appendChild(countdownBar);
+            this.countdownBar.appendChild(countdownBarItem);
+            document.querySelector('body').appendChild(this.countdownBar);
 
             setTimeout(() => {
-                countdownBar.remove();
+                this.clearCountdown();
             }, countdownInterval);
         }
     }
 
     clearCountdown() {
-        document.querySelector('#dashboardSwarmChromeExtensionCountdown').remove();
+        this.countdownBar.remove();
+        this.countdownBar = undefined;
     }
 
     scroll(scroll) {
@@ -47,14 +45,11 @@ class ContentScript {
 
 let contentScript = new ContentScript();
 
-chrome.runtime.onMessage.addListener(request => {
+chrome.runtime.onMessage.addListener((request, sender, response) => {
     if (typeof contentScript[request.action] === 'function') {
         let result = contentScript[request.action].apply(contentScript, request.args);
-        chrome.runtime.sendMessage({
-            target: 'node',
-            action: request.action,
-            data: result
-        });
+        response(result);
+        return true;
     }
 });
 
