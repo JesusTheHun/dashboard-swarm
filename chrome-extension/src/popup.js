@@ -1,63 +1,48 @@
 import defer from './function/defer';
 import Rx from 'rxjs/Rx';
+import nodeProxy from './channels/NodeProxy';
 
+const NodeProxy = new nodeProxy();
 let getDisplays = new defer();
 let activePanelTab = 0;
 
 let tabsSubject = new Rx.BehaviorSubject([]);
 let globalPlayerSubject = new Rx.BehaviorSubject(false);
 
-chrome.runtime.onMessage.addListener(function(data) {
-    if (data.target === 'popup' && data.action === 'getTabs') {
-        tabsSubject.next(data.data);
-    }
+NodeProxy.getDisplays(response => getDisplays.resolve(response));
+NodeProxy.getTabs(response => tabsSubject.next(response));
+NodeProxy.getRotationStatus();
 
-    if (data.target === 'popup' && data.action === 'getDisplays') {
-        getDisplays.resolve(data.data);
-    }
+NodeProxy.on('rotationStatus', response => {
+    globalPlayerSubject.next(response);
+});
+NodeProxy.on('rotationStarted', () => globalPlayerSubject.next(true));
+NodeProxy.on('rotationStopped', () => globalPlayerSubject.next(false));
 
-    if (data.target === 'popup' && data.action === 'rotationStatus') {
-        globalPlayerSubject.next(data.data);
-    }
-
-    if (data.target === 'popup' && data.action === 'tabOpened') {
-        let currentTabs = tabsSubject.getValue();
-        currentTabs.push(data.data);
-        tabsSubject.next(currentTabs);
-    }
-
-    if (data.target === 'popup' && data.action === 'tabClosed') {
-        let currentTabs = tabsSubject.getValue();
-        let tabIdx = currentTabs.findIndex(tab => tab.id === data.data);
-        currentTabs.splice(tabIdx, 1);
-        tabsSubject.next(currentTabs);
-
-        removeTabFromPanel(data.data);
-    }
-
-    if (data.target === 'popup' && data.action === 'tabUpdated') {
-        let tabId = data.data[0];
-        let newProps = data.data[1];
-        let currentTabs = tabsSubject.getValue();
-        let updatedTab = currentTabs.find(t => t.id === tabId);
-
-        Object.assign(updatedTab, newProps);
-        tabsSubject.next(currentTabs);
-    }
-
-    if (data.target === 'popup' && data.action === 'rotationStarted') {
-        globalPlayerSubject.next(true);
-    }
-
-    if (data.target === 'popup' && data.action === 'rotationStopped') {
-        globalPlayerSubject.next(false);
-    }
-
+NodeProxy.on('tabOpened', tab => {
+    let currentTabs = tabsSubject.getValue();
+    currentTabs.push(tab);
+    tabsSubject.next(currentTabs);
 });
 
-chrome.runtime.sendMessage({node: "getDisplays"});
-chrome.runtime.sendMessage({node: "getTabs"});
-chrome.runtime.sendMessage({node: "getRotationStatus"});
+NodeProxy.on('tabClosed', tabId => {
+    let currentTabs = tabsSubject.getValue();
+    let tabIdx = currentTabs.findIndex(tab => tab.id === tabId);
+    currentTabs.splice(tabIdx, 1);
+    tabsSubject.next(currentTabs);
+
+    removeTabFromPanel(tabId);
+});
+
+NodeProxy.on('tabUpdated', data => {
+    let tabId = data[0];
+    let newProps = data[1];
+    let currentTabs = tabsSubject.getValue();
+    let updatedTab = currentTabs.find(t => t.id === tabId);
+
+    Object.assign(updatedTab, newProps);
+    tabsSubject.next(currentTabs);
+});
 
 document.addEventListener('DOMContentLoaded', () => {
 
