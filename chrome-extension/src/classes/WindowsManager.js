@@ -93,7 +93,10 @@ class WindowsManager {
                     }
 
                     if (newProps.scroll !== undefined) {
-                        DashboardSwarmWebSocket.sendEvent('tabUpdated', [tabId, newProps]);
+                        let tabProxy = new TabProxy(tabId);
+                        tabProxy.scroll(newProps.scroll, response => {
+                            DashboardSwarmWebSocket.sendEvent('tabUpdated', [tabId, {scroll: response}]);
+                        });
                     }
                 }
             });
@@ -190,6 +193,13 @@ class WindowsManager {
         tabs.forEach(tab => {
             wm.openTab(tab.display, tab.url).then(tabId => {
                 DashboardSwarmWebSocket.sendEvent('tabUpdated', [tab.id, {id: tabId}]);
+
+                setTimeout(() => {
+                    chrome.tabs.setZoom(tab.id, tab.zoom, () => {
+                        let tabScript = new TabProxy(tab.id);
+                        tabScript.scrollTo(tab.scroll, response => console.log(response));
+                    });
+                }, 2500);
             });
         });
     }

@@ -34,9 +34,7 @@ NodeProxy.on('tabClosed', tabId => {
     removeTabFromPanel(tabId);
 });
 
-NodeProxy.on('tabUpdated', data => {
-    let tabId = data[0];
-    let newProps = data[1];
+NodeProxy.on('tabUpdated', (tabId, newProps) => {
     let currentTabs = tabsSubject.getValue();
     let updatedTab = currentTabs.find(t => t.id === tabId);
 
@@ -291,26 +289,7 @@ function addTabToPanel(tabId, tabUrl, tabTitle) {
         domTabTileParamMenu.appendChild(domTabTileScrollDivider);
 
         let scroll = direction => {
-            let scroll = Object.assign({}, currentScroll);
-            switch (direction) {
-                case 'top':
-                    scroll.top += 25;
-                break;
-
-                case 'bottom':
-                    scroll.top -= 25;
-                break;
-
-                case 'left':
-                    scroll.left += 25;
-                break;
-
-                case 'right':
-                    scroll.left -= 25;
-                break;
-            }
-
-            chrome.runtime.sendMessage({node: "updateTab", args: [tabId, {scroll: scroll}]});
+            NodeProxy.updateTab(tabId, {scroll: direction});
         };
 
         let domTabTileScrollLeft = createMenuElement("Scroll Left", () => scroll('left'));

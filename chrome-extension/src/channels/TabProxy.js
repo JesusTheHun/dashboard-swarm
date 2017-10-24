@@ -19,7 +19,7 @@ class TabProxy extends ExtendableProxy {
                             responseCallback = args.pop();
                         }
 
-                        return chrome.tabs.sendMessage(id, {action: prop, args: args}, {}, responseCallback);
+                        chrome.tabs.sendMessage(id, {action: prop, args: args}, {}, responseCallback);
                     };
                 }
 
@@ -30,5 +30,4 @@ class TabProxy extends ExtendableProxy {
         this.id = id;
     }
 }
-
 export default TabProxy;

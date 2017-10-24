@@ -32,25 +32,78 @@ class ContentScript {
     }
 
     clearCountdown() {
-        this.countdownBar.remove();
-        this.countdownBar = undefined;
+        if (this.countdownBar !== undefined) {
+            this.countdownBar.remove();
+            this.countdownBar = undefined;
+        }
     }
 
-    scroll(scroll) {
-        window.scrollTo(scroll.top, scroll.left);
+    scroll(direction) {
+        let doc = document.documentElement;
+        let currentScroll = {
+            top: (window.pageYOffset || doc.scrollTop)  - (doc.clientTop || 0),
+            left: (window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0)
+        };
+
+        let scroll = Object.assign({}, currentScroll);
+
+        switch(direction) {
+            case 'bottom':
+                scroll.top += 25;
+            break;
+
+            case 'top':
+                scroll.top -= 25;
+            break;
+
+            case 'left':
+                scroll.left -= 25;
+            break;
+
+            case 'right':
+                scroll.left += 25;
+            break;
+        }
+
+        window.scrollTo(scroll.left, scroll.top);
+
+        return {
+            top: (window.pageYOffset || doc.scrollTop)  - (doc.clientTop || 0),
+            left: (window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0)
+        };
+    }
+
+    scrollTo(scroll, response) {
+        window.scrollTo(scroll.left, scroll.top);
+
+        response({
+            top: (window.pageYOffset || doc.scrollTop)  - (doc.clientTop || 0),
+            left: (window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0)
+        });
     }
 
     hello() { alert("Hello :D"); return "foo";};
 }
 
+export default ContentScript;
+
 let contentScript = new ContentScript();
 
 chrome.runtime.onMessage.addListener((request, sender, response) => {
-    if (typeof contentScript[request.action] === 'function') {
-        let result = contentScript[request.action].apply(contentScript, request.args);
-        response(result);
-        return true;
+    let targetFunction = contentScript[request.action];
+
+    if (typeof targetFunction === 'function') {
+        let givenArgsLength = request.args.length;
+        if (givenArgsLength < targetFunction.length) {
+            request.args.push(response);
+        }
+
+        let result = targetFunction.apply(contentScript, request.args);
+
+        if (givenArgsLength === targetFunction.length) {
+            response(result);
+        } else {
+            return true;
+        }
     }
 });
-
-export default ContentScript;
