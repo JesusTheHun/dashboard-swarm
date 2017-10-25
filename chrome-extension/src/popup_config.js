@@ -56,6 +56,8 @@ function connect(e, callback) {
     let serverUrlInput = document.querySelector('#serverUrl');
     let serverUrl = serverUrlInput.value;
 
+    let connectionHint = document.querySelector('#connectionHint');
+
     chrome.storage.sync.set({
         server: serverUrl
     }, () => {
@@ -68,7 +70,7 @@ function connect(e, callback) {
         DashboardSwarmWebSocket.getWebSocketReady().then(() => {
 
             serverUrlInput.classList.add('is-success');
-            parameters.removeAttribute('disabled');
+            document.querySelector('#parameters').removeAttribute('disabled');
             serverUrlInput.setAttribute('disabled', 'disabled');
             document.querySelector('#connect').textContent = "Disconnect";
             callback(true);
