@@ -44,11 +44,23 @@ class DashboardSwarmWebSocket {
 
         if (typeof this.serverErrorHandler === 'function') {
             ws.onerror = err => {
+                this.wsReady.reject(err);
+                this.wsSubject.next(null);
                 this.serverErrorHandler.call(this, err);
             };
         }
 
         this.ws = ws;
+    }
+
+    /**
+     * Close connection, is any
+     */
+    close() {
+        if (this.ws) {
+            this.ws.close();
+            this.wsReady = new defer();
+        }
     }
 
     /**

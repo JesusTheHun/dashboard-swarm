@@ -1,3 +1,5 @@
+import DashboardSwarmWebSocket from "./classes/DashboardSwarmWebSocket";
+
 (() => {
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -24,10 +26,67 @@
         let parameters = document.querySelector('#parameters');
         parameters.setAttribute('disabled', 'disabled');
 
-        document.querySelector('#closeConfigLink')
+        document.querySelector('#master').addEventListener('change', e => {
+            chrome.storage.sync.set({
+                master: e.target.checked
+            });
+        });
+
+        let isConnected = false;
+
+        document.querySelector('#connect').addEventListener('click', e => {
+            e.preventDefault();
+
+            if (isConnected) {
+                disconnect(e, response => {
+                    isConnected = response;
+                });
+            } else {
+                connect(e, response => {
+                    isConnected = response;
+                });
+            }
+        });
     });
 
 
 })();
+
+function connect(e, callback) {
+    let serverUrlInput = document.querySelector('#serverUrl');
+    let serverUrl = serverUrlInput.value;
+
+    chrome.storage.sync.set({
+        server: serverUrl
+    }, () => {
+        DashboardSwarmWebSocket.setServerUrl(serverUrl);
+        DashboardSwarmWebSocket.connect();
+
+        serverUrlInput.classList.remove('is-success');
+        serverUrlInput.classList.remove('is-error');
+
+        DashboardSwarmWebSocket.getWebSocketReady().then(() => {
+
+            serverUrlInput.classList.add('is-success');
+            parameters.removeAttribute('disabled');
+            serverUrlInput.setAttribute('disabled', 'disabled');
+            document.querySelector('#connect').textContent = "Disconnect";
+            callback(true);
+
+        }).catch(err => {
+            connectionHint.textContent = "Error : " + err;
+            serverUrlInput.classList.add('is-error');
+            callback(false);
+        });
+    });
+}
+
+function disconnect(e, callback) {
+    let serverUrlInput = document.querySelector('#serverUrl');
+    serverUrlInput.removeAttribute('disabled');
+    DashboardSwarmWebSocket.close();
+    document.querySelector('#parameters').setAttribute('disabled', 'disabled');
+    callback(false);
+}
 
 export default {};
