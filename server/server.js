@@ -45,8 +45,8 @@ fs.readFile(storageFilePath, (err, storageContent) => {
     setInterval(removeExpiredFlashTabs, config.flashTabDuration * 1000, storage.tabs);
 
     wss = new WebSocketServer({ httpServer: server });
-    wss.on('request', request => {
 
+    wss.on('request', request => {
         console.log((new Date()) + ' Connection from origin ' + request.origin + '.');
 
         let conn = request.accept(null, request.origin);
@@ -81,9 +81,11 @@ fs.readFile(storageFilePath, (err, storageContent) => {
 
                         case 'getConfig':
                             event = {
-                                event: 'config',
+                                event: 'serverConfig',
                                 args: [storage.config]
                             };
+                            console.log("config send");
+                            console.log(event);
                             conn.send(JSON.stringify(event));
                             break;
 

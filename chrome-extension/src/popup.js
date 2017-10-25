@@ -1,6 +1,7 @@
 import defer from './function/defer';
 import Rx from 'rxjs/Rx';
 import nodeProxy from './channels/NodeProxy';
+import popupConfig from './popup_config';
 
 const NodeProxy = new nodeProxy();
 let getDisplays = new defer();
