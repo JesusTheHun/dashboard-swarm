@@ -20,7 +20,10 @@
     <div id="displays">
         <div class="panel">
             <div class="panel-header text-center">
-                <div class="panel-title h5 mt-10">Dashboard Swarm</div>
+                <div class="panel-title h5 mt-10">
+                    Dashboard Swarm
+                    <a href="::javascript" id="configLink"><i class="fa fa-cogs"></i></a>
+                </div>
                 <div id="player">
                     <div class="btn btn-link" id="playPause">
                         <i class="fa fa-play"></i>
@@ -37,6 +40,89 @@
                     <button class="btn btn-primary input-group-btn" id="addDashboard">Add</button>
                     <button class="btn input-group-btn" id="addDashboardFlash"><i class="fa fa-bolt"></i></button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Config scene -->
+
+    <div id="config">
+        <div class="panel">
+            <div class="panel-header text-center">
+                <div class="panel-title h5 mt-10">
+                    Dashboard Swarm
+                    <a href="javascript:" id="closeConfigLink"><i class="fa fa-close"></i></a>
+                </div>
+            </div>
+
+            <div class="panel-body">
+                <form action="#" class="form-horizontal">
+
+                    <fieldset id="client">
+                        <div class="form-group">
+                            <label class="form-switch">
+                                <input id="master" type="checkbox"> <i class="form-icon"></i> Display dashboards on this computer
+                            </label>
+                        </div>
+
+                    </fieldset>
+
+                    <hr>
+
+                    <fieldset>
+
+                        <legend>Parameters</legend>
+
+                        <div class="form-group">
+                            <div class="col-5">
+                                <label class="form-label" for="serverUrl">Server URL</label>
+                            </div>
+                            <div class="col-7">
+                                <div class="input-group">
+                                    <input class="form-input" type="text" id="serverUrl" placeholder="localhost:8080">
+                                    <button class="btn btn-primary input-group-btn">Connect</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <fieldset id="parameters">
+
+                            <!-- Tab switch interval -->
+                            <div class="form-group">
+                                <div class="col-5">
+                                    <label class="form-label" for="tabSwitchInterval">Tab switch interval</label>
+                                </div>
+                                <div class="col-7">
+                                    <input class="form-input" type="text" id="tabSwitchInterval" placeholder="Milliseconds">
+                                </div>
+                            </div>
+
+                            <!-- Flash tab foreground coef -->
+                            <div class="form-group">
+                                <div class="col-5">
+                                    <label class="form-label" for="flashTabDuration">Flash tab duration</label>
+                                </div>
+                                <div class="col-7">
+                                    <input class="form-input" type="text" id="flashTabDuration" placeholder="Milliseconds">
+                                </div>
+                            </div>
+
+                            <!-- Flash tab lifetime -->
+                            <div class="form-group">
+                                <div class="col-5">
+                                    <label class="form-label" for="flashTabLifetime">Flash tab lifetime</label>
+                                </div>
+                                <div class="col-7">
+                                    <input class="form-input" type="text" id="flashTabLifetime" placeholder="Seconds">
+                                </div>
+                            </div>
+
+                        </fieldset>
+
+                    </fieldset>
+
+                </form>
             </div>
         </div>
     </div>

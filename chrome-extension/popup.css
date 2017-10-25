@@ -48,10 +48,11 @@
     font-size: 0.7em;
 }
 
-.panel .panel-body {
+#displays .panel .panel-body {
     padding-top: 1rem;
     padding-bottom: 0.3rem;
 }
+
 .panel .panel-body .tile .tile-content .tile-subtitle {
     font-style: italic;
     font-size: 0.6rem;
@@ -71,3 +72,22 @@
 #player i {
     font-size: 1.3rem;
 }
+
+a#configLink, a#closeConfigLink {
+    float: right;
+    width: 20px;
+}
+
+#config {
+    display: none;
+    min-width: 400px;
+}
+
+#config .panel {
+    min-width: 400px;
+}
+
+/*#saveClient {*/
+    /*display: block;*/
+    /*width: 100%;*/
+/*}*/

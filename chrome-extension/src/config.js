@@ -1,7 +1,11 @@
 import DashboardSwarmNode from './classes/DashboardSwarmNode';
+import DashboardSwarmWebSocket from './classes/DashboardSwarmWebSocket';
+import DashboardSwarmListener from './classes/DashboardSwarmListener';
 
 // Saves options to chrome.storage.sync.
 function save_options() {
+
+
 
     chrome.storage.sync.get({
         master: false,
@@ -35,15 +39,22 @@ function save_options() {
 // Restores select box and checkbox state using the preferences
 // stored in chrome.storage.
 function restore_options() {
-    // Use default value color = 'red' and likesColor = true.
+
     chrome.storage.sync.get({
         master: false,
-        server: 'localhost:8080',
-        interval: 5000
+        server: 'localhost:8080'
     }, function(items) {
-        document.getElementById('master').checked = items.master;
         document.getElementById('server').value = items.server;
-        document.getElementById('interval').value = items.interval;
+        document.getElementById('master').checked = items.master;
+
+        DashboardSwarmWebSocket.setServerUrl(items.server);
+        DashboardSwarmWebSocket.connect();
+
+        DashboardSwarmListener.subscribeEvent('serverConfig', config => {
+            console.log(config);
+        });
+
+        DashboardSwarmWebSocket.sendCommand('getConfig');
     });
 }
 
