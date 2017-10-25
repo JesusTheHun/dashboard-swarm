@@ -34,11 +34,13 @@ let storage;
 fs.readFile(storageFilePath, (err, storageContent) => {
     if (err) throw err;
 
-    storage = JSON.parse(storageContent);
+    let parsedStorage = JSON.parse(storageContent);
+    let defaultStorage = {
+        tabs: [],
+        config: {}
+    };
 
-    if (storage.tabs === undefined) {
-        storage.tabs = [];
-    }
+    storage = Object.assign(defaultStorage, parsedStorage);
 
     setInterval(removeExpiredFlashTabs, config.flashTabDuration * 1000, storage.tabs);
 
@@ -65,13 +67,31 @@ fs.readFile(storageFilePath, (err, storageContent) => {
                 let data = JSON.parse(message);
 
                 if (data.hasOwnProperty('cmd')) {
+
+                    let event;
+
                     switch (data.cmd) {
                         case 'getTabs':
-                            let event = {
+                            event = {
                                 event: 'serverTabs',
                                 args: [storage.tabs]
                             };
                             conn.send(JSON.stringify(event));
+                        break;
+
+                        case 'getConfig':
+                            event = {
+                                event: 'config',
+                                args: [storage.config]
+                            };
+                            conn.send(JSON.stringify(event));
+                            break;
+
+                        case 'config':
+                            let configName = data.args[0];
+                            let configValue = data.args[1];
+                            storage.config[configName] = configValue;
+                            writeStorage();
                         break;
 
                         default:
