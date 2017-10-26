@@ -11,7 +11,7 @@
         "scripts": [
             "build/background.js"
         ]
-    }
+    },
     "permissions": [
         "background",
         "system.display",

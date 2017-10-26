@@ -1,6 +1,6 @@
 import DashboardSwarmWebSocket from "./DashboardSwarmWebSocket";
 import DashboardSwarmListener from "./DashboardSwarmListener";
-import defer from "../function/defer";
+import Parameters from "./Parameters";
 
 class DashboardSwarmNode {
 
@@ -71,6 +71,17 @@ class DashboardSwarmNode {
             DashboardSwarmListener.subscribeEvent('rotationStatus', isPlaying => {
                 chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStatus', data: isPlaying});
             });
+
+            let rebootRotation = () => {
+                chrome.runtime.sendMessage({node: "stopRotation", args: []});
+                chrome.runtime.sendMessage({node: "startRotation", args: [
+                    Parameters.getParameter('tabSwitchInterval'),
+                    Parameters.getParameters('flashTabSwitchInterval')
+                ]});
+            };
+
+            Parameters.subscribe('tabSwitchInterval', newValue => rebootRotation());
+            Parameters.subscribe('flashTabSwitchInterval', newValue => rebootRotation());
 
             /**
              * Bridge for the popup

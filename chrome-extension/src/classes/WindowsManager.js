@@ -109,12 +109,12 @@ class WindowsManager {
                 }
             });
 
-            DashboardSwarmListener.subscribeCommand('startRotation', interval => {
+            DashboardSwarmListener.subscribeCommand('startRotation', (interval, intervalFlash) => {
                 if (DashboardSwarmNode.isMaster()) {
                     wm.getDisplays().then(displays => {
                         Object.keys(displays).forEach(display => {
                             if (wm.windows[display] !== undefined) {
-                                wm.startRotation(display, interval);
+                                wm.startRotation(display, interval, intervalFlash);
                             }
                         })
                     });
@@ -349,7 +349,7 @@ class WindowsManager {
      * @param {number} display Display you want to make rotate
      * @param {number} interval Pause duration between two tabs. In milliseconds
      */
-    startRotation(display, interval) {
+    startRotation(display, interval, intervalFlash) {
         let wm = this;
         let w = wm.windows[display];
 
@@ -381,7 +381,7 @@ class WindowsManager {
                         let tabDuration = interval;
 
                         if (wm.getTab(tabId).flash) {
-                            tabDuration = 2 * interval;
+                            tabDuration = intervalFlash;
                             flashPause[display] = 1;
                             setTimeout(() => flashPause[display] = 0, tabDuration);
                         }

@@ -1,5 +1,6 @@
 import DashboardSwarmWebSocket from "./classes/DashboardSwarmWebSocket";
 import DashboardSwarmListener from "./classes/DashboardSwarmListener";
+import Parameters from "./classes/Parameters";
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -10,8 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('div#displays').style.display = 'none';
         document.querySelector('div#config').style.display = 'block';
     });
-
-    configLink.click();
 
     let closeConfigLink = document.querySelector('#closeConfigLink');
 
@@ -38,46 +37,51 @@ document.addEventListener('DOMContentLoaded', () => {
             connect(e, response => {
                 isConnected = response;
 
-                let configOptions = ['tabSwitchInterval', 'flashTabLifetime', 'flashTabDuration'];
-
-                if (isConnected) {
-
-                    DashboardSwarmListener.subscribeEvent('serverConfig', config => {
-                        configOptions.forEach(configName => {
-                            let value = '';
-                            if (config[configName] !== undefined) {
-                                value = config[configName];
-                            }
-
-                            let input = document.querySelector('#' + configName);
-
-                            if (input) {
-                                input.value = value;
-                            }
-                        });
-                    });
-
-                    DashboardSwarmWebSocket.sendCommand('getConfig');
-
-                    document.querySelector('#save').addEventListener('click', e => {
-                        e.preventDefault();
-
-                        let newConfig = {};
-
-                        configOptions.forEach(configName => {
-                            let input = document.querySelector('#' + configName);
-                            newConfig[configName] = input.value;
-                        });
-
-                        DashboardSwarmWebSocket.sendCommand('setConfig', [newConfig]);
-
-                        e.target.classList.add('successBackground');
-
-                        setTimeout(() => {
-                            e.target.classList.remove('successBackground');
-                        }, 500);
-                    });
+                if (!isConnected) {
+                    return;
                 }
+
+                let configOptions = Parameters.getParametersName();
+
+                DashboardSwarmListener.subscribeEvent('serverConfig', config => {
+                    configOptions.forEach(configName => {
+                        let value = '';
+                        if (config[configName] !== undefined) {
+                            value = config[configName];
+                        }
+
+                        let input = document.querySelector('#' + configName);
+
+                        if (input) {
+                            input.value = value;
+                        }
+                    });
+                });
+
+                DashboardSwarmWebSocket.sendCommand('getConfig');
+
+                document.querySelector('#save').addEventListener('click', e => {
+                    e.preventDefault();
+
+                    let newConfig = {};
+
+                    configOptions.forEach(configName => {
+                        let input = document.querySelector('#' + configName);
+                        newConfig[configName] = input.value;
+                    });
+
+                    chrome.storage.sync.set({
+                        server: document.querySelector('#serverUrl').value
+                    });
+
+                    DashboardSwarmWebSocket.sendCommand('setConfig', [newConfig]);
+
+                    e.target.classList.add('successBackground');
+
+                    setTimeout(() => {
+                        e.target.classList.remove('successBackground');
+                    }, 500);
+                });
             });
         }
     });
@@ -133,7 +137,15 @@ function disconnect(e, callback) {
     let serverUrlInput = document.querySelector('#serverUrl');
     serverUrlInput.removeAttribute('disabled');
     DashboardSwarmWebSocket.close();
+
+    let configOptions = Parameters.getParametersName();
+
+    configOptions.forEach(configName => {
+        document.querySelector('#' + configName).value = '';
+    });
+
     document.querySelector('#parameters').setAttribute('disabled', 'disabled');
+    document.querySelector('#connect').textContent = "Connect";
     callback(false);
 }
 
