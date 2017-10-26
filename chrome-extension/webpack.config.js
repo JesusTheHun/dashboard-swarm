@@ -17,7 +17,6 @@ module.exports = {
     context: path.join(__dirname, 'src'),
     entry: {
         background: './background.js',
-        config: './config.js',
         popup: './popup.js',
         contentScript: './contentScript.js'
     },
