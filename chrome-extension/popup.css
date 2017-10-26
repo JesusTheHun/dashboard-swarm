@@ -87,7 +87,25 @@ a#configLink, a#closeConfigLink {
     min-width: 400px;
 }
 
-/*#saveClient {*/
-    /*display: block;*/
-    /*width: 100%;*/
-/*}*/
+#save {
+    display: block;
+    width: 100%;
+}
+
+@keyframes successColor {
+    from {
+        background-color: #4452c0;
+        color: white;
+    }
+    to {
+        background-color: #0ea951;
+        color: black;
+    }
+}
+
+.successBackground {
+    animation-name: successColor;
+    animation-duration: 250ms;
+    animation-iteration-count: 2;
+    animation-direction: alternate;
+}

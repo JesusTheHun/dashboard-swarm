@@ -1,56 +1,102 @@
 import DashboardSwarmWebSocket from "./classes/DashboardSwarmWebSocket";
+import DashboardSwarmListener from "./classes/DashboardSwarmListener";
 
-(() => {
+document.addEventListener('DOMContentLoaded', () => {
 
-    document.addEventListener('DOMContentLoaded', () => {
+    let configLink = document.querySelector('#configLink');
+    configLink.addEventListener('click', e => {
+        e.preventDefault();
 
-        let configLink = document.querySelector('#configLink');
-        configLink.addEventListener('click', e => {
-            e.preventDefault();
+        document.querySelector('div#displays').style.display = 'none';
+        document.querySelector('div#config').style.display = 'block';
+    });
 
-            document.querySelector('div#displays').style.display = 'none';
-            document.querySelector('div#config').style.display = 'block';
-        });
+    configLink.click();
 
-        configLink.click();
+    let closeConfigLink = document.querySelector('#closeConfigLink');
 
-        let closeConfigLink = document.querySelector('#closeConfigLink');
+    closeConfigLink.addEventListener('click', e => {
+        e.preventDefault();
 
-        closeConfigLink.addEventListener('click', e => {
-            e.preventDefault();
+        document.querySelector('div#displays').style.display = 'block';
+        document.querySelector('div#config').style.display = 'none';
+    });
 
-            document.querySelector('div#displays').style.display = 'block';
-            document.querySelector('div#config').style.display = 'none';
-        });
+    let parameters = document.querySelector('#parameters');
+    parameters.setAttribute('disabled', 'disabled');
 
-        let parameters = document.querySelector('#parameters');
-        parameters.setAttribute('disabled', 'disabled');
+    let isConnected = false;
+
+    document.querySelector('#connect').addEventListener('click', e => {
+        e.preventDefault();
+
+        if (isConnected) {
+            disconnect(e, response => {
+                isConnected = response;
+            });
+        } else {
+            connect(e, response => {
+                isConnected = response;
+
+                let configOptions = ['tabSwitchInterval', 'flashTabLifetime', 'flashTabDuration'];
+
+                if (isConnected) {
+
+                    DashboardSwarmListener.subscribeEvent('serverConfig', config => {
+                        configOptions.forEach(configName => {
+                            let value = '';
+                            if (config[configName] !== undefined) {
+                                value = config[configName];
+                            }
+
+                            let input = document.querySelector('#' + configName);
+
+                            if (input) {
+                                input.value = value;
+                            }
+                        });
+                    });
+
+                    DashboardSwarmWebSocket.sendCommand('getConfig');
+
+                    document.querySelector('#save').addEventListener('click', e => {
+                        e.preventDefault();
+
+                        let newConfig = {};
+
+                        configOptions.forEach(configName => {
+                            let input = document.querySelector('#' + configName);
+                            newConfig[configName] = input.value;
+                        });
+
+                        DashboardSwarmWebSocket.sendCommand('setConfig', [newConfig]);
+
+                        e.target.classList.add('successBackground');
+
+                        setTimeout(() => {
+                            e.target.classList.remove('successBackground');
+                        }, 500);
+                    });
+                }
+            });
+        }
+    });
+
+    chrome.storage.sync.get({
+        master: false,
+        server: 'localhost:8080'
+    }, function(currentConfig) {
+
+        document.querySelector('#serverUrl').value = currentConfig.server;
+        document.querySelector('#master').checked = currentConfig.master;
 
         document.querySelector('#master').addEventListener('change', e => {
             chrome.storage.sync.set({
                 master: e.target.checked
             });
         });
-
-        let isConnected = false;
-
-        document.querySelector('#connect').addEventListener('click', e => {
-            e.preventDefault();
-
-            if (isConnected) {
-                disconnect(e, response => {
-                    isConnected = response;
-                });
-            } else {
-                connect(e, response => {
-                    isConnected = response;
-                });
-            }
-        });
     });
-
-
-})();
+});
 
 function connect(e, callback) {
     let serverUrlInput = document.querySelector('#serverUrl');

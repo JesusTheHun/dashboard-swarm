@@ -84,15 +84,13 @@ fs.readFile(storageFilePath, (err, storageContent) => {
                                 event: 'serverConfig',
                                 args: [storage.config]
                             };
-                            console.log("config send");
-                            console.log(event);
+
                             conn.send(JSON.stringify(event));
                             break;
 
-                        case 'config':
-                            let configName = data.args[0];
-                            let configValue = data.args[1];
-                            storage.config[configName] = configValue;
+                        case 'setConfig':
+                            let configUpdate = data.args[0];
+                            Object.assign(storage.config, configUpdate);
                             writeStorage();
                         break;
 
@@ -119,6 +117,7 @@ fs.readFile(storageFilePath, (err, storageContent) => {
 
                             if (data.args[5] === true) {
                                 let endDate = new Date();
+                                // endDate.setSeconds
                                 endDate.setDate(endDate.getDate() + 1);
                                 tabToPush.flash = endDate;
                             }
