@@ -9,6 +9,7 @@ class DashboardSwarmNode {
             this.master = 0;
             this.tabs = [];
             this.displays = null;
+            this.rotation = false;
 
             let node = this;
 
@@ -68,20 +69,31 @@ class DashboardSwarmNode {
                 chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStopped', data: []});
             });
 
-            DashboardSwarmListener.subscribeEvent('rotationStatus', isPlaying => {
+            DashboardSwarmListener.subscribeEvent('rotationStatus', (isPlaying, interval, flashInterval) => {
+                this.rotation = {
+                    active: isPlaying,
+                    interval: interval,
+                    flashInterval: flashInterval
+                };
                 chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStatus', data: isPlaying});
             });
 
             let rebootRotation = () => {
-                chrome.runtime.sendMessage({node: "stopRotation", args: []});
-                chrome.runtime.sendMessage({node: "startRotation", args: [
-                    Parameters.getParameter('tabSwitchInterval'),
-                    Parameters.getParameters('flashTabSwitchInterval')
-                ]});
+                this.stopRotation();
+                this.startRotation();
             };
 
-            Parameters.subscribe('tabSwitchInterval', newValue => rebootRotation());
-            Parameters.subscribe('flashTabSwitchInterval', newValue => rebootRotation());
+            Parameters.subscribe('tabSwitchInterval', newValue => {
+                if (this.rotation.active && newValue !== this.rotation.interval) {
+                    rebootRotation();
+                }
+            });
+
+            Parameters.subscribe('flashTabSwitchInterval', newValue => {
+                if (this.rotation.active && newValue !== this.rotation.flashInterval) {
+                    rebootRotation();
+                }
+            });
 
             /**
              * Bridge for the popup
@@ -166,8 +178,11 @@ class DashboardSwarmNode {
         return Object.assign({}, this.displays);
     }
 
-    startRotation(interval) {
-        DashboardSwarmWebSocket.sendCommand('startRotation', [interval]);
+    startRotation() {
+        DashboardSwarmWebSocket.sendCommand('startRotation', [
+            Parameters.getParameter('tabSwitchInterval'),
+            Parameters.getParameter('flashTabSwitchInterval')
+        ]);
     }
 
     stopRotation() {

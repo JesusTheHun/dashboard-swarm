@@ -348,8 +348,13 @@ class WindowsManager {
      * Start the rotation of tabs for a particular display
      * @param {number} display Display you want to make rotate
      * @param {number} interval Pause duration between two tabs. In milliseconds
+     * @param {number} intervalFlash Pause duration for a flash tab. In milliseconds
      */
     startRotation(display, interval, intervalFlash) {
+        if (!interval || interval < 100 || !intervalFlash || intervalFlash < 100) {
+            return;
+        }
+
         let wm = this;
         let w = wm.windows[display];
 
@@ -395,7 +400,7 @@ class WindowsManager {
             }
         }, interval);
 
-        DashboardSwarmWebSocket.sendEvent('rotationStarted', [display, interval]);
+        DashboardSwarmWebSocket.sendEvent('rotationStarted', [display, interval, intervalFlash]);
     }
 
     /**

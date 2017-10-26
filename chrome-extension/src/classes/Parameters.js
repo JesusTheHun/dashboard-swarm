@@ -1,32 +1,34 @@
 import DashboardSwarmListener from "./DashboardSwarmListener";
+import DashboardSwarmWebSocket from "./DashboardSwarmWebSocket";
 import Rx from "rxjs";
 
-let paramsName = [
+const paramsName = [
     'tabSwitchInterval',
     'flashTabLifetime',
     'flashTabSwitchInterval',
 ];
 
-let params = {};
-
 class Parameters {
     constructor() {
         if (!Parameters.instance) {
+            this.params = {};
 
             paramsName.forEach(paramName => {
-                params[paramName] = new Rx.BehaviorSubject([undefined]);
+                this.params[paramName] = new Rx.BehaviorSubject(undefined);
             });
 
             DashboardSwarmListener.subscribeEvent('serverConfig', config => {
                 paramsName.forEach(paramName => {
-                    let upToDateValue = config[paramsName];
-                    let currentValue = params[paramName];
+                    let upToDateValue = config[paramName];
+                    let currentValue = this.getParameter(paramName);
 
                     if (currentValue !== upToDateValue) {
-                        params[paramName].next(config[paramsName]);
+                        this.params[paramName].next(config[paramName]);
                     }
                 });
             });
+
+            DashboardSwarmWebSocket.sendCommand('getConfig');
 
             Parameters.instance = this;
         }
@@ -38,8 +40,10 @@ class Parameters {
         let p = {};
 
         paramsName.forEach(paramName => {
-           p[paramName] = params[paramName].getValue();
+           p[paramName] = this.params[paramName].getValue();
         });
+
+        return p;
     }
 
     getParametersName() {
@@ -47,12 +51,11 @@ class Parameters {
     }
 
     getParameter(paramName) {
-        return params[paramName].getValue();
+        return this.params[paramName].getValue();
     }
 
     subscribe(paramName, callback) {
-        params[paramName].subscribe(callback);
-
+        this.params[paramName].subscribe(callback);
         return this;
     }
 }
