@@ -184,7 +184,7 @@ function removeExpiredFlashTabs(tabs) {
     let removedTabId = [];
 
     tabs.map(tab => {
-        let expirationDate = moment(tab.flash).add(storage.config.flashTabLifetime, 'm').toDate();
+        let expirationDate = moment(tab.flash).add(storage.config.flashTabLifetime, 's').toDate();
 
         if (tab.flash instanceof Date && expirationDate < new Date()) {
             removedTabId.push(tab.id);

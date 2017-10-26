@@ -3,6 +3,7 @@ import DashboardSwarmWebSocket from './classes/DashboardSwarmWebSocket';
 
 // Init listeners
 import WindowsManager from './classes/WindowsManager';
+import Parameters from './classes/Parameters';
 
 ///////////////////////////////
 // Load displays information //

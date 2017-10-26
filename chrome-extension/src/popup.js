@@ -104,13 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let isPlaying = globalPlayerSubject.getValue();
 
         if (isPlaying) {
-            chrome.runtime.sendMessage({node: "stopRotation", args: []});
+            NodeProxy.stopRotation();
         } else {
-            chrome.storage.sync.get({
-                interval: 5000
-            }, function(config) {
-                chrome.runtime.sendMessage({node: "startRotation", args: [config.interval]});
-            });
+            NodeProxy.startRotation();
         }
     });
 
