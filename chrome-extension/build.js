@@ -21,9 +21,7 @@ let buildComponents = [
     'node_modules/font-awesome/fonts/fontawesome-webfont.ttf',
     'node_modules/font-awesome/fonts/fontawesome-webfont.woff',
     'node_modules/font-awesome/fonts/fontawesome-webfont.woff2',
-    'config.html',
     'build/background.js',
-    'build/config.js',
     'build/popup.js',
     'build/contentScript.js',
 ];

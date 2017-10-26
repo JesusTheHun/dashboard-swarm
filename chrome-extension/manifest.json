@@ -11,11 +11,7 @@
         "scripts": [
             "build/background.js"
         ]
-    },
-    "options_ui": {
-        "page": "config.html",
-        "chrome_style": true
-    },
+    }
     "permissions": [
         "background",
         "system.display",
