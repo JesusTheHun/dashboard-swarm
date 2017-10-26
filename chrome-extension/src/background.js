@@ -10,17 +10,11 @@ import WindowsManager from './classes/WindowsManager';
 
 chrome.browserAction.setBadgeText({"text": "OFF"});
 
-chrome.storage.sync.get({
-    server: 'localhost:8080',
-    master: false
-}, function(items) {
-    DashboardSwarmNode.setMaster(items.master);
-    DashboardSwarmWebSocket.setServerUrl(items.server);
-    DashboardSwarmWebSocket.setServerConnectionErrorHandler(err => {
-        chrome.browserAction.setBadgeText({"text": "ERR"});
-    });
-    DashboardSwarmWebSocket.connect();
+chrome.storage.onChanged.addListener((changes, areaName) => {
+    reloadConfig();
 });
+
+reloadConfig();
 
 DashboardSwarmWebSocket.getWebSocketSubject().subscribe(ws => {
     if (ws === null) return;
@@ -30,3 +24,17 @@ DashboardSwarmWebSocket.getWebSocketSubject().subscribe(ws => {
         chrome.browserAction.setBadgeText({"text": "OFF"});
     };
 });
+
+function reloadConfig() {
+    chrome.storage.sync.get({
+        server: 'localhost:8080',
+        master: false
+    }, function(items) {
+        DashboardSwarmNode.setMaster(items.master);
+        DashboardSwarmWebSocket.setServerUrl(items.server);
+        DashboardSwarmWebSocket.setServerConnectionErrorHandler(err => {
+            chrome.browserAction.setBadgeText({"text": "ERR"});
+        });
+        DashboardSwarmWebSocket.connect();
+    });
+}

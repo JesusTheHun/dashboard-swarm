@@ -1,18 +1,17 @@
+const moment = require('moment');
 const WebSocketServer = require('websocket').server;
 const http = require('http');
 const fs = require('fs');
 
 const defaultConfig = {
     hostname: 'localhost',
-    port: 8080,
-    flashTabDuration: 2880
+    port: 8080
 };
 
 let config = Object.assign({}, defaultConfig);
 
 if (process.argv[2] !== undefined) config.hostname = process.argv[2];
 if (process.argv[3] !== undefined) config.port = process.argv[3];
-if (process.argv[4] !== undefined) config.flashTabDuration = process.argv[4];
 
 
 let server = http.createServer((req, res) => {
@@ -37,12 +36,16 @@ fs.readFile(storageFilePath, (err, storageContent) => {
     let parsedStorage = JSON.parse(storageContent);
     let defaultStorage = {
         tabs: [],
-        config: {}
+        config: {
+            tabSwitchInterval: 3000,
+            flashTabLifetime: 24*3600,
+            flashTabSwitchInterval: 8000
+        }
     };
 
     storage = Object.assign(defaultStorage, parsedStorage);
 
-    setInterval(removeExpiredFlashTabs, config.flashTabDuration * 1000, storage.tabs);
+    setInterval(removeExpiredFlashTabs, 10000, storage.tabs);
 
     wss = new WebSocketServer({ httpServer: server });
 
@@ -56,6 +59,7 @@ fs.readFile(storageFilePath, (err, storageContent) => {
 
         conn.on('close', conn => {
             clients.splice(clientIndex, 1);
+            console.log((new Date()) + ' Connection closed.');
         });
 
         conn.on('message', packet => {
@@ -92,6 +96,13 @@ fs.readFile(storageFilePath, (err, storageContent) => {
                             let configUpdate = data.args[0];
                             Object.assign(storage.config, configUpdate);
                             writeStorage();
+
+                            event = {
+                                event: 'serverConfig',
+                                args: [storage.config]
+                            };
+
+                            conn.send(JSON.stringify(event));
                         break;
 
                         default:
@@ -116,10 +127,7 @@ fs.readFile(storageFilePath, (err, storageContent) => {
                             };
 
                             if (data.args[5] === true) {
-                                let endDate = new Date();
-                                // endDate.setSeconds
-                                endDate.setDate(endDate.getDate() + 1);
-                                tabToPush.flash = endDate;
+                                tabToPush.flash = new Date();
                             }
 
                             storage.tabs.push(tabToPush);
@@ -176,14 +184,14 @@ function removeExpiredFlashTabs(tabs) {
     let removedTabId = [];
 
     tabs.map(tab => {
-        if (tab.flash instanceof Date && tab.flash < new Date()) {
+        let expirationDate = moment(tab.flash).add(storage.config.flashTabLifetime, 'm').toDate();
+
+        if (tab.flash instanceof Date && expirationDate < new Date()) {
             removedTabId.push(tab.id);
-            clients.forEach(client => {
-                client.send(JSON.stringify({
-                    'cmd': 'closeTab',
-                    'args': [tab.id]
-                }));
-            });
+            broadcast(JSON.stringify({
+                'cmd': 'closeTab',
+                'args': [tab.id]
+            }))
         }
     });
 

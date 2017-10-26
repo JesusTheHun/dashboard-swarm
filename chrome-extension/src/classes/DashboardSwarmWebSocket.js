@@ -32,12 +32,14 @@ class DashboardSwarmWebSocket {
     connect() {
 
         if (this.ws) {
+            console.log("close");
             this.ws.close();
             this.wsReady = new defer();
         }
 
         let ws = new WebSocketClient('ws://' + this.serverUrl);
         ws.onopen = () => {
+            console.log("open");
             this.wsReady.resolve(ws);
             this.wsSubject.next(ws);
         };
