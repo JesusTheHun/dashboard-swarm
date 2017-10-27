@@ -158,6 +158,8 @@ function showTabsForDisplay(display) {
 
 function addTabToPanel(tabId, tabUrl, tabTitle) {
 
+    let tab = tabsSubject.getValue().find(t => t.id === tabId);
+
     let domPanelBody = document.querySelector('#displays .panel .panel-body');
 
     let domTabTile = document.createElement('div');
@@ -225,7 +227,19 @@ function addTabToPanel(tabId, tabUrl, tabTitle) {
     domTabTileContent.appendChild(domTabTileContentTitle);
     domTabTileContent.appendChild(domTabTileContentSubtitle);
 
-    domTabTileContentTitle.textContent = tabTitle;
+    if (tab.flash) {
+        let domTabTileFlashIcon = document.createElement('i');
+        domTabTileFlashIcon.classList.add('fa');
+        domTabTileFlashIcon.classList.add('fa-bolt');
+        domTabTileFlashIcon.classList.add('watermark');
+        domTabTileFlashIcon.classList.add('flashIcon');
+
+        domTabTileContentTitle.appendChild(domTabTileFlashIcon);
+    }
+
+    let domTabTitleContentTitleText = document.createTextNode(tabTitle);
+
+    domTabTileContentTitle.appendChild(domTabTitleContentTitleText);
     domTabTileContentTitle.setAttribute('title', tabTitle);
     domTabTileContentSubtitle.textContent = tabUrl;
     domTabTileContentSubtitle.setAttribute('title', tabUrl);

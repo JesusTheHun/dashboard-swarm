@@ -26,7 +26,9 @@ class WindowsManager {
                                 let scroll = {top: 0, left: 0};
 
                                 chrome.tabs.getZoom(tabId, zoom => {
-                                    DashboardSwarmWebSocket.sendEvent('tabOpened', [tabId, display, url, changeInfo.title, tab.index, isFlash, zoom, scroll]);
+                                    let flash = isFlash ? new Date() : undefined;
+                                    wm.tabs[tab.id].flash = flash;
+                                    DashboardSwarmWebSocket.sendEvent('tabOpened', [tabId, display, url, changeInfo.title, tab.index, flash, zoom, scroll]);
                                 });
                                 chrome.tabs.onUpdated.removeListener(updateWhenTitleIsReady);
                             }
@@ -351,54 +353,57 @@ class WindowsManager {
      * @param {number} intervalFlash Pause duration for a flash tab. In milliseconds
      */
     startRotation(display, interval, intervalFlash) {
-        if (!interval || interval < 100 || !intervalFlash || intervalFlash < 100) {
+        if (!interval || interval < 1 || !intervalFlash || intervalFlash < 1) {
             return;
         }
 
         let wm = this;
-        let w = wm.windows[display];
+        let displayWindow = wm.windows[display];
+        let rotationStartDate;
 
-        let flashPause = {};
-
-        chrome.tabs.query({active: true, windowId: w.id}, tabs => {
+        chrome.tabs.query({active: true, windowId: displayWindow.id}, tabs => {
             let tab = tabs[0];
-            let tabDuration = interval;
-
-            if (wm.getTab(tab.id).flash) {
-                tabDuration = 2 * interval;
-            }
+            let tabDuration = wm.getTab(tab.id).flash ? intervalFlash : interval;
 
             let tabScript = new TabProxy(tab.id);
-            tabScript.rearmCountdown(tabDuration);
+            tabScript.rearmCountdown(tabDuration * 1000);
+            rotationStartDate = new Date();
         });
 
         wm.intervals[display] = setInterval(() => {
-            if (!flashPause[display]) {
-                if (wm.windows[display] !== undefined) { // Prevent re-opening a closed window
-
-                    chrome.windows.get(w.id, {populate: true}, window => {
-                        let tabs = window.tabs.sort((a, b) => a.index - b.index);
-                        let maxIndex = tabs[tabs.length - 1].index;
-                        let activeTabIndex = tabs.findIndex(t => t.active === true);
-
-                        let tabToActivate = activeTabIndex === maxIndex ? 0 : activeTabIndex + 1;
-                        let tabId = tabs[tabToActivate].id;
-                        let tabDuration = interval;
-
-                        if (wm.getTab(tabId).flash) {
-                            tabDuration = intervalFlash;
-                            flashPause[display] = 1;
-                            setTimeout(() => flashPause[display] = 0, tabDuration);
-                        }
-
-                        chrome.tabs.update(tabId, {active: true}, tab => {
-                            let tabScript = new TabProxy(tab.id);
-                            tabScript.rearmCountdown(tabDuration);
-                        });
-                    });
-                }
+            if (rotationStartDate === undefined) {
+                return;
             }
-        }, interval);
+
+            if (displayWindow !== undefined) { // Prevent re-opening a closed window
+
+                let elapsedMilliseconds = new Date() - rotationStartDate;
+
+                chrome.windows.get(displayWindow.id, {populate: true}, window => {
+                    let tabs = window.tabs.sort((a, b) => a.index - b.index);
+                    let activeTab = tabs.find(t => t.active === true);
+
+                    let maxIndex = tabs[tabs.length - 1].index;
+                    let activeTabIndex = tabs.findIndex(t => t.active === true);
+                    let tabToActivate = activeTabIndex === maxIndex ? 0 : activeTabIndex + 1;
+                    let nextTabId = tabs[tabToActivate].id;
+
+                    let tabDuration = wm.getTab(activeTab.id).flash ? intervalFlash : interval;
+
+                    if (elapsedMilliseconds < (tabDuration * 1000)) {
+                        return;
+                    }
+
+                    chrome.tabs.update(nextTabId, {active: true}, tab => {
+                        let tabScript = new TabProxy(tab.id);
+                        tabScript.rearmCountdown(tabDuration);
+                        console.log("rearm called");
+                        rotationStartDate = new Date();
+                    });
+                });
+            }
+
+        }, 100);
 
         DashboardSwarmWebSocket.sendEvent('rotationStarted', [display, interval, intervalFlash]);
     }

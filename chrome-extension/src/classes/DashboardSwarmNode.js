@@ -35,7 +35,7 @@ class DashboardSwarmNode {
                     url: url,
                     title: title,
                     position: position,
-                    isFlash: isFlash,
+                    flash: isFlash,
                     zoom: zoom,
                     scroll: scroll
                 };

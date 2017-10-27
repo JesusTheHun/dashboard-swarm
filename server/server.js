@@ -122,13 +122,10 @@ fs.readFile(storageFilePath, (err, storageContent) => {
                                 url: data.args[2],
                                 title: data.args[3],
                                 position: data.args[4],
+                                flash: data.args[5],
                                 zoom: data.args[6],
                                 scroll: data.args[7]
                             };
-
-                            if (data.args[5] === true) {
-                                tabToPush.flash = new Date();
-                            }
 
                             storage.tabs.push(tabToPush);
 
@@ -184,14 +181,21 @@ function removeExpiredFlashTabs(tabs) {
     let removedTabId = [];
 
     tabs.map(tab => {
-        let expirationDate = moment(tab.flash).add(storage.config.flashTabLifetime, 's').toDate();
 
-        if (tab.flash instanceof Date && expirationDate < new Date()) {
-            removedTabId.push(tab.id);
-            broadcast(JSON.stringify({
-                'cmd': 'closeTab',
-                'args': [tab.id]
-            }))
+        if (tab.flash !== undefined) {
+            let expirationDate = moment(tab.flash).add(storage.config.flashTabLifetime, 'm').toDate();
+
+            if (expirationDate < new Date()) {
+
+                console.log("Expired flash tab detected, expiration date");
+                console.log(expirationDate);
+
+                removedTabId.push(tab.id);
+                broadcast(JSON.stringify({
+                    'cmd': 'closeTab',
+                    'args': [tab.id]
+                }))
+            }
         }
     });
 
