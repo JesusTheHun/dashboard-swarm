@@ -58,6 +58,10 @@
     font-size: 0.6rem;
 }
 
+.panel .panel-body .tile .tile-content .flashIcon {
+    margin-right: 0.4rem;
+}
+
 .menu {
     position: absolute;
     right: 1rem;
@@ -108,4 +112,8 @@ a#configLink, a#closeConfigLink {
     animation-duration: 250ms;
     animation-iteration-count: 2;
     animation-direction: alternate;
+}
+
+.watermark {
+    opacity: 0.4;
 }
