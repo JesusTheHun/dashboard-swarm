@@ -61,8 +61,8 @@ class DashboardSwarmNode {
                 chrome.runtime.sendMessage({ target: 'popup', action: 'tabUpdated', data: [tabId, newProps]});
             });
 
-            DashboardSwarmListener.subscribeEvent('rotationStarted', interval => {
-                chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStarted', data: [interval]});
+            DashboardSwarmListener.subscribeEvent('rotationStarted', (display, interval, intervalFlash) => {
+                chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStarted', data: [display, interval, intervalFlash]});
             });
 
             DashboardSwarmListener.subscribeEvent('rotationStopped', () => {

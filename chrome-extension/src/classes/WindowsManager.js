@@ -358,10 +358,9 @@ class WindowsManager {
         }
 
         let wm = this;
-        let displayWindow = wm.windows[display];
         let rotationStartDate;
 
-        chrome.tabs.query({active: true, windowId: displayWindow.id}, tabs => {
+        chrome.tabs.query({active: true, windowId: wm.windows[display].id}, tabs => {
             let tab = tabs[0];
             let tabDuration = wm.getTab(tab.id).flash ? intervalFlash : interval;
 
@@ -375,11 +374,14 @@ class WindowsManager {
                 return;
             }
 
-            if (displayWindow !== undefined) { // Prevent re-opening a closed window
+            console.log("Windows display");
+            console.log(wm.windows[display]);
+
+            if (wm.windows[display] !== undefined) { // Prevent re-opening a closed window
 
                 let elapsedMilliseconds = new Date() - rotationStartDate;
 
-                chrome.windows.get(displayWindow.id, {populate: true}, window => {
+                chrome.windows.get(wm.windows[display].id, {populate: true}, window => {
                     let tabs = window.tabs.sort((a, b) => a.index - b.index);
                     let activeTab = tabs.find(t => t.active === true);
 
@@ -396,7 +398,7 @@ class WindowsManager {
 
                     chrome.tabs.update(nextTabId, {active: true}, tab => {
                         let tabScript = new TabProxy(tab.id);
-                        tabScript.rearmCountdown(tabDuration);
+                        tabScript.rearmCountdown(tabDuration * 1000);
                         console.log("rearm called");
                         rotationStartDate = new Date();
                     });

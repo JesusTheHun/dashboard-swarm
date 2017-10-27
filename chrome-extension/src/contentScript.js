@@ -5,34 +5,35 @@ class ContentScript {
 
         let countdownBarItem;
 
-        if (this.countdownBar === undefined) {
-            this.countdownBar = document.createElement('div');
-            this.countdownBar.style.width = "100%";
-            this.countdownBar.style.position = 'absolute';
-            this.countdownBar.style.top = (height - barHeight) + "px";
-            this.countdownBar.style.zIndex = 9999;
+        this.clearCountdown();
 
-            countdownBarItem = document.createElement('div');
-            countdownBarItem.style.width = "0";
-            countdownBarItem.style.borderBottomRightRadius = (barHeight/2) + "px";
-            countdownBarItem.style.borderTopRightRadius = (barHeight/2) + "px";
-            countdownBarItem.style.height = barHeight + "px";
-            countdownBarItem.style.backgroundColor = "rgb(87, 85, 217)";
-            countdownBarItem.style.animationName = "countdown";
-            countdownBarItem.style.animationDuration =  countdownInterval + "ms";
-            countdownBarItem.style.animationTimingFunction =  "linear";
+        this.countdownBar = document.createElement('div');
+        this.countdownBar.style.width = "100%";
+        this.countdownBar.style.position = 'absolute';
+        this.countdownBar.style.top = (height - barHeight) + "px";
+        this.countdownBar.style.zIndex = 9999;
 
-            this.countdownBar.appendChild(countdownBarItem);
-            document.querySelector('body').appendChild(this.countdownBar);
+        countdownBarItem = document.createElement('div');
+        countdownBarItem.style.width = "0";
+        countdownBarItem.style.borderBottomRightRadius = (barHeight/2) + "px";
+        countdownBarItem.style.borderTopRightRadius = (barHeight/2) + "px";
+        countdownBarItem.style.height = barHeight + "px";
+        countdownBarItem.style.backgroundColor = "rgb(87, 85, 217)";
+        countdownBarItem.style.animationName = "countdown";
+        countdownBarItem.style.animationDuration =  countdownInterval + "ms";
+        countdownBarItem.style.animationTimingFunction =  "linear";
 
-            setTimeout(() => {
-                this.clearCountdown();
-            }, countdownInterval);
-        }
+        this.countdownBar.appendChild(countdownBarItem);
+        document.querySelector('body').appendChild(this.countdownBar);
+
+        console.log("bar appended");
     }
 
     clearCountdown() {
         if (this.countdownBar !== undefined) {
+            let barItem = this.countdownBar.querySelector('div');
+            console.log(barItem);
+            this.countdownBar.removeChild(barItem);
             this.countdownBar.remove();
             this.countdownBar = undefined;
         }
