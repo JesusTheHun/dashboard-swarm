@@ -102,7 +102,9 @@ fs.readFile(storageFilePath, (err, storageContent) => {
                                 args: [storage.config]
                             };
 
-                            conn.send(JSON.stringify(event));
+                            console.log("Broadcasting new config");
+
+                            broadcast(JSON.stringify(event));
                         break;
 
                         default:
