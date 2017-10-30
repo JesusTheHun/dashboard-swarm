@@ -2,6 +2,7 @@ import defer from './function/defer';
 import Rx from 'rxjs/Rx';
 import nodeProxy from './channels/NodeProxy';
 import popupConfig from './popup_config';
+import showTabTools from './popup_tabTools';
 
 const NodeProxy = new nodeProxy();
 let getDisplays = new defer();
@@ -74,8 +75,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        let firstDisplay = domPanelTabBlock.querySelector('.tab-item:first-child a');
 
-        domPanelTabBlock.querySelector('.tab-item:first-child a').dispatchEvent(new Event('click'));
+        if (firstDisplay) {
+            firstDisplay.dispatchEvent(new Event('click'));
+        }
     });
 
     chrome.tabs.query({active: true, currentWindow: true}, tabs => {
@@ -258,21 +262,7 @@ function addTabToPanel(tabId, tabUrl, tabTitle) {
     domTabTileParamMenuButton.addEventListener('click', e => {
         e.preventDefault();
 
-        let bodyHeight = body.offsetHeight;
-
-        if (domTabTileParamMenu.classList.contains('hide')) {
-            domTabTileParamMenu.classList.remove('hide');
-
-            let menuBottom = domTabTileParamMenu.offsetTop + domTabTileParamMenu.offsetHeight;
-
-            if (menuBottom > bodyHeight) {
-                body.style.height = (menuBottom + 10) + 'px';
-            }
-
-        } else {
-            domTabTileParamMenu.classList.add('hide');
-            body.style.height = bodyOriginalHeight + 'px';
-        }
+        showTabTools(tabId);
     });
 
     getDisplays.then(displays => {

@@ -117,3 +117,32 @@ a#configLink, a#closeConfigLink {
 .watermark {
     opacity: 0.4;
 }
+
+#tabTools {
+    align-items: flex-end;
+    margin-bottom: -8px;
+}
+
+#tabTools .modal-container {
+    width: 100%;
+}
+
+#tabTools div.commands {
+    margin: auto;
+    height: 170px;
+    width: 170px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-content: center;
+}
+
+#tabTools div.commands .d-flex {
+    justify-content: space-between;
+    align-items: center;
+    align-content: space-between;
+}
+
+#tabTools div.commands .arrow {
+    box-shadow: #50596c;
+}
