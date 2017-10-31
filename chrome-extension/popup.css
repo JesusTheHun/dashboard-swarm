@@ -127,22 +127,28 @@ a#configLink, a#closeConfigLink {
     width: 100%;
 }
 
-#tabTools div.commands {
-    margin: auto;
-    height: 170px;
-    width: 170px;
+#tabTools h6 {
+    margin-bottom: 0;
+}
+
+#tabTools .displays {
+    margin-top: 0.2rem;
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-content: center;
+    flex-wrap: wrap;
 }
 
-#tabTools div.commands .d-flex {
-    justify-content: space-between;
-    align-items: center;
-    align-content: space-between;
+#tabTools .displays .btn {
+    height: 1.2rem;
+    width: 1.6rem;
+    line-height: 0.4rem;
+    margin-right: 0.2rem;
 }
 
-#tabTools div.commands .arrow {
-    box-shadow: #50596c;
+#tabTools #zoomAndScroll {
+    display: flex;
+    justify-content: space-between;
+}
+
+#tabTools .modal-body {
+    min-height: 220px;
 }
