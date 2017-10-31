@@ -10,7 +10,7 @@ class ContentScript {
         this.countdownBar = document.createElement('div');
         this.countdownBar.style.width = "100%";
         this.countdownBar.style.position = 'absolute';
-        this.countdownBar.style.top = (height - barHeight) + "px";
+        this.countdownBar.style.top = (height - barHeight + this.getScroll().top) + "px";
         this.countdownBar.style.zIndex = 9999;
 
         countdownBarItem = document.createElement('div');
@@ -39,14 +39,16 @@ class ContentScript {
         }
     }
 
-    scroll(direction) {
+
+    getScroll() {
         let doc = document.documentElement;
-        let currentScroll = {
+        return {
             top: (window.pageYOffset || doc.scrollTop)  - (doc.clientTop || 0),
             left: (window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0)
-        };
-
-        let scroll = Object.assign({}, currentScroll);
+        }
+    }
+    scroll(direction) {
+        let scroll = Object.assign({}, this.getScroll());
 
         switch(direction) {
             case 'bottom':
@@ -68,19 +70,13 @@ class ContentScript {
 
         window.scrollTo(scroll.left, scroll.top);
 
-        return {
-            top: (window.pageYOffset || doc.scrollTop)  - (doc.clientTop || 0),
-            left: (window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0)
-        };
+        return this.getScroll();
     }
 
     scrollTo(scroll, response) {
         window.scrollTo(scroll.left, scroll.top);
 
-        response({
-            top: (window.pageYOffset || doc.scrollTop)  - (doc.clientTop || 0),
-            left: (window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0)
-        });
+        response(this.getScroll());
     }
 
     hello() { alert("Hello :D"); return "foo";};
