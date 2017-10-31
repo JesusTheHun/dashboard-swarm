@@ -156,13 +156,14 @@ function showTabsForDisplay(display) {
             return;
         }
 
-        displayTabs.map(tab => addTabToPanel(tab.id, tab.url, tab.title));
+        displayTabs.map(tab => addTabToPanel(tab));
     });
 }
 
-function addTabToPanel(tabId, tabUrl, tabTitle) {
-
-    let tab = tabsSubject.getValue().find(t => t.id === tabId);
+function addTabToPanel(tab) {
+    let tabId = tab.id;
+    let tabUrl = tab.url;
+    let tabTitle = tab.title;
 
     let domPanelBody = document.querySelector('#displays .panel .panel-body');
 
@@ -256,110 +257,9 @@ function addTabToPanel(tabId, tabUrl, tabTitle) {
 
     domPanelBody.insertBefore(domTabTileParamMenu, domTabTile.nextSibling);
 
-    let body = document.querySelector('body');
-    let bodyOriginalHeight = body.offsetHeight;
-
     domTabTileParamMenuButton.addEventListener('click', e => {
         e.preventDefault();
-
-        showTabTools(tabId);
-    });
-
-    getDisplays.then(displays => {
-
-        let domTabTileReloadLink = createMenuElement("Reload", e => {
-            e.preventDefault();
-            chrome.runtime.sendMessage({node: "reloadTab", args: [tabId]});
-        });
-
-        domTabTileParamMenu.appendChild(domTabTileReloadLink);
-
-        let currentZoom = 1.00;
-        let currentScroll = {
-            top: 0,
-            left: 0
-        };
-
-        tabsSubject.subscribe(tabs => {
-            let tab = tabs.find(tab => tab.id === tabId);
-            currentZoom = tab.zoom;
-            Object.assign(currentScroll, tab.scroll);
-        });
-
-        let domTabTileScrollDivider = createMenuDivider("SCROLL");
-        domTabTileParamMenu.appendChild(domTabTileScrollDivider);
-
-        let scroll = direction => {
-            NodeProxy.updateTab(tabId, {scroll: direction});
-        };
-
-        let domTabTileScrollLeft = createMenuElement("Scroll Left", () => scroll('left'));
-        let domTabTileScrollRight = createMenuElement("Scroll Right", () => scroll('right'));
-        let domTabTileScrollUp = createMenuElement("Scroll Up", () => scroll('top'));
-        let domTabTileScrollDown = createMenuElement("Scroll Down", () => scroll('bottom'));
-
-        domTabTileParamMenu.appendChild(domTabTileScrollLeft);
-        domTabTileParamMenu.appendChild(domTabTileScrollRight);
-        domTabTileParamMenu.appendChild(domTabTileScrollUp);
-        domTabTileParamMenu.appendChild(domTabTileScrollDown);
-
-        let zoomDividerText = zoom => "ZOOM - " + Math.round(zoom * 100) + " %";
-
-        let domTabTileZoomDivider = createMenuDivider(zoomDividerText(currentZoom));
-        domTabTileParamMenu.appendChild(domTabTileZoomDivider);
-
-        tabsSubject.subscribe(tabs => {
-            let tab = tabs.find(tab => tab.id === tabId);
-            domTabTileZoomDivider.setAttribute('data-content', zoomDividerText(tab.zoom));
-        });
-
-        let domTabTileZoomInLink = createMenuElement("Zoom In", e => {
-            e.preventDefault();
-            chrome.runtime.sendMessage({node: "updateTab", args: [tabId, {zoom: currentZoom + 0.05}]});
-        });
-
-        domTabTileParamMenu.appendChild(domTabTileZoomInLink);
-
-        let domTabTileZoomOutLink = createMenuElement("Zoom Out", e => {
-            e.preventDefault();
-            chrome.runtime.sendMessage({node: "updateTab", args: [tabId, {zoom: currentZoom - 0.05}]});
-        });
-
-        domTabTileParamMenu.appendChild(domTabTileZoomOutLink);
-
-        let domTabTileZoomResetLink = createMenuElement("Zoom Reset", e => {
-            e.preventDefault();
-            chrome.runtime.sendMessage({node: "updateTab", args: [tabId, {zoom: 1}]});
-        });
-
-        domTabTileParamMenu.appendChild(domTabTileZoomResetLink);
-
-        let domTabTileDisplayDivider = createMenuDivider("SEND TO DISPLAY");
-        domTabTileParamMenu.appendChild(domTabTileDisplayDivider);
-
-        for (let i in displays) {
-            if (displays.hasOwnProperty(i) && parseInt(i) !== activePanelTab) {
-                let displayLink = createMenuElement(getDisplayName(i), e => {
-                    e.preventDefault();
-                    chrome.runtime.sendMessage({node: "updateTab", args: [tabId, {display: parseInt(i)}]});
-                    domTabTileParamMenu.classList.add('hide');
-                });
-
-                domTabTileParamMenu.appendChild(displayLink);
-            }
-        }
-
-
-        let domTabTileCarefulDivider = createMenuDivider("CAREFUL");
-        domTabTileParamMenu.appendChild(domTabTileCarefulDivider);
-
-        let domTabTileDeleteLink = createMenuElement("Supprimer", e => {
-            e.preventDefault();
-            chrome.runtime.sendMessage({node: "closeTab", args: [tabId]});
-            domTabTileParamMenu.classList.add('hide');
-        });
-
-        domTabTileParamMenu.appendChild(domTabTileDeleteLink);
+        showTabTools(tabsSubject, tabId);
     });
 
     editableTextNode(domTabTileContentTitle, (oldValue, newValue) => {

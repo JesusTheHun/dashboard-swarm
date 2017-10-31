@@ -137,30 +137,44 @@
 
     <!-- Tab tools panel -->
 
-    <div class="modal active" id="tabTools">
+    <div class="modal" id="tabTools">
         <div class="modal-overlay"></div>
         <div class="modal-container">
             <div class="modal-header">
-                <button class="btn btn-clear float-right"></button>
-                <div class="modal-title h5">Tab</div>
+                <div class="modal-title h6"></div>
             </div>
             <div class="modal-body">
                 <div class="content">
                     <div class="commands">
-                        <div class="d-flex">
-                            <div><button class="btn btn-link"><i class="icon icon-2x icon-minus"></i></button></div>
-                            <div><button class="btn btn-link scroll"><i class="icon icon-2x icon-upward"></i></button></div>
-                            <div><button class="btn btn-link"><i class="icon icon-2x icon-plus"></i></button></div>
+                        <button id="closePanel" class="btn btn-clear float-right"></button>
+                        <div>
+                            <button id="reload" class="btn btn-primary">Refresh</button>
+                            <button id="close" class="btn btn-link">Close tab</button>
                         </div>
-                        <div class="d-flex">
-                            <div><button class="btn btn-link scroll"><i class="icon icon-2x icon-back"></i></button></div>
-                            <div><button class="btn btn-link"><i class="icon icon-2x icon-apps"></i></button></div>
-                            <div><button class="btn btn-link scroll"><i class="icon icon-2x icon-forward"></i></button></div>
+
+                        <br>
+                        <h6>Display</h6>
+                        <div class="displays">
                         </div>
-                        <div class="d-flex">
-                            <div><button class="btn btn-link"><i class="icon icon-2x icon-refresh"></i></button></div>
-                            <div><button class="btn btn-link scroll"><i class="icon icon-2x icon-downward"></i></button></div>
-                            <div><button class="btn btn-link"><i class="icon icon-2x icon-cross"></i></button></div>
+
+                        <br>
+                        <div id="zoomAndScroll">
+                            <div>
+                                <h6>Zoom <small id="zoomLabel"></small></h6>
+                                <div>
+                                    <button class="btn btn-link" id="zoomOut"><i class="icon icon-minus"></i></button>
+                                    <button class="btn btn-link" id="zoomIn"><i class="icon icon-plus"></i></button>
+                                </div>
+                            </div>
+                            <div>
+                                <h6>Scroll</h6>
+                                <div>
+                                    <button id="scrollUp" class="btn btn-link"><i class="icon icon-upward"></i></button>
+                                    <button id="scrollDown" class="btn btn-link"><i class="icon icon-downward"></i></button>
+                                    <button id="scrollLeft" class="btn btn-link"><i class="icon icon-back"></i></button>
+                                    <button id="scrollRight" class="btn btn-link"><i class="icon icon-forward"></i></button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
