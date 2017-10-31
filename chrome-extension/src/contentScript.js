@@ -25,8 +25,6 @@ class ContentScript {
 
         this.countdownBar.appendChild(countdownBarItem);
         document.querySelector('body').appendChild(this.countdownBar);
-
-        console.log("bar appended");
     }
 
     clearCountdown() {
