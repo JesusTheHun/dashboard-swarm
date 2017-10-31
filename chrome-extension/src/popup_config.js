@@ -1,6 +1,9 @@
 import DashboardSwarmWebSocket from "./classes/DashboardSwarmWebSocket";
 import DashboardSwarmListener from "./classes/DashboardSwarmListener";
 import Parameters from "./classes/Parameters";
+import nodeProxy from "./channels/NodeProxy";
+
+const NodeProxy = new nodeProxy();
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -99,6 +102,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 master: e.target.checked
             });
         });
+    });
+
+    document.querySelector('#restart').addEventListener('click', (e) => {
+        e.preventDefault();
+        NodeProxy.restart();
     });
 });
 
