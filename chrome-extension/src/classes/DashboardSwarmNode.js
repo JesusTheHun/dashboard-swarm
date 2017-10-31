@@ -13,6 +13,12 @@ class DashboardSwarmNode {
 
             let node = this;
 
+            DashboardSwarmListener.subscribeCommand('restartMaster', () => {
+                if (this.isMaster()) {
+                    chrome.runtime.reload();
+                }
+            });
+
             DashboardSwarmListener.subscribeCommand('updateTab', (tabId, newProps) => {
                 if (newProps.title !== undefined) {
                     DashboardSwarmWebSocket.sendEvent('tabUpdated', [tabId, newProps]);
@@ -203,6 +209,10 @@ class DashboardSwarmNode {
 
     displayStateFullscreen(display) {
         DashboardSwarmWebSocket.sendCommand('displayStateFullscreen', [display]);
+    }
+
+    restart() {
+        DashboardSwarmWebSocket.sendCommand('restartMaster');
     }
 }
 
