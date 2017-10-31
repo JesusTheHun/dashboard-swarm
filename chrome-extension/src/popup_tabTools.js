@@ -44,6 +44,11 @@ function showTabTools(tabsSubject, tabId) {
         NodeProxy.reloadTab(tabId);
     });
 
+    document.querySelector('#tabTools #foreground').addEventListener('click', (e) => {
+        e.preventDefault();
+        NodeProxy.sendToForeground(tabId);
+    });
+
     document.querySelector('#tabTools #close').addEventListener('click', (e) => {
         e.preventDefault();
         NodeProxy.closeTab(tabId);
