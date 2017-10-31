@@ -147,6 +147,12 @@ class WindowsManager {
                 }
             });
 
+            DashboardSwarmListener.subscribeCommand('sendToForeground', tabId => {
+                if (DashboardSwarmNode.isMaster()) {
+                    chrome.tabs.update(tabId, {active: true});
+                }
+            });
+
             WindowsManager.instance = this;
         }
 
@@ -373,9 +379,6 @@ class WindowsManager {
             if (rotationStartDate === undefined) {
                 return;
             }
-
-            console.log("Windows display");
-            console.log(wm.windows[display]);
 
             if (wm.windows[display] !== undefined) { // Prevent re-opening a closed window
 

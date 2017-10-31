@@ -197,6 +197,10 @@ class DashboardSwarmNode {
         DashboardSwarmWebSocket.sendCommand('reloadTab', [tabId]);
     }
 
+    sendToForeground(tabId) {
+        DashboardSwarmWebSocket.sendCommand('sendToForeground', [tabId]);
+    }
+
     displayStateFullscreen(display) {
         DashboardSwarmWebSocket.sendCommand('displayStateFullscreen', [display]);
     }
