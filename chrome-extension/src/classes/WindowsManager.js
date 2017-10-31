@@ -293,11 +293,11 @@ class WindowsManager {
 
                         resolve(createdWindow);
 
-                        // chrome.windows.update(createdWindow.id, {
-                        //     'state': "fullscreen"
-                        // }, function(window) {
-                        //     console.log("Window " + createdWindow.id + " in fullscreen mode");
-                        // });
+                        chrome.windows.update(createdWindow.id, {
+                            'state': "fullscreen"
+                        }, function(window) {
+                            console.log("Window " + createdWindow.id + " in fullscreen mode");
+                        });
                     });
                 } catch (err) {
                     reject(err);
