@@ -318,8 +318,6 @@ class WindowsManager {
      * @returns {Promise}
      */
     closeTab(tabId) {
-        let wm = this;
-
         return new Promise((resolve, reject) => {
             try {
                 chrome.tabs.remove(tabId, () => {
