@@ -8,10 +8,13 @@ const defaultConfig = {
     port: 8080
 };
 
+let storageFilePath = 'storage.json';
+
 let config = Object.assign({}, defaultConfig);
 
 if (process.argv[2] !== undefined) config.hostname = process.argv[2];
 if (process.argv[3] !== undefined) config.port = process.argv[3];
+if (process.argv[4] !== undefined) storageFilePath= process.argv[4];
 
 
 let server = http.createServer((req, res) => {
@@ -27,7 +30,6 @@ server.listen(config.port, config.hostname, () => {
 
 let wss;
 let clients = [];
-let storageFilePath = 'storage.json';
 let storage;
 
 fs.readFile(storageFilePath, (err, storageContent) => {
