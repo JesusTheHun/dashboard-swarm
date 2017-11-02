@@ -5,15 +5,21 @@ import popupConfig from './popup_config';
 import showTabTools from './popup_tabTools';
 
 const NodeProxy = new nodeProxy();
-let getDisplays = new defer();
 let activePanelTab = 0;
 
 let tabsSubject = new Rx.BehaviorSubject([]);
+let displaysSubject = new Rx.BehaviorSubject({});
 let globalPlayerSubject = new Rx.BehaviorSubject(false);
 
-NodeProxy.getDisplays(response => getDisplays.resolve(response));
+NodeProxy.getDisplays(response => displaysSubject.next(response));
 NodeProxy.getTabs(response => tabsSubject.next(response));
 NodeProxy.getRotationStatus();
+
+NodeProxy.on('newConnection', () => {
+    console.log("new connection received");
+    NodeProxy.getDisplays(response => displaysSubject.next(response));
+    NodeProxy.getTabs(response => tabsSubject.next(response));
+});
 
 NodeProxy.on('rotationStatus', response => {
     globalPlayerSubject.next(response);
@@ -48,7 +54,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let domPanelTabBlock = document.querySelector('#displays .panel ul.tab-block');
 
-    getDisplays.then(displays => {
+    displaysSubject.subscribe(displays => {
+        while (domPanelTabBlock.firstChild) {
+            domPanelTabBlock.removeChild(domPanelTabBlock.firstChild);
+        }
+
         for (let i in displays) {
             if (displays.hasOwnProperty(i)) {
                 let domPanelTab = document.createElement('li');
@@ -340,27 +350,4 @@ function removeTabFromPanel(tabId) {
 
 function getDisplayName(i) {
     return "Display " + i;
-}
-
-function createMenuElement(text, clickCallback) {
-    let domTabTileMenuElement = document.createElement('li');
-    domTabTileMenuElement.classList.add('menu-item');
-
-    let domTabTileMenuElementLink = document.createElement('a');
-    domTabTileMenuElementLink.textContent = text;
-
-    domTabTileMenuElementLink.addEventListener('click', clickCallback);
-    domTabTileMenuElementLink.setAttribute('href', 'javascript::');
-
-    domTabTileMenuElement.appendChild(domTabTileMenuElementLink);
-
-    return domTabTileMenuElement;
-}
-
-function createMenuDivider(text) {
-    let domTabTileMenuElement = document.createElement('li');
-    domTabTileMenuElement.classList.add('divider');
-    domTabTileMenuElement.setAttribute('data-content', text);
-
-    return domTabTileMenuElement;
 }

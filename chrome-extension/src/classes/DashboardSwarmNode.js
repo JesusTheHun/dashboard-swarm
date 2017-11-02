@@ -1,5 +1,6 @@
 import DashboardSwarmWebSocket from "./DashboardSwarmWebSocket";
 import DashboardSwarmListener from "./DashboardSwarmListener";
+import WindowsManager from "./WindowsManager";
 import Parameters from "./Parameters";
 
 class DashboardSwarmNode {
@@ -13,8 +14,13 @@ class DashboardSwarmNode {
 
             let node = this;
 
+            DashboardSwarmWebSocket.getWebSocketSubject().subscribe(newConnection => {
+                chrome.runtime.sendMessage({ target: 'popup', action: 'newConnection', data: []});
+            });
+
             DashboardSwarmListener.subscribeCommand('restartMaster', () => {
                 if (this.isMaster()) {
+                    WindowsManager.closeEverything();
                     chrome.runtime.reload();
                 }
             });
