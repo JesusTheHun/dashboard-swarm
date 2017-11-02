@@ -14,7 +14,7 @@ let config = Object.assign({}, defaultConfig);
 
 if (process.argv[2] !== undefined) config.hostname = process.argv[2];
 if (process.argv[3] !== undefined) config.port = process.argv[3];
-if (process.argv[4] !== undefined) storageFilePath= process.argv[4];
+if (process.argv[4] !== undefined) storageFilePath = process.argv[4];
 
 
 let server = http.createServer((req, res) => {
@@ -27,6 +27,7 @@ server.listen(config.port, config.hostname, () => {
     console.log((new Date()) + " Server is listening on " + config.hostname + ":" + config.port);
 });
 
+console.log(storageFilePath);
 
 let wss;
 let clients = [];

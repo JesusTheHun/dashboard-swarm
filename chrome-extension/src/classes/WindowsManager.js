@@ -143,7 +143,12 @@ class WindowsManager {
 
             DashboardSwarmListener.subscribeCommand('reloadTab', tabId => {
                 if (DashboardSwarmNode.isMaster()) {
-                    chrome.tabs.reload(tabId);
+                    chrome.tabs.reload(tabId, () => {
+                        setTimeout(() => {
+                            chrome.tabs.executeScript(tabId, {file: "build/contentScript.js"});
+                            chrome.tabs.insertCSS(tabId, {file: "build/content_script/keyframe.css"});
+                        }, 500);
+                    });
                 }
             });
 
@@ -197,19 +202,21 @@ class WindowsManager {
         let wm = this;
         wm.closeEverything();
 
-        tabs.sort((a, b) => a.position - b.position);
-        tabs.forEach(tab => {
-            wm.openTab(tab.display, tab.url).then(tabId => {
-                DashboardSwarmWebSocket.sendEvent('tabUpdated', [tab.id, {id: tabId}]);
+        setTimeout(() => {
+            tabs.sort((a, b) => a.position - b.position);
+            tabs.forEach(tab => {
+                wm.openTab(tab.display, tab.url).then(tabId => {
+                    DashboardSwarmWebSocket.sendEvent('tabUpdated', [tab.id, {id: tabId}]);
 
-                setTimeout(() => {
-                    chrome.tabs.setZoom(tab.id, tab.zoom, () => {
-                        let tabScript = new TabProxy(tab.id);
-                        tabScript.scrollTo(tab.scroll, response => console.log(response));
-                    });
-                }, 2500);
+                    setTimeout(() => {
+                        chrome.tabs.setZoom(tab.id, tab.zoom, () => {
+                            let tabScript = new TabProxy(tab.id);
+                            tabScript.scrollTo(tab.scroll);
+                        });
+                    }, 2500);
+                });
             });
-        });
+        }, 1000);
     }
 
     /**
@@ -337,11 +344,17 @@ class WindowsManager {
      * Close everything. No event is emited
      */
     closeEverything() {
+        let closed = 0;
+
         for (let windowId in this.windows) {
             if (this.windows.hasOwnProperty(windowId)) {
-                chrome.windows.remove(windowId);
+                chrome.windows.remove(this.windows[windowId].id, () => {
+                    closed++;
+                });
             }
         }
+
+        return closed;
     }
 
     dumpInternal() {

@@ -16,7 +16,6 @@ NodeProxy.getTabs(response => tabsSubject.next(response));
 NodeProxy.getRotationStatus();
 
 NodeProxy.on('newConnection', () => {
-    console.log("new connection received");
     NodeProxy.getDisplays(response => displaysSubject.next(response));
     NodeProxy.getTabs(response => tabsSubject.next(response));
 });
