@@ -295,8 +295,6 @@ class WindowsManager {
 
                         chrome.windows.update(createdWindow.id, {
                             'state': "fullscreen"
-                        }, function(window) {
-                            console.log("Window " + createdWindow.id + " in fullscreen mode");
                         });
                     });
                 } catch (err) {
@@ -402,7 +400,6 @@ class WindowsManager {
                     chrome.tabs.update(nextTabId, {active: true}, tab => {
                         let tabScript = new TabProxy(tab.id);
                         tabScript.rearmCountdown(tabDuration * 1000);
-                        console.log("rearm called");
                         rotationStartDate = new Date();
                     });
                 });
