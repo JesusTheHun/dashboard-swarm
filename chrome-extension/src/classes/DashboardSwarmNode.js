@@ -2,6 +2,7 @@ import DashboardSwarmWebSocket from "./DashboardSwarmWebSocket";
 import DashboardSwarmListener from "./DashboardSwarmListener";
 import WindowsManager from "./WindowsManager";
 import Parameters from "./Parameters";
+import defer from "../function/defer";
 
 class DashboardSwarmNode {
 
@@ -11,15 +12,22 @@ class DashboardSwarmNode {
             this.tabs = [];
             this.displays = null;
             this.rotation = false;
+            this.tabsDefer = new defer();
+            this.displaysDefer = new defer();
 
             let node = this;
 
             DashboardSwarmWebSocket.getWebSocketSubject().subscribe(newConnection => {
-                chrome.runtime.sendMessage({ target: 'popup', action: 'newConnection', data: []});
+                if (newConnection !== null) {
+                    this.tabsDefer = new defer();
+                    this.displaysDefer = new defer();
+                    node.refresh();
+                    chrome.runtime.sendMessage({ target: 'popup', action: 'newConnection', data: []});
+                }
             });
 
             DashboardSwarmListener.subscribeCommand('restartMaster', () => {
-                if (this.isMaster()) {
+                if (node.isMaster()) {
                     WindowsManager.closeEverything();
                     chrome.runtime.reload();
                 }
@@ -33,11 +41,14 @@ class DashboardSwarmNode {
 
             DashboardSwarmListener.subscribeEvent('serverTabs', tabs => {
                 node.tabs = tabs;
+                node.tabsDefer.resolve(tabs);
                 chrome.runtime.sendMessage({ target: 'popup', action: 'getTabs', data: tabs});
             });
 
             DashboardSwarmListener.subscribeEvent('masterDisplays', displays => {
                 node.displays = displays;
+                node.displaysDefer.resolve(displays);
+                chrome.runtime.sendMessage({ target: 'popup', action: 'getDisplays', data: displays});
             });
 
             DashboardSwarmListener.subscribeEvent('tabOpened', (id, display, url, title, position, isFlash, zoom, scroll) => {
@@ -56,21 +67,25 @@ class DashboardSwarmNode {
             });
 
             DashboardSwarmListener.subscribeEvent('tabClosed', tabId => {
-                let tabIdx = node.getTabs().findIndex(t => t.id === tabId);
-                if (tabIdx === -1) {
-                    return;
-                }
-                node.tabs.splice(tabIdx, 1);
-                chrome.runtime.sendMessage({ target: 'popup', action: 'tabClosed', data: tabId});
+                node.getTabs().then(tabs => {
+                    let tabIdx = tabs.findIndex(t => t.id === tabId);
+                    if (tabIdx === -1) {
+                        return;
+                    }
+                    node.tabs.splice(tabIdx, 1);
+                    chrome.runtime.sendMessage({ target: 'popup', action: 'tabClosed', data: tabId});
+                });
             });
 
             DashboardSwarmListener.subscribeEvent('tabUpdated', (tabId, newProps) => {
-                let currentTab = node.getTabs().find(t => t.id === tabId);
-                if (currentTab === undefined) {
-                    return;
-                }
-                Object.assign(currentTab, newProps);
-                chrome.runtime.sendMessage({ target: 'popup', action: 'tabUpdated', data: [tabId, newProps]});
+                node.getTabs().then(tabs => {
+                    let currentTab = tabs.find(t => t.id === tabId);
+                    if (currentTab === undefined) {
+                        return;
+                    }
+                    Object.assign(currentTab, newProps);
+                    chrome.runtime.sendMessage({target: 'popup', action: 'tabUpdated', data: [tabId, newProps]});
+                });
             });
 
             DashboardSwarmListener.subscribeEvent('rotationStarted', (display, interval, intervalFlash) => {
@@ -113,11 +128,18 @@ class DashboardSwarmNode {
             chrome.runtime.onMessage.addListener((request, sender, response) => {
                 if (request.hasOwnProperty('node') && typeof node[request.node] === 'function') {
                     let result = node[request.node].apply(node, request.args);
-                    response(result);
+
+                    // Resolve then promise before sending the response through the NodeProxy
+                    if (result instanceof Promise) {
+                        result.then(q => {
+                            response(q);
+                        });
+                        return true;
+                    } else {
+                        response(result);
+                    }
                 }
             });
-
-            this.refresh();
 
             DashboardSwarmNode.instance = this;
         }
@@ -177,17 +199,17 @@ class DashboardSwarmNode {
     }
 
     /**
-     * @returns {Array} A copy of node's tabs.
+     * @returns {Promise<Array>} A copy of node's tabs.
      */
     getTabs() {
-        return this.tabs.slice(0);
+        return this.tabsDefer;
     }
 
     /**
-     * @returns {*} A copy of displays details
+     * @returns {Promise<*>} A copy of displays details
      */
     getDisplays() {
-        return Object.assign({}, this.displays);
+        return this.displaysDefer;
     }
 
     startRotation() {

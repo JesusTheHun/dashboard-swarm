@@ -52,6 +52,7 @@ function showTabTools(tabsSubject, tabId) {
     document.querySelector('#tabTools #close').addEventListener('click', (e) => {
         e.preventDefault();
         NodeProxy.closeTab(tabId);
+        closeTabTools();
     });
 
     let currentZoom = tab.zoom;
