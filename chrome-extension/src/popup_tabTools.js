@@ -61,6 +61,12 @@ function showTabTools(tabsSubject, tabId) {
     tabsSubject.subscribe(tabs => {
         let tab = tabs.find(tab => tab.id === tabId);
         currentZoom = tab.zoom;
+
+        // Legacy support
+        if (tab.scroll === undefined) {
+            tab.scroll = {top: 0, left: 0};
+        }
+
         Object.assign(currentScroll, tab.scroll);
     });
 
