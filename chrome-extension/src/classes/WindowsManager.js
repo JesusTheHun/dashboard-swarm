@@ -2,6 +2,7 @@ import DashboardSwarmListener from "./DashboardSwarmListener";
 import DashboardSwarmNode from "./DashboardSwarmNode";
 import DashboardSwarmWebSocket from "./DashboardSwarmWebSocket";
 import TabProxy from "../channels/TabProxy";
+import Rx from 'rxjs/Rx';
 
 class WindowsManager {
 
@@ -200,23 +201,23 @@ class WindowsManager {
      */
     setTabs(tabs) {
         let wm = this;
-        wm.closeEverything();
+        wm.closeEverything().then(windowClosedCount => {
+            setTimeout(() => {
+                tabs.sort((a, b) => a.position - b.position);
+                tabs.forEach(tab => {
+                    wm.openTab(tab.display, tab.url).then(tabId => {
+                        DashboardSwarmWebSocket.sendEvent('tabUpdated', [tab.id, {id: tabId}]);
 
-        setTimeout(() => {
-            tabs.sort((a, b) => a.position - b.position);
-            tabs.forEach(tab => {
-                wm.openTab(tab.display, tab.url).then(tabId => {
-                    DashboardSwarmWebSocket.sendEvent('tabUpdated', [tab.id, {id: tabId}]);
-
-                    setTimeout(() => {
-                        chrome.tabs.setZoom(tab.id, tab.zoom, () => {
-                            let tabScript = new TabProxy(tab.id);
-                            tabScript.scrollTo(tab.scroll);
-                        });
-                    }, 2500);
+                        setTimeout(() => {
+                            chrome.tabs.setZoom(tab.id, tab.zoom, () => {
+                                let tabScript = new TabProxy(tab.id);
+                                tabScript.scrollTo(tab.scroll);
+                            });
+                        }, 2500);
+                    });
                 });
-            });
-        }, 1000);
+            }, 1000);
+        });
     }
 
     /**
@@ -340,19 +341,27 @@ class WindowsManager {
 
     /**
      * Close everything. No event is emited
+     * @return Promise<number>
      */
     closeEverything() {
-        let closed = 0;
+        let closed = new Rx.BehaviorSubject(0);
+        let toBeClosed = this.windows.length;
 
         for (let windowId in this.windows) {
             if (this.windows.hasOwnProperty(windowId)) {
                 chrome.windows.remove(this.windows[windowId].id, () => {
-                    closed++;
+                    closed.next(closed.getValue() + 1);
                 });
             }
         }
 
-        return closed;
+        return new Promise((resolve, reject) => {
+            closed.subscribe(newValue => {
+                if (toBeClosed === newValue) {
+                    resolve(closed);
+                }
+            });
+        });
     }
 
     dumpInternal() {
