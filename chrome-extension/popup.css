@@ -25,7 +25,7 @@
     white-space: nowrap;
     text-overflow: ellipsis;
     height: 20px;
-    width: 250px;
+    width: 299px;
 }
 
 .tile .tile-subtitle {
@@ -151,4 +151,16 @@ a#configLink, a#closeConfigLink {
 
 #tabTools .modal-body {
     min-height: 220px;
+}
+
+#tabTemplate {
+    display: none;
+}
+
+.js-param-button i {
+    visibility: hidden;
+}
+
+.tile:hover .js-param-button i {
+    visibility: visible;
 }
