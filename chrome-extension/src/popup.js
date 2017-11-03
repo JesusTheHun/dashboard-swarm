@@ -207,7 +207,7 @@ function addTabToPanel(tab) {
     domTabTileParamMenuButton.classList.add('btn', 'btn-link', 'btn-action', 'btn-lg');
 
     let DomTabTileParamMenuButtonIcon = document.createElement('i');
-    DomTabTileParamMenuButtonIcon.classList.add('icon', 'icon-more-vert');
+    DomTabTileParamMenuButtonIcon.classList.add('icon', 'icon-caret');
 
     domTabTileMoveUpIconWrapper.appendChild(domTabTileMoveUpIcon);
     domTabTileMoveDownIconWrapper.appendChild(domTabTileMoveDownIcon);
