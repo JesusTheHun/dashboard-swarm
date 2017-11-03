@@ -1,5 +1,5 @@
 import ContentScript from '../contentScript';
-import ExtendableProxy from '../channels/ExtendableProxy';
+import ExtendableProxy from '../../../common/ExtendableProxy';
 
 class TabProxy extends ExtendableProxy {
     constructor(id) {
