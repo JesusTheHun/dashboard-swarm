@@ -176,43 +176,11 @@ function addTabToPanel(tab) {
 
     let domPanelBody = document.querySelector('#displays .panel .panel-body');
 
-    let domTabTile = document.createElement('div');
-    domTabTile.classList.add('tile');
+    let domTabTile = document.querySelector('#tabTemplate').cloneNode(true);
+    domTabTile.removeAttribute('id');
     domTabTile.setAttribute('data-tabId', tabId);
 
-    let domTabTileContent = document.createElement('div');
-    domTabTileContent.classList.add('tile-content');
-
-    let domTabTileContentTitle = document.createElement('div');
-    domTabTileContentTitle.classList.add('tile-title');
-
-    let domTabTileMoveIconsBox = document.createElement('div');
-    domTabTileMoveIconsBox.classList.add('tile-action', 'icon-column');
-
-    let domTabTileMoveUpIconWrapper = document.createElement('div');
-    let domTabTileMoveUpIcon = document.createElement('i');
-    domTabTileMoveUpIcon.classList.add('icon', 'icon-upward', 'hover-only');
-
-    let domTabTileMoveDownIconWrapper = document.createElement('div');
-    let domTabTileMoveDownIcon = document.createElement('i');
-    domTabTileMoveDownIcon.classList.add('icon', 'icon-downward', 'hover-only');
-
-    let domTabTileContentSubtitle = document.createElement('div');
-    domTabTileContentSubtitle.classList.add('tile-subtitle');
-
-    let domTabTileAction = document.createElement('div');
-    domTabTileAction.classList.add('tile-action');
-
-    let domTabTileParamMenuButton = document.createElement('div');
-    domTabTileParamMenuButton.classList.add('btn', 'btn-link', 'btn-action', 'btn-lg');
-
-    let DomTabTileParamMenuButtonIcon = document.createElement('i');
-    DomTabTileParamMenuButtonIcon.classList.add('icon', 'icon-caret');
-
-    domTabTileMoveUpIconWrapper.appendChild(domTabTileMoveUpIcon);
-    domTabTileMoveDownIconWrapper.appendChild(domTabTileMoveDownIcon);
-
-    domTabTileMoveUpIconWrapper.addEventListener('click', e => {
+    domTabTile.querySelector('.icon-column .js-moveup').addEventListener('click', e => {
         let tab = tabsSubject.getValue().find(t => t.id === tabId);
 
         if (tab.position > 0) {
@@ -220,7 +188,7 @@ function addTabToPanel(tab) {
         }
     });
 
-    domTabTileMoveDownIconWrapper.addEventListener('click', e => {
+    domTabTile.querySelector('.icon-column .js-movedown').addEventListener('click', e => {
         let tab = tabsSubject.getValue().find(t => t.id === tabId);
         let positions = tabsSubject.getValue().filter(t => t.display === activePanelTab).map(t => t.position);
         let maxPos = Math.max(...positions);
@@ -230,43 +198,21 @@ function addTabToPanel(tab) {
         }
     });
 
-    domTabTileMoveIconsBox.appendChild(domTabTileMoveUpIconWrapper);
-    domTabTileMoveIconsBox.appendChild(domTabTileMoveDownIconWrapper);
-
-    domTabTileParamMenuButton.appendChild(DomTabTileParamMenuButtonIcon);
-
-    domTabTile.appendChild(domTabTileMoveIconsBox);
-    domTabTile.appendChild(domTabTileContent);
-    domTabTile.appendChild(domTabTileAction);
-    domTabTileContent.appendChild(domTabTileContentTitle);
-    domTabTileContent.appendChild(domTabTileContentSubtitle);
-
-    if (tab.flash) {
-        let domTabTileFlashIcon = document.createElement('i');
-        domTabTileFlashIcon.classList.add('fa');
-        domTabTileFlashIcon.classList.add('fa-bolt');
-        domTabTileFlashIcon.classList.add('watermark');
-        domTabTileFlashIcon.classList.add('flashIcon');
-
-        domTabTileContentTitle.appendChild(domTabTileFlashIcon);
+    if (!tab.flash) {
+        domTabTile.querySelector('.js-flashicon').remove();
     }
 
     let domTabTitleContentTitleText = document.createTextNode(tabTitle);
 
+    let domTabTileContentTitle = domTabTile.querySelector('.tile-title');
     domTabTileContentTitle.appendChild(domTabTitleContentTitleText);
     domTabTileContentTitle.setAttribute('title', tabTitle);
+
+    let domTabTileContentSubtitle = domTabTile.querySelector('.tile-subtitle');
     domTabTileContentSubtitle.textContent = tabUrl;
     domTabTileContentSubtitle.setAttribute('title', tabUrl);
 
-    domTabTileAction.appendChild(domTabTileParamMenuButton);
-    domPanelBody.appendChild(domTabTile);
-
-    let domTabTileParamMenu = document.createElement('ul');
-    domTabTileParamMenu.classList.add('menu', 'hide');
-
-    domPanelBody.insertBefore(domTabTileParamMenu, domTabTile.nextSibling);
-
-    domTabTileParamMenuButton.addEventListener('click', e => {
+    domTabTile.querySelector('.js-param-button').addEventListener('click', e => {
         e.preventDefault();
         showTabTools(tabsSubject, tabId);
     });
@@ -282,6 +228,8 @@ function addTabToPanel(tab) {
             chrome.runtime.sendMessage({node: "updateTab", args: [tabId, {url: newValue}]});
         }
     });
+
+    domPanelBody.appendChild(domTabTile);
 }
 
 function editableTextNode(domElement, saveFunction) {
