@@ -55,12 +55,12 @@ function showTabTools(tabsSubject, tabId) {
         closeTabTools();
     });
 
-    let currentZoom = tab.zoom;
-    let currentScroll = tab.scroll;
+    let currentZoom = tab.zoom || 1;
+    let currentScroll = tab.scroll || {top: 0, left: 0};
 
     tabsSubject.subscribe(tabs => {
         let tab = tabs.find(tab => tab.id === tabId);
-        currentZoom = tab.zoom;
+        currentZoom = tab.zoom || 1;
 
         // Legacy support
         if (tab.scroll === undefined) {
@@ -74,7 +74,7 @@ function showTabTools(tabsSubject, tabId) {
 
     tabsSubject.subscribe(tabs => {
         let updatedTab = tabs.find(tab => tab.id === tabId);
-        zoomLabel.textContent = Math.round(updatedTab.zoom * 100) + " %";
+        zoomLabel.textContent = Math.round((updatedTab.zoom || 1) * 100) + " %";
     });
 
     document.querySelector('#zoomIn').addEventListener('click', () => {
