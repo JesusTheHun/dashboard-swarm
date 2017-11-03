@@ -24,6 +24,7 @@ let buildComponents = [
     'build/background.js',
     'build/popup.js',
     'build/contentScript.js',
+    'build/content_script/keyframe.css',
 ];
 
 fs.mkdir(dest, err => {
