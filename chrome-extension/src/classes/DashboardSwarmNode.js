@@ -28,8 +28,9 @@ class DashboardSwarmNode {
 
             DashboardSwarmListener.subscribeCommand('restartMaster', () => {
                 if (node.isMaster()) {
-                    WindowsManager.closeEverything();
-                    chrome.runtime.reload();
+                    WindowsManager.closeEverything().then((windowClosedCount) => {
+                        chrome.runtime.reload();
+                    });
                 }
             });
 
