@@ -16,9 +16,15 @@ NodeProxy.getTabs(response => tabsSubject.next(response));
 NodeProxy.getRotationStatus();
 
 NodeProxy.on('newConnection', () => {
+
+    clearTabsSpace();
+    showWaitingMaster();
+
     NodeProxy.getDisplays(response => displaysSubject.next(response));
     NodeProxy.getTabs(response => tabsSubject.next(response));
 });
+
+NodeProxy.on('masterDisplays', response => displaysSubject.next(response));
 
 NodeProxy.on('rotationStatus', response => {
     globalPlayerSubject.next(response);
@@ -49,14 +55,42 @@ NodeProxy.on('tabUpdated', (tabId, newProps) => {
     tabsSubject.next(currentTabs);
 });
 
+function clearTabsSpace() {
+    let domPanelTabBlock = document.querySelector('#displays .panel ul.tab-block');
+
+    while (domPanelTabBlock.firstChild) {
+        domPanelTabBlock.removeChild(domPanelTabBlock.firstChild);
+    }
+
+    let domPanelBody = document.querySelector('#displays .panel .panel-body');
+
+    while (domPanelBody.firstChild) {
+        domPanelBody.removeChild(domPanelBody.firstChild);
+    }
+}
+
+function showWaitingMaster() {
+    let waitingMaster = document.getElementById('waitingMaster').cloneNode(true);
+    waitingMaster.removeAttribute('id');
+    document.querySelector('#displays .panel .panel-body').appendChild(waitingMaster);
+}
+
+function removeWaitingMaster() {
+    document.querySelector('#displays .panel .panel-body .empty').remove();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
 
     let domPanelTabBlock = document.querySelector('#displays .panel ul.tab-block');
 
+    showWaitingMaster();
+
     displaysSubject.subscribe(displays => {
-        while (domPanelTabBlock.firstChild) {
-            domPanelTabBlock.removeChild(domPanelTabBlock.firstChild);
+        if ((typeof displays !== 'object') || Object.keys(displays).length === 0) {
+            return;
         }
+
+        clearTabsSpace();
 
         for (let i in displays) {
             if (displays.hasOwnProperty(i)) {
@@ -84,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        let firstDisplay = domPanelTabBlock.querySelector('.tab-item:first-child a');
+        let firstDisplay = domPanelTabBlock.querySelector('.panel-nav .tab-item:first-child a');
 
         if (firstDisplay) {
             firstDisplay.dispatchEvent(new Event('click'));
@@ -144,7 +178,6 @@ function askOpenTab(isFlash) {
 }
 
 function showTabsForDisplay(display) {
-
     let domEmptyState = document.getElementById('empty');
     let domPanelBody = document.querySelector('#displays .panel .panel-body');
 

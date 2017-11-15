@@ -36,21 +36,29 @@ class DashboardSwarmWebSocket {
             this.wsReady = new defer();
         }
 
-        let ws = new WebSocketClient('ws://' + this.serverUrl);
-        ws.onopen = () => {
-            this.wsReady.resolve(ws);
-            this.wsSubject.next(ws);
+        let handleConnectionError = err => {
+            console.log(err);
+            this.wsReady.reject(err);
+            this.wsSubject.next(null);
+
+            if (typeof this.serverErrorHandler === 'function') {
+                this.serverErrorHandler.call(this, err);
+            }
         };
 
-        if (typeof this.serverErrorHandler === 'function') {
-            ws.onerror = err => {
-                this.wsReady.reject(err);
-                this.wsSubject.next(null);
-                this.serverErrorHandler.call(this, err);
+        try {
+            let ws = new WebSocketClient('ws://' + this.serverUrl);
+            ws.onopen = () => {
+                this.wsReady.resolve(ws);
+                this.wsSubject.next(ws);
             };
-        }
 
-        this.ws = ws;
+            ws.onclose = err => handleConnectionError(err);
+        } catch (err) {
+            handleConnectionError(err)
+        } finally {
+            this.ws = ws;
+        }
     }
 
     /**
@@ -102,6 +110,8 @@ class DashboardSwarmWebSocket {
 
         this.getWebSocketReady().then(function (ws) {
             ws.send(JSON.stringify(data));
+        }).catch(err => {
+            console.log("Cannot send command `" + cmd + "`, socket is in error : " + err.code);
         });
     }
 
@@ -117,6 +127,8 @@ class DashboardSwarmWebSocket {
 
         this.getWebSocketReady().then(function (ws) {
             ws.send(JSON.stringify(data));
+        }).catch(err => {
+            console.log("Cannot send command `" + cmd + "`, socket is in error : " + err.code);
         });
     }
 }

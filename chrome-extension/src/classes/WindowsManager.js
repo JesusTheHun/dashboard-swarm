@@ -209,7 +209,7 @@ class WindowsManager {
                         DashboardSwarmWebSocket.sendEvent('tabUpdated', [tab.id, {id: tabId}]);
 
                         setTimeout(() => {
-                            chrome.tabs.setZoom(tab.id, tab.zoom, () => {
+                            chrome.tabs.setZoom(tab.id, (tab.zoom || 1), () => {
                                 let tabScript = new TabProxy(tab.id);
                                 tabScript.scrollTo(tab.scroll);
                             });
