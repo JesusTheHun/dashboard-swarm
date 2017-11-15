@@ -46,11 +46,7 @@ class NodeProxy extends ExtendableProxy {
     }
 
     on(event, callback) {
-        let events = this.subscriptions[event];
-        if (events === undefined) {
-            events = [];
-        }
-
+        let events = this.subscriptions[event] || [];
         events.push(callback);
         this.subscriptions[event] = events;
     }

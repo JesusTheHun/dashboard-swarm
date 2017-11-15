@@ -1,11 +1,20 @@
 /** Template */
-#empty {
+#empty, #waitingMaster {
     display: none;
 }
 
 #displays .empty {
     min-width: 300px;
-    margin-top: 16px;
+    /*margin-top: 16px;*/
+}
+
+#displays .empty.empty-sm {
+    padding: 1rem 1rem;
+}
+
+#displays .empty .loading {
+    /*margin-top: 0.3rem;*/
+    margin-left: 1.7rem;
 }
 
 .hide {
@@ -107,8 +116,26 @@ a#configLink, a#closeConfigLink {
     }
 }
 
+@keyframes errorColor {
+    from {
+        background-color: #4452c0;
+        color: white;
+    }
+    to {
+        background-color: #a9373b;
+        color: black;
+    }
+}
+
 .successBackground {
     animation-name: successColor;
+    animation-duration: 250ms;
+    animation-iteration-count: 2;
+    animation-direction: alternate;
+}
+
+.errorBackground {
+    animation-name: errorColor;
     animation-duration: 250ms;
     animation-iteration-count: 2;
     animation-direction: alternate;

@@ -131,6 +131,9 @@ function connect(e, callback) {
             document.querySelector('#parameters').removeAttribute('disabled');
             serverUrlInput.setAttribute('disabled', 'disabled');
             document.querySelector('#connect').textContent = "Disconnect";
+
+            NodeProxy.refresh();
+
             callback(true);
 
         }).catch(err => {
