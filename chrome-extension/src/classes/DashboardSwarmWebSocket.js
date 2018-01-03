@@ -17,7 +17,7 @@ class DashboardSwarmWebSocket {
                 if (ws === null) return;
 
                 this.reconnectionInterval = setInterval(() => {
-                    if (this.ws.readyState === WebSocket.CLOSED) {
+                    if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
                         this.connect();
                     }
                 }, reconnectIntervalDelay);
