@@ -145,10 +145,10 @@ class WindowsManager {
             DashboardSwarmListener.subscribeCommand('reloadTab', tabId => {
                 if (DashboardSwarmNode.isMaster()) {
                     chrome.tabs.reload(tabId, () => {
-                        setTimeout(() => {
-                            chrome.tabs.executeScript(tabId, {file: "build/contentScript.js"});
-                            chrome.tabs.insertCSS(tabId, {file: "build/content_script/keyframe.css"});
-                        }, 500);
+                        // setTimeout(() => {
+                        //     chrome.tabs.executeScript(tabId, {file: "build/contentScript.js"});
+                        //     chrome.tabs.insertCSS(tabId, {file: "build/content_script/keyframe.css"});
+                        // }, 500);
                     });
                 }
             });
@@ -234,8 +234,8 @@ class WindowsManager {
                 this.getWindowForDisplay(display).then((window) => {
                     chrome.tabs.create({ windowId: window.id, url: tabUrl, active: true}, tab => {
                         wm.tabs[tab.id] = tab;
-                        chrome.tabs.executeScript(tab.id, {file: "build/contentScript.js"});
-                        chrome.tabs.insertCSS(tab.id, {file: "build/content_script/keyframe.css"});
+                        // chrome.tabs.executeScript(tab.id, {file: "build/contentScript.js"});
+                        // chrome.tabs.insertCSS(tab.id, {file: "build/content_script/keyframe.css"});
                         resolve(tab.id);
                     });
                 });

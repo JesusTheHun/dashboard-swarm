@@ -2,6 +2,7 @@ import ContentScript from '../contentScript';
 import ExtendableProxy from '../../../common/ExtendableProxy';
 
 class TabProxy extends ExtendableProxy {
+
     constructor(id) {
         super({
             get: (target, prop) => {
