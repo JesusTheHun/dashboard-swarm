@@ -27,6 +27,7 @@ module.exports = {
     plugins: [
         new CleanWebpackPlugin([buildDirectory]),
         new CopyWebpackPlugin([
+            {from: '../env.dev.js', to: 'env.js'},
             {from: 'content_script/**/*', to: 'content_script/[name].[ext]'}
         ])
     ],
