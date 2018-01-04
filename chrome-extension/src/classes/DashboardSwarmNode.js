@@ -18,6 +18,7 @@ class DashboardSwarmNode {
             let node = this;
 
             DashboardSwarmWebSocket.getWebSocketSubject().subscribe(newConnection => {
+
                 if (newConnection !== null) {
                     this.tabsDefer = new defer();
                     this.displaysDefer = new defer();
