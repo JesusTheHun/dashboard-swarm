@@ -34,6 +34,7 @@ class DashboardSwarmWebSocket {
         if (this.ws) {
             this.ws.close();
             this.wsReady = new defer();
+            this.wsSubject.next(null);
         }
 
         let handleConnectionError = err => {
@@ -46,8 +47,10 @@ class DashboardSwarmWebSocket {
             }
         };
 
+        let ws;
+
         try {
-            let ws = new WebSocketClient('ws://' + this.serverUrl);
+            ws = new WebSocketClient('ws://' + this.serverUrl);
             ws.onopen = () => {
                 this.wsReady.resolve(ws);
                 this.wsSubject.next(ws);
