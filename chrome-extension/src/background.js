@@ -1,10 +1,32 @@
 import DashboardSwarmNode from './classes/DashboardSwarmNode';
 import DashboardSwarmWebSocket from './classes/DashboardSwarmWebSocket';
 import DashboardSwarmTab from '../../common/DashboardSwarmTab';
+import Logger from 'js-logger';
+import { DEBUG_LEVEL } from "./env";
 
 // Init listeners
 import WindowsManager from './classes/WindowsManager';
 import Parameters from './classes/Parameters';
+
+/////////////////
+// Init logger //
+/////////////////
+
+Logger.useDefaults({
+    defaultLevel: DEBUG_LEVEL,
+    formatter: function(messages, context) {
+        let date = new Date;
+        let time = '[ ' + date.getHours() +':'+ date.getMinutes() +':'+ date.getSeconds() +'.'+ date.getMilliseconds() + ' ]';
+
+        if (context.name) {
+            messages.unshift('[ ' + context.name +' ]');
+        }
+
+        messages.unshift(time);
+    }
+});
+
+Logger.info("Logger loaded, log level : " + DEBUG_LEVEL);
 
 ///////////////////////////////
 // Load displays information //

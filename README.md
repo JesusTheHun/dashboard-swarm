@@ -26,4 +26,4 @@ npm start -- localhost 8080 storage.json
 npm run dist
 ```
 
-The script will execute `build.js` which will copy required files into the dist directory.
+The script will execute `dist.js` which will copy required files into the dist directory.

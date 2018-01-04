@@ -3,6 +3,9 @@ import DashboardSwarmListener from "./DashboardSwarmListener";
 import WindowsManager from "./WindowsManager";
 import Parameters from "./Parameters";
 import defer from "../function/defer";
+import Logger from 'js-logger';
+
+const logger = Logger.get('DashboardSwarmNode');
 
 class DashboardSwarmNode {
 
@@ -18,6 +21,9 @@ class DashboardSwarmNode {
             let node = this;
 
             DashboardSwarmWebSocket.getWebSocketSubject().subscribe(newConnection => {
+
+                logger.info("new connection received");
+                logger.info(newConnection);
 
                 if (newConnection !== null) {
                     this.tabsDefer = new defer();
