@@ -1,8 +1,11 @@
 import defer from '../function/defer';
 import Rx from 'rxjs/Rx';
+import Logger from "js-logger/src/logger";
 
 const WebSocketClient = require('websocket').w3cwebsocket;
-const reconnectIntervalDelay = 5000;
+const reconnectIntervalDelay = 10000;
+
+const logger = Logger.get('DashboardSwarmWebSocket');
 
 class DashboardSwarmWebSocket {
 
@@ -14,7 +17,10 @@ class DashboardSwarmWebSocket {
             this.wsSubject = new Rx.BehaviorSubject(null);
 
             this.getWebSocketSubject().subscribe(ws => {
-                if (ws === null) return;
+                logger.debug("new WebSocket received");
+                logger.debug(ws);
+
+                if (ws !== null) return;
 
                 this.reconnectionInterval = setInterval(() => {
                     if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
@@ -23,6 +29,7 @@ class DashboardSwarmWebSocket {
                 }, reconnectIntervalDelay);
             });
         }
+
         return DashboardSwarmWebSocket.instance;
     }
 
@@ -30,15 +37,12 @@ class DashboardSwarmWebSocket {
      * Establish WebSocket connection with stored configuration. Will close any previous connection
      */
     connect() {
+        logger.info("connection requested");
 
-        if (this.ws) {
-            this.ws.close();
-            this.wsReady = new defer();
-            this.wsSubject.next(null);
-        }
+        this.close();
 
         let handleConnectionError = err => {
-            console.log(err);
+            logger.error(err);
             this.wsReady.reject(err);
             this.wsSubject.next(null);
 
@@ -52,6 +56,7 @@ class DashboardSwarmWebSocket {
         try {
             ws = new WebSocketClient('ws://' + this.serverUrl);
             ws.onopen = () => {
+                logger.debug("connection established");
                 this.wsReady.resolve(ws);
                 this.wsSubject.next(ws);
             };
@@ -69,8 +74,10 @@ class DashboardSwarmWebSocket {
      */
     close() {
         if (this.ws) {
+            logger.debug("closing existing connection");
             this.ws.close();
             this.wsReady = new defer();
+            this.wsSubject.next(null);
         }
     }
 
@@ -111,10 +118,14 @@ class DashboardSwarmWebSocket {
         data.cmd = cmd;
         data.args = args === undefined ? [] : args;
 
+        logger.debug("sending command :");
+        logger.debug(data);
+
         this.getWebSocketReady().then(function (ws) {
             ws.send(JSON.stringify(data));
+            logger.debug("command sent");
         }).catch(err => {
-            console.log("Cannot send command `" + cmd + "`, socket is in error : " + err.code);
+            logger.error("cannot send command `" + cmd + "`, socket is in error : " + err.code);
         });
     }
 
@@ -128,10 +139,14 @@ class DashboardSwarmWebSocket {
         data.event = event;
         data.args = args === undefined ? [] : args;
 
+        logger.debug("sending event :");
+        logger.debug(data);
+
         this.getWebSocketReady().then(function (ws) {
             ws.send(JSON.stringify(data));
+            logger.debug("event sent");
         }).catch(err => {
-            console.log("Cannot send command `" + cmd + "`, socket is in error : " + err.code);
+            logger.error("cannot send event `" + event + "`, socket is in error : " + err.code);
         });
     }
 }

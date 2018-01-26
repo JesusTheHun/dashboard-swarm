@@ -3,7 +3,7 @@ import DashboardSwarmListener from "./DashboardSwarmListener";
 import WindowsManager from "./WindowsManager";
 import Parameters from "./Parameters";
 import defer from "../function/defer";
-import Logger from 'js-logger';
+import Logger from "js-logger/src/logger";
 
 const logger = Logger.get('DashboardSwarmNode');
 
@@ -21,16 +21,17 @@ class DashboardSwarmNode {
             let node = this;
 
             DashboardSwarmWebSocket.getWebSocketSubject().subscribe(newConnection => {
-
                 logger.info("new connection received");
-                logger.info(newConnection);
+                logger.debug(newConnection);
 
-                if (newConnection !== null) {
-                    this.tabsDefer = new defer();
-                    this.displaysDefer = new defer();
-                    node.refresh();
-                    chrome.runtime.sendMessage({ target: 'popup', action: 'newConnection', data: []});
+                if (newConnection === null) {
+                    return;
                 }
+
+                this.tabsDefer = new defer();
+                this.displaysDefer = new defer();
+                node.refresh();
+                chrome.runtime.sendMessage({ target: 'popup', action: 'newConnection', data: []});
             });
 
             DashboardSwarmListener.subscribeCommand('restartMaster', () => {

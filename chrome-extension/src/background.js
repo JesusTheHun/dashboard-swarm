@@ -1,32 +1,17 @@
+//////////////////
+// Import stuff //
+//////////////////
+
+import logger from './logger';
+
 import DashboardSwarmNode from './classes/DashboardSwarmNode';
 import DashboardSwarmWebSocket from './classes/DashboardSwarmWebSocket';
 import DashboardSwarmTab from '../../common/DashboardSwarmTab';
-import Logger from 'js-logger';
-import { DEBUG_LEVEL } from "./env";
 
 // Init listeners
 import WindowsManager from './classes/WindowsManager';
 import Parameters from './classes/Parameters';
 
-/////////////////
-// Init logger //
-/////////////////
-
-Logger.useDefaults({
-    defaultLevel: DEBUG_LEVEL,
-    formatter: function(messages, context) {
-        let date = new Date;
-        let time = '[ ' + date.getHours() +':'+ date.getMinutes() +':'+ date.getSeconds() +'.'+ date.getMilliseconds() + ' ]';
-
-        if (context.name) {
-            messages.unshift('[ ' + context.name +' ]');
-        }
-
-        messages.unshift(time);
-    }
-});
-
-Logger.info("Logger loaded, log level : " + DEBUG_LEVEL);
 
 ///////////////////////////////
 // Load displays information //
@@ -35,11 +20,14 @@ Logger.info("Logger loaded, log level : " + DEBUG_LEVEL);
 chrome.browserAction.setBadgeText({"text": "OFF"});
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
+    logger.info("config changes detected, live apply");
+
     if (changes.master) {
         DashboardSwarmNode.setMaster(changes.master.newValue);
     }
 
     if (changes.server) {
+        logger.info("server url changed, reconnection...");
         DashboardSwarmWebSocket.setServerUrl(changes.server.newValue);
         DashboardSwarmWebSocket.connect();
     }
@@ -63,5 +51,7 @@ chrome.storage.sync.get({
     DashboardSwarmWebSocket.setServerConnectionErrorHandler(err => {
         chrome.browserAction.setBadgeText({"text": "ERR"});
     });
+    logger.debug("config loaded");
+    logger.debug(items);
     DashboardSwarmWebSocket.connect();
 });
