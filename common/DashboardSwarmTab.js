@@ -1,6 +1,6 @@
 import ExtendableProxy from "./ExtendableProxy";
 
-class DashboardSwarmTab extends ExtendableProxy{
+export class DashboardSwarmTab extends ExtendableProxy {
     constructor(tabData) {
         super({
             get: (target, access) => {
@@ -41,5 +41,3 @@ class DashboardSwarmTab extends ExtendableProxy{
         return Object.assign({top: 0, left: 0}, this.scroll);
     }
 }
-
-export default DashboardSwarmTab;

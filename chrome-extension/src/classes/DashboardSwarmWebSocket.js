@@ -7,30 +7,24 @@ const reconnectIntervalDelay = 10000;
 
 const logger = Logger.get('DashboardSwarmWebSocket');
 
-class DashboardSwarmWebSocket {
+export class DashboardSwarmWebSocket {
 
     constructor() {
-        if (!DashboardSwarmWebSocket.instance) {
-            DashboardSwarmWebSocket.instance = this;
+        this.wsReady = new defer();
+        this.wsSubject = new Rx.BehaviorSubject(null);
 
-            this.wsReady = new defer();
-            this.wsSubject = new Rx.BehaviorSubject(null);
+        this.getWebSocketSubject().subscribe(ws => {
+            logger.debug("new WebSocket received");
+            logger.debug(ws);
 
-            this.getWebSocketSubject().subscribe(ws => {
-                logger.debug("new WebSocket received");
-                logger.debug(ws);
+            if (ws !== null) return;
 
-                if (ws !== null) return;
-
-                this.reconnectionInterval = setInterval(() => {
-                    if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
-                        this.connect();
-                    }
-                }, reconnectIntervalDelay);
-            });
-        }
-
-        return DashboardSwarmWebSocket.instance;
+            this.reconnectionInterval = setInterval(() => {
+                if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
+                    this.connect();
+                }
+            }, reconnectIntervalDelay);
+        });
     }
 
     /**
@@ -150,8 +144,3 @@ class DashboardSwarmWebSocket {
         });
     }
 }
-
-const instance = new DashboardSwarmWebSocket();
-Object.freeze(instance.instance);
-
-export default instance;

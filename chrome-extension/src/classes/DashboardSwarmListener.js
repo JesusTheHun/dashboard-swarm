@@ -1,33 +1,28 @@
-import DashboardSwarmWebSocket from './DashboardSwarmWebSocket';
+export class DashboardSwarmListener {
 
-class DashboardSwarmListener {
+    constructor(ws) {
+        this.ws = ws;
+        this.handlers = {'event': [], 'command': []};
 
-    constructor() {
-        if (!DashboardSwarmListener.instance) {
+        this.ws.getWebSocketSubject().subscribe(ws => {
+            if (ws === null) return;
+            ws.onmessage = event => {
+                let message = event.data;
 
-            let listener = this;
-            listener.handlers = {'event': [], 'command': []};
+                try {
+                    let data = JSON.parse(message);
+                    this.dispatch(data);
 
-            DashboardSwarmWebSocket.getWebSocketSubject().subscribe(ws => {
-                if (ws === null) return;
-                ws.onmessage = event => {
-                    let message = event.data;
-
-                    try {
-                        let data = JSON.parse(message);
-                        listener.dispatch(data);
-
-                    } catch (err) {
-                        console.log(err);
-                    }
+                } catch (err) {
+                    console.log(err);
                 }
-            });
-
-            DashboardSwarmListener.instance = this;
-        }
-        return DashboardSwarmListener.instance;
+            }
+        });
     }
 
+    getWebSocket() {
+        return this.ws;
+    }
 
     subscribeEvent(eventName, callback) {
         return subscribe.call(this, 'event', eventName, callback);
@@ -91,8 +86,3 @@ function unsubscribe(namespace, name, callback) {
 
     return foundCallback !== undefined;
 }
-
-const instance = new DashboardSwarmListener();
-Object.freeze(instance.instance);
-
-export default instance;
