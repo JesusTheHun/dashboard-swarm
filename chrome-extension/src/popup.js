@@ -3,6 +3,9 @@ import Rx from 'rxjs/Rx';
 import nodeProxy from './channels/NodeProxy';
 import popupConfig from './popup_config';
 import showTabTools from './popup_tabTools';
+import Logger from './logger';
+
+const logger = Logger.get('popup');
 
 const NodeProxy = new nodeProxy();
 let activePanelTab = 0;
@@ -11,17 +14,16 @@ let tabsSubject = new Rx.BehaviorSubject([]);
 let displaysSubject = new Rx.BehaviorSubject({});
 let globalPlayerSubject = new Rx.BehaviorSubject(false);
 
-NodeProxy.getDisplays(response => displaysSubject.next(response));
-NodeProxy.getTabs(response => tabsSubject.next(response));
-NodeProxy.getRotationStatus();
-
 NodeProxy.on('newConnection', () => {
+
+    logger.info("new connection detected");
 
     clearTabsSpace();
     showWaitingMaster();
 
     NodeProxy.getDisplays(response => displaysSubject.next(response));
     NodeProxy.getTabs(response => tabsSubject.next(response));
+    NodeProxy.getRotationStatus();
 });
 
 NodeProxy.on('masterDisplays', response => displaysSubject.next(response));
