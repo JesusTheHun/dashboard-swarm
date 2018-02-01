@@ -41,7 +41,7 @@ export class Parameters {
         return p;
     }
 
-    getParametersName() {
+    static getParametersName() {
         return paramsName;
     }
 

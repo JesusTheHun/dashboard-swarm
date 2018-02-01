@@ -1,4 +1,3 @@
-import defer from './function/defer';
 import Rx from 'rxjs/Rx';
 import nodeProxy from './channels/NodeProxy';
 import popupConfig from './popup_config';
@@ -14,9 +13,9 @@ let tabsSubject = new Rx.BehaviorSubject([]);
 let displaysSubject = new Rx.BehaviorSubject({});
 let globalPlayerSubject = new Rx.BehaviorSubject(false);
 
-NodeProxy.on('newConnection', () => {
+NodeProxy.on('connectionSuccess', () => {
 
-    logger.info("new connection detected");
+    logger.info("new successful connection detected");
 
     clearTabsSpace();
     showWaitingMaster();

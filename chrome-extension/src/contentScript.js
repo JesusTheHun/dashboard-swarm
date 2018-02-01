@@ -1,4 +1,4 @@
-class ContentScript {
+export class ContentScript {
     rearmCountdown(countdownInterval) {
         let barHeight = 8;
         let height = window.innerHeight;
@@ -76,11 +76,7 @@ class ContentScript {
 
         response(this.getScroll());
     }
-
-    hello() { alert("Hello :D"); return "foo";};
 }
-
-export default ContentScript;
 
 let contentScript = new ContentScript();
 

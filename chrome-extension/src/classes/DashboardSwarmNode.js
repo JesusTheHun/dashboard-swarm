@@ -1,5 +1,3 @@
-import WindowsManager from "./WindowsManager";
-import Parameters from "./Parameters";
 import defer from "../function/defer";
 import Logger from "js-logger/src/logger";
 
@@ -7,9 +5,10 @@ const logger = Logger.get('DashboardSwarmNode');
 
 export class DashboardSwarmNode {
 
-    constructor(ws, listener) {
+    constructor(ws, listener, param) {
         this.ws = ws;
         this.dsListener = listener;
+        this.param = param;
 
         this.master = 0;
         this.tabs = [];
@@ -28,40 +27,33 @@ export class DashboardSwarmNode {
             this.displaysDefer = new defer();
 
             if (newConnection === null) {
+                chrome.runtime.sendMessage({ target: 'popup', action: 'connectionFailed', data: []});
                 return;
             }
 
             node.refresh();
-            chrome.runtime.sendMessage({ target: 'popup', action: 'newConnection', data: []});
+            chrome.runtime.sendMessage({ target: 'popup', action: 'connectionSuccess', data: []});
         });
 
-        ws.subscribeCommand('restartMaster', () => {
-            if (node.isMaster()) {
-                WindowsManager.closeEverything().then(windowClosedCount => {
-                    chrome.runtime.reload();
-                });
-            }
-        });
-
-        ws.subscribeCommand('updateTab', (tabId, newProps) => {
+        listener.subscribeCommand('updateTab', (tabId, newProps) => {
             if (newProps.title !== undefined) {
                 ws.sendEvent('tabUpdated', [tabId, newProps]);
             }
         });
 
-        ws.subscribeEvent('serverTabs', tabs => {
+        listener.subscribeEvent('serverTabs', tabs => {
             node.tabs = tabs;
             node.tabsDefer.resolve(tabs);
             chrome.runtime.sendMessage({ target: 'popup', action: 'getTabs', data: tabs});
         });
 
-        ws.subscribeEvent('masterDisplays', displays => {
+        listener.subscribeEvent('masterDisplays', displays => {
             node.displays = displays;
             node.displaysDefer.resolve(displays);
             chrome.runtime.sendMessage({ target: 'popup', action: 'getDisplays', data: displays});
         });
 
-        ws.subscribeEvent('tabOpened', (id, display, url, title, position, isFlash, zoom, scroll) => {
+        listener.subscribeEvent('tabOpened', (id, display, url, title, position, isFlash, zoom, scroll) => {
             let tab = {
                 id: id,
                 display: display,
@@ -76,7 +68,7 @@ export class DashboardSwarmNode {
             chrome.runtime.sendMessage({target: 'popup', action: 'tabOpened', data: tab});
         });
 
-        ws.subscribeEvent('tabClosed', tabId => {
+        listener.subscribeEvent('tabClosed', tabId => {
             node.getTabs().then(tabs => {
                 let tabIdx = tabs.findIndex(t => t.id === tabId);
                 if (tabIdx === -1) {
@@ -87,7 +79,7 @@ export class DashboardSwarmNode {
             });
         });
 
-        ws.subscribeEvent('tabUpdated', (tabId, newProps) => {
+        listener.subscribeEvent('tabUpdated', (tabId, newProps) => {
             node.getTabs().then(tabs => {
                 let currentTab = tabs.find(t => t.id === tabId);
                 if (currentTab === undefined) {
@@ -98,15 +90,15 @@ export class DashboardSwarmNode {
             });
         });
 
-        ws.subscribeEvent('rotationStarted', (display, interval, intervalFlash) => {
+        listener.subscribeEvent('rotationStarted', (display, interval, intervalFlash) => {
             chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStarted', data: [display, interval, intervalFlash]});
         });
 
-        ws.subscribeEvent('rotationStopped', () => {
+        listener.subscribeEvent('rotationStopped', () => {
             chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStopped', data: []});
         });
 
-        ws.subscribeEvent('rotationStatus', (isPlaying, interval, flashInterval) => {
+        listener.subscribeEvent('rotationStatus', (isPlaying, interval, flashInterval) => {
             this.rotation = {
                 active: isPlaying,
                 interval: interval,
@@ -115,18 +107,22 @@ export class DashboardSwarmNode {
             chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStatus', data: isPlaying});
         });
 
+        listener.subscribeEvent('serverConfig', config => {
+            chrome.runtime.sendMessage({ target: 'popup', action: 'serverConfig', data: config});
+        });
+
         let rebootRotation = () => {
             this.stopRotation();
             this.startRotation();
         };
 
-        Parameters.subscribe('tabSwitchInterval', newValue => {
+        param.subscribe('tabSwitchInterval', newValue => {
             if (this.rotation.active && newValue !== this.rotation.interval) {
                 rebootRotation();
             }
         });
 
-        Parameters.subscribe('flashTabSwitchInterval', newValue => {
+        param.subscribe('flashTabSwitchInterval', newValue => {
             if (this.rotation.active && newValue !== this.rotation.flashInterval) {
                 rebootRotation();
             }
@@ -225,10 +221,14 @@ export class DashboardSwarmNode {
         return this.displaysDefer;
     }
 
+    getConfig() {
+        this.ws.sendCommand('getConfig');
+    }
+
     startRotation() {
         this.ws.sendCommand('startRotation', [
-            Parameters.getParameter('tabSwitchInterval'),
-            Parameters.getParameter('flashTabSwitchInterval')
+            this.param.getParameter('tabSwitchInterval'),
+            this.param.getParameter('flashTabSwitchInterval')
         ]);
     }
 
@@ -254,5 +254,21 @@ export class DashboardSwarmNode {
 
     restart() {
         this.ws.sendCommand('restartMaster');
+    }
+
+    connect() {
+        this.ws.connect();
+    }
+
+    close() {
+        this.ws.close();
+    }
+
+    setServerUrl(serverUrl) {
+        this.ws.setServerUrl(serverUrl);
+    }
+
+    setConfig(newConfig) {
+        this.ws.sendCommand('setConfig', [newConfig]);
     }
 }

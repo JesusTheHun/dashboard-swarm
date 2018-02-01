@@ -1,6 +1,4 @@
-import DashboardSwarmWebSocket from "./classes/DashboardSwarmWebSocket";
-import DashboardSwarmListener from "./classes/DashboardSwarmListener";
-import Parameters from "./classes/Parameters";
+import {Parameters} from "./classes/Parameters";
 import nodeProxy from "./channels/NodeProxy";
 
 const NodeProxy = new nodeProxy();
@@ -46,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let configOptions = Parameters.getParametersName();
 
-                DashboardSwarmListener.subscribeEvent('serverConfig', config => {
+                NodeProxy.on('serverConfig', config => {
                     configOptions.forEach(configName => {
                         let value = '';
                         if (config[configName] !== undefined) {
@@ -61,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 });
 
-                DashboardSwarmWebSocket.sendCommand('getConfig');
+                NodeProxy.getConfig();
 
                 document.querySelector('#save').addEventListener('click', e => {
                     e.preventDefault();
@@ -77,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         server: document.querySelector('#serverUrl').value
                     });
 
-                    DashboardSwarmWebSocket.sendCommand('setConfig', [newConfig]);
+                    NodeProxy.setConfig(newConfig);
 
                     e.target.classList.add('successBackground');
 
@@ -119,14 +117,8 @@ function connect(e, callback) {
     chrome.storage.sync.set({
         server: serverUrl
     }, () => {
-        DashboardSwarmWebSocket.setServerUrl(serverUrl);
-        DashboardSwarmWebSocket.connect();
 
-        serverUrlInput.classList.remove('is-success');
-        serverUrlInput.classList.remove('is-error');
-
-        DashboardSwarmWebSocket.getWebSocketReady().then(() => {
-
+        NodeProxy.on('connectionSuccess', () => {
             serverUrlInput.classList.add('is-success');
             document.querySelector('#parameters').removeAttribute('disabled');
             serverUrlInput.setAttribute('disabled', 'disabled');
@@ -135,19 +127,26 @@ function connect(e, callback) {
             NodeProxy.refresh();
 
             callback(true);
+        });
 
-        }).catch(err => {
+        NodeProxy.on('connectionFailed', () => {
             connectionHint.textContent = "Error : " + err;
             serverUrlInput.classList.add('is-error');
             callback(false);
         });
+
+        NodeProxy.setServerUrl(serverUrl);
+        NodeProxy.connect();
+
+        serverUrlInput.classList.remove('is-success');
+        serverUrlInput.classList.remove('is-error');
     });
 }
 
 function disconnect(e, callback) {
     let serverUrlInput = document.querySelector('#serverUrl');
     serverUrlInput.removeAttribute('disabled');
-    DashboardSwarmWebSocket.close();
+    NodeProxy.close();
 
     let configOptions = Parameters.getParametersName();
 
