@@ -3,7 +3,6 @@ import Rx from 'rxjs/Rx';
 import Logger from "js-logger/src/logger";
 
 const WebSocketClient = require('websocket').w3cwebsocket;
-const reconnectIntervalDelay = 10000;
 
 const logger = Logger.get('DashboardSwarmWebSocket');
 
@@ -12,19 +11,6 @@ export class DashboardSwarmWebSocket {
     constructor() {
         this.wsReady = new defer();
         this.wsSubject = new Rx.BehaviorSubject(null);
-
-        this.getWebSocketSubject().subscribe(ws => {
-            logger.debug("new WebSocket received");
-            logger.debug(ws);
-
-            if (ws !== null) return;
-
-            this.reconnectionInterval = setInterval(() => {
-                if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
-                    this.connect();
-                }
-            }, reconnectIntervalDelay);
-        });
     }
 
     /**
@@ -80,6 +66,7 @@ export class DashboardSwarmWebSocket {
      * @param {string} url
      */
     setServerUrl(url) {
+        logger.debug("New server url : " + url);
         this.serverUrl = url;
     }
 
@@ -112,7 +99,7 @@ export class DashboardSwarmWebSocket {
         data.cmd = cmd;
         data.args = args === undefined ? [] : args;
 
-        logger.debug("sending command :");
+        logger.debug("command rdy to be send :");
         logger.debug(data);
 
         this.getWebSocketReady().then(function (ws) {

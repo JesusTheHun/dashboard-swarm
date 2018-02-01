@@ -5,7 +5,6 @@ export class WindowsManager {
 
     constructor(dsListener, dsNode) {
         this.dsListener = dsListener;
-        this.dsNode = dsNode;
 
         this.windows = {};
         this.windowsPromises = {};
@@ -155,6 +154,14 @@ export class WindowsManager {
         dsListener.subscribeCommand('sendToForeground', tabId => {
             if (dsNode.isMaster()) {
                 chrome.tabs.update(tabId, {active: true});
+            }
+        });
+
+        dsListener.subscribeCommand('restartMaster', () => {
+            if (dsNode.isMaster()) {
+                this.closeEverything().then(windowClosedCount => {
+                    chrome.runtime.reload();
+                });
             }
         });
     }
