@@ -1,3 +1,6 @@
+import Logger from './logger';
+const logger = Logger.get('contentScript');
+
 export class ContentScript {
     rearmCountdown(countdownInterval) {
         let barHeight = 8;
@@ -30,7 +33,7 @@ export class ContentScript {
     clearCountdown() {
         if (this.countdownBar !== undefined) {
             let barItem = this.countdownBar.querySelector('div');
-            console.log(barItem);
+            logger.log(barItem);
             this.countdownBar.removeChild(barItem);
             this.countdownBar.remove();
             this.countdownBar = undefined;
@@ -67,13 +70,11 @@ export class ContentScript {
         }
 
         window.scrollTo(scroll.left, scroll.top);
-
         return this.getScroll();
     }
 
     scrollTo(scroll, response) {
         window.scrollTo(scroll.left, scroll.top);
-
         response(this.getScroll());
     }
 }
@@ -85,18 +86,18 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
 
     if (typeof targetFunction === 'function') {
         let givenArgsLength = request.args.length;
-        if (givenArgsLength < targetFunction.length) {
+        let async = givenArgsLength < targetFunction.length;
+
+        if (async) {
             request.args.push(response);
         }
 
         let result = targetFunction.apply(contentScript, request.args);
 
-        if (givenArgsLength === targetFunction.length) {
+        if (!async) {
             response(result);
         } else {
             return true;
         }
     }
 });
-
-console.log("contentScript loaded");

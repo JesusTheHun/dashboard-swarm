@@ -35,7 +35,7 @@ export class WindowsManager {
                             chrome.tabs.getZoom(tabId, zoom => {
                                 let flash = isFlash ? new Date() : undefined;
                                 wm.tabs[tab.id].flash = flash;
-                                dsListener.sendEvent('tabOpened', [tabId, display, url, changeInfo.title, tab.index, flash, zoom, scroll]);
+                                dsListener.getDashboardSwarmWebSocket().sendEvent('tabOpened', [tabId, display, url, changeInfo.title, tab.index, flash, zoom, scroll]);
                             });
                             chrome.tabs.onUpdated.removeListener(updateWhenTitleIsReady);
                         }
@@ -150,12 +150,7 @@ export class WindowsManager {
 
             dsListener.subscribeCommand('reloadTab', tabId => {
                 if (dsNode.isMaster()) {
-                    chrome.tabs.reload(tabId, () => {
-                        //setTimeout(() => {
-                            //chrome.tabs.executeScript(tabId, {file: "build/contentScript.js"});
-                            //chrome.tabs.insertCSS(tabId, {file: "build/content_script/keyframe.css"});
-                        //}, 500);
-                    });
+                    chrome.tabs.reload(tabId);
                 }
             });
 
@@ -244,8 +239,6 @@ export class WindowsManager {
                 this.getWindowForDisplay(display).then((window) => {
                     chrome.tabs.create({ windowId: window.id, url: tabUrl, active: true}, tab => {
                         wm.tabs[tab.id] = tab;
-                        // chrome.tabs.executeScript(tab.id, {file: "build/contentScript.js"});
-                        // chrome.tabs.insertCSS(tab.id, {file: "build/content_script/keyframe.css"});
                         resolve(tab.id);
                     });
                 });
