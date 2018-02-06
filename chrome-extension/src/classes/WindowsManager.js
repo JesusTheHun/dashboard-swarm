@@ -1,5 +1,8 @@
 import TabProxy from "../channels/TabProxy";
 import Rx from 'rxjs/Rx';
+import Logger from "js-logger/src/logger";
+
+const logger = Logger.get('WindowsManager');
 
 export class WindowsManager {
 
@@ -14,7 +17,12 @@ export class WindowsManager {
         let wm = this;
 
         dsListener.subscribeEvent('serverTabs', tabs => {
-            if (dsNode.isMaster()) wm.setTabs(tabs);
+            logger.info("serverTabs received");
+            logger.debug(tabs);
+            if (dsNode.isMaster()) {
+                logger.info("this node is a master one, setting tabs");
+                wm.setTabs(tabs);
+            }
         });
 
         dsListener.subscribeCommand('openTab', (display, url, isFlash) => {
@@ -203,11 +211,12 @@ export class WindowsManager {
     setTabs(tabs) {
         let wm = this;
         wm.closeEverything().then(windowClosedCount => {
+            logger.debug("everything has been closed (" + windowClosedCount + " windows closed) ");
             setTimeout(() => {
                 tabs.sort((a, b) => a.position - b.position);
                 tabs.forEach(tab => {
                     wm.openTab(tab.display, tab.url).then(tabId => {
-                        dsListener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tab.id, {id: tabId}]);
+                        this.dsListener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tab.id, {id: tabId}]);
 
                         setTimeout(() => {
                             chrome.tabs.setZoom(tab.id, (tab.zoom || 1), () => {
@@ -346,7 +355,10 @@ export class WindowsManager {
      */
     closeEverything() {
         let closed = new Rx.BehaviorSubject(0);
-        let toBeClosed = this.windows.length;
+        let toBeClosed = Object.keys(this.windows).length;
+
+        logger.debug("closing everything, " + toBeClosed + " windows to be closed");
+        logger.debug(this.windows);
 
         for (let windowId in this.windows) {
             if (this.windows.hasOwnProperty(windowId)) {
@@ -359,7 +371,7 @@ export class WindowsManager {
         return new Promise((resolve, reject) => {
             closed.subscribe(newValue => {
                 if (toBeClosed === newValue) {
-                    resolve(closed);
+                    resolve(toBeClosed);
                 }
             });
         });

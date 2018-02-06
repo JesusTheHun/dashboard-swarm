@@ -5,27 +5,33 @@ import showTabTools from './popup_tabTools';
 import Logger from './logger';
 
 const logger = Logger.get('popup');
-
 const NodeProxy = new nodeProxy();
+
 let activePanelTab = 0;
 
 let tabsSubject = new Rx.BehaviorSubject([]);
 let displaysSubject = new Rx.BehaviorSubject({});
 let globalPlayerSubject = new Rx.BehaviorSubject(false);
 
-NodeProxy.on('connectionSuccess', () => {
-
-    logger.info("new successful connection detected");
-
+function load() {
     clearTabsSpace();
-    showWaitingMaster();
 
-    NodeProxy.getDisplays(response => displaysSubject.next(response));
+    let masterTimeout = setTimeout(() => showWaitingMaster(), 500);
+
+    NodeProxy.getDisplays(response => {
+        displaysSubject.next(response);
+        clearTimeout(masterTimeout);
+    });
     NodeProxy.getTabs(response => tabsSubject.next(response));
     NodeProxy.getRotationStatus();
-});
+}
 
-NodeProxy.on('masterDisplays', response => displaysSubject.next(response));
+load();
+
+NodeProxy.on('connectionSuccess', () => {
+    logger.info("new successful connection detected");
+    load();
+});
 
 NodeProxy.on('rotationStatus', response => {
     globalPlayerSubject.next(response);
@@ -59,14 +65,16 @@ NodeProxy.on('tabUpdated', (tabId, newProps) => {
 function clearTabsSpace() {
     let domPanelTabBlock = document.querySelector('#displays .panel ul.tab-block');
 
-    while (domPanelTabBlock.firstChild) {
-        domPanelTabBlock.removeChild(domPanelTabBlock.firstChild);
-    }
+    if (domPanelTabBlock) {
+        while (domPanelTabBlock.firstChild) {
+            domPanelTabBlock.removeChild(domPanelTabBlock.firstChild);
+        }
 
-    let domPanelBody = document.querySelector('#displays .panel .panel-body');
+        let domPanelBody = document.querySelector('#displays .panel .panel-body');
 
-    while (domPanelBody.firstChild) {
-        domPanelBody.removeChild(domPanelBody.firstChild);
+        while (domPanelBody.firstChild) {
+            domPanelBody.removeChild(domPanelBody.firstChild);
+        }
     }
 }
 
