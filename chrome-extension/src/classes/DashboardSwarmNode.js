@@ -1,151 +1,159 @@
-import DashboardSwarmWebSocket from "./DashboardSwarmWebSocket";
-import DashboardSwarmListener from "./DashboardSwarmListener";
-import WindowsManager from "./WindowsManager";
-import Parameters from "./Parameters";
 import defer from "../function/defer";
+import Logger from "js-logger/src/logger";
 
-class DashboardSwarmNode {
+const logger = Logger.get('DashboardSwarmNode');
 
-    constructor() {
-        if (!DashboardSwarmNode.instance) {
-            this.master = 0;
-            this.tabs = [];
-            this.displays = null;
-            this.rotation = false;
+export class DashboardSwarmNode {
+
+    constructor(ws, listener, param) {
+        this.ws = ws;
+        this.dsListener = listener;
+        this.param = param;
+
+        this.master = 0;
+        this.tabs = [];
+        this.displays = null;
+        this.rotation = false;
+        this.tabsDefer = new defer();
+        this.displaysDefer = new defer();
+
+        let node = this;
+
+        ws.getWebSocketSubject().subscribe(newConnection => {
+            logger.info("new connection received");
+            logger.debug(newConnection);
+
             this.tabsDefer = new defer();
             this.displaysDefer = new defer();
 
-            let node = this;
+            if (newConnection === null) {
+                chrome.runtime.sendMessage({ target: 'popup', action: 'connectionFailed', data: []});
+                return;
+            }
 
-            DashboardSwarmWebSocket.getWebSocketSubject().subscribe(newConnection => {
-                if (newConnection !== null) {
-                    this.tabsDefer = new defer();
-                    this.displaysDefer = new defer();
-                    node.refresh();
-                    chrome.runtime.sendMessage({ target: 'popup', action: 'newConnection', data: []});
-                }
-            });
+            node.refresh();
+            chrome.runtime.sendMessage({ target: 'popup', action: 'connectionSuccess', data: []});
+        });
 
-            DashboardSwarmListener.subscribeCommand('restartMaster', () => {
-                if (node.isMaster()) {
-                    WindowsManager.closeEverything().then((windowClosedCount) => {
-                        chrome.runtime.reload();
-                    });
-                }
-            });
+        listener.subscribeCommand('updateTab', (tabId, newProps) => {
+            if (newProps.title !== undefined) {
+                ws.sendEvent('tabUpdated', [tabId, newProps]);
+            }
+        });
 
-            DashboardSwarmListener.subscribeCommand('updateTab', (tabId, newProps) => {
-                if (newProps.title !== undefined) {
-                    DashboardSwarmWebSocket.sendEvent('tabUpdated', [tabId, newProps]);
-                }
-            });
+        listener.subscribeEvent('serverTabs', tabs => {
+            node.tabs = tabs;
+            node.tabsDefer.resolve(tabs);
+            chrome.runtime.sendMessage({ target: 'popup', action: 'getTabs', data: tabs});
+        });
 
-            DashboardSwarmListener.subscribeEvent('serverTabs', tabs => {
-                node.tabs = tabs;
-                node.tabsDefer.resolve(tabs);
-                chrome.runtime.sendMessage({ target: 'popup', action: 'getTabs', data: tabs});
-            });
+        listener.subscribeEvent('masterDisplays', displays => {
+            node.displays = displays;
+            node.displaysDefer.resolve(displays);
+            chrome.runtime.sendMessage({ target: 'popup', action: 'getDisplays', data: displays});
+        });
 
-            DashboardSwarmListener.subscribeEvent('masterDisplays', displays => {
-                node.displays = displays;
-                node.displaysDefer.resolve(displays);
-                chrome.runtime.sendMessage({ target: 'popup', action: 'getDisplays', data: displays});
-            });
-
-            DashboardSwarmListener.subscribeEvent('tabOpened', (id, display, url, title, position, isFlash, zoom, scroll) => {
-                let tab = {
-                    id: id,
-                    display: display,
-                    url: url,
-                    title: title,
-                    position: position,
-                    flash: isFlash,
-                    zoom: zoom,
-                    scroll: scroll
-                };
-                node.tabs.push(tab);
-                chrome.runtime.sendMessage({target: 'popup', action: 'tabOpened', data: tab});
-            });
-
-            DashboardSwarmListener.subscribeEvent('tabClosed', tabId => {
-                node.getTabs().then(tabs => {
-                    let tabIdx = tabs.findIndex(t => t.id === tabId);
-                    if (tabIdx === -1) {
-                        return;
-                    }
-                    node.tabs.splice(tabIdx, 1);
-                    chrome.runtime.sendMessage({ target: 'popup', action: 'tabClosed', data: tabId});
-                });
-            });
-
-            DashboardSwarmListener.subscribeEvent('tabUpdated', (tabId, newProps) => {
-                node.getTabs().then(tabs => {
-                    let currentTab = tabs.find(t => t.id === tabId);
-                    if (currentTab === undefined) {
-                        return;
-                    }
-                    Object.assign(currentTab, newProps);
-                    chrome.runtime.sendMessage({target: 'popup', action: 'tabUpdated', data: [tabId, newProps]});
-                });
-            });
-
-            DashboardSwarmListener.subscribeEvent('rotationStarted', (display, interval, intervalFlash) => {
-                chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStarted', data: [display, interval, intervalFlash]});
-            });
-
-            DashboardSwarmListener.subscribeEvent('rotationStopped', () => {
-                chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStopped', data: []});
-            });
-
-            DashboardSwarmListener.subscribeEvent('rotationStatus', (isPlaying, interval, flashInterval) => {
-                this.rotation = {
-                    active: isPlaying,
-                    interval: interval,
-                    flashInterval: flashInterval
-                };
-                chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStatus', data: isPlaying});
-            });
-
-            let rebootRotation = () => {
-                this.stopRotation();
-                this.startRotation();
+        listener.subscribeEvent('tabOpened', (id, display, url, title, position, isFlash, zoom, scroll) => {
+            let tab = {
+                id: id,
+                display: display,
+                url: url,
+                title: title,
+                position: position,
+                flash: isFlash,
+                zoom: zoom,
+                scroll: scroll
             };
+            node.tabs.push(tab);
+            chrome.runtime.sendMessage({target: 'popup', action: 'tabOpened', data: tab});
+        });
 
-            Parameters.subscribe('tabSwitchInterval', newValue => {
-                if (this.rotation.active && newValue !== this.rotation.interval) {
-                    rebootRotation();
+        listener.subscribeEvent('tabClosed', tabId => {
+            node.getTabs().then(tabs => {
+                let tabIdx = tabs.findIndex(t => t.id === tabId);
+                if (tabIdx === -1) {
+                    return;
                 }
+                node.tabs.splice(tabIdx, 1);
+                chrome.runtime.sendMessage({ target: 'popup', action: 'tabClosed', data: tabId});
             });
+        });
 
-            Parameters.subscribe('flashTabSwitchInterval', newValue => {
-                if (this.rotation.active && newValue !== this.rotation.flashInterval) {
-                    rebootRotation();
+        listener.subscribeEvent('tabUpdated', (tabId, newProps) => {
+            node.getTabs().then(tabs => {
+                let currentTab = tabs.find(t => t.id === tabId);
+                if (currentTab === undefined) {
+                    return;
                 }
+                Object.assign(currentTab, newProps);
+                chrome.runtime.sendMessage({target: 'popup', action: 'tabUpdated', data: [tabId, newProps]});
             });
+        });
 
-            /**
-             * Bridge for the popup
-             */
-            chrome.runtime.onMessage.addListener((request, sender, response) => {
-                if (request.hasOwnProperty('node') && typeof node[request.node] === 'function') {
-                    let result = node[request.node].apply(node, request.args);
+        listener.subscribeEvent('rotationStarted', (display, interval, intervalFlash) => {
+            chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStarted', data: [display, interval, intervalFlash]});
+        });
 
-                    // Resolve then promise before sending the response through the NodeProxy
-                    if (result instanceof Promise) {
-                        result.then(q => {
-                            response(q);
-                        });
-                        return true;
-                    } else {
-                        response(result);
-                    }
+        listener.subscribeEvent('rotationStopped', () => {
+            chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStopped', data: []});
+        });
+
+        listener.subscribeEvent('rotationStatus', (isPlaying, interval, flashInterval) => {
+            this.rotation = {
+                active: isPlaying,
+                interval: interval,
+                flashInterval: flashInterval
+            };
+            chrome.runtime.sendMessage({ target: 'popup', action: 'rotationStatus', data: isPlaying});
+        });
+
+        listener.subscribeEvent('serverConfig', config => {
+            chrome.runtime.sendMessage({ target: 'popup', action: 'serverConfig', data: config});
+        });
+
+        let rebootRotation = () => {
+            this.stopRotation();
+            this.startRotation();
+        };
+
+        param.subscribe('tabSwitchInterval', newValue => {
+            if (this.rotation.active && newValue !== this.rotation.interval) {
+                rebootRotation();
+            }
+        });
+
+        param.subscribe('flashTabSwitchInterval', newValue => {
+            if (this.rotation.active && newValue !== this.rotation.flashInterval) {
+                rebootRotation();
+            }
+        });
+
+        /**
+         * Bridge for the popup
+         */
+        chrome.runtime.onMessage.addListener((request, sender, response) => {
+            if (request.hasOwnProperty('node') && typeof node[request.node] === 'function') {
+                let result = node[request.node].apply(node, request.args);
+
+                // Resolve then promise before sending the response through the NodeProxy
+                if (result instanceof Promise) {
+                    result.then(q => {
+                        response(q);
+                    });
+                    return true;
+                } else {
+                    response(result);
                 }
-            });
+            }
+        });
+    }
 
-            DashboardSwarmNode.instance = this;
-        }
-
-        return DashboardSwarmNode.instance;
+    /**
+     * Return the node's listener
+     * @returns DashboardSwarmListener
+     */
+    getListener() {
+        return this.dsListener;
     }
 
     /**
@@ -168,8 +176,8 @@ class DashboardSwarmNode {
      * Ask the server for its tabs and refresh the node content with it
      */
     refresh() {
-        DashboardSwarmWebSocket.sendCommand('getTabs');
-        DashboardSwarmWebSocket.sendCommand('getDisplays');
+        this.ws.sendCommand('getTabs');
+        this.ws.sendCommand('getDisplays');
     }
 
     /**
@@ -179,7 +187,7 @@ class DashboardSwarmNode {
      * @param {string} isFlash If true the tab will be automatically removed after programmed delay
      */
     openTab(display, tabUrl, isFlash) {
-        DashboardSwarmWebSocket.sendCommand('openTab', [display, tabUrl, isFlash]);
+        this.ws.sendCommand('openTab', [display, tabUrl, isFlash]);
     }
 
     /**
@@ -187,7 +195,7 @@ class DashboardSwarmNode {
      * @param {number} tabId
      */
     closeTab(tabId) {
-        DashboardSwarmWebSocket.sendCommand('closeTab', [tabId]);
+        this.ws.sendCommand('closeTab', [tabId]);
     }
 
     /**
@@ -196,7 +204,7 @@ class DashboardSwarmNode {
      * @param {*} newProps
      */
     updateTab(tabId, newProps) {
-        DashboardSwarmWebSocket.sendCommand('updateTab', [tabId, newProps]);
+        this.ws.sendCommand('updateTab', [tabId, newProps]);
     }
 
     /**
@@ -213,39 +221,54 @@ class DashboardSwarmNode {
         return this.displaysDefer;
     }
 
+    getConfig() {
+        this.ws.sendCommand('getConfig');
+    }
+
     startRotation() {
-        DashboardSwarmWebSocket.sendCommand('startRotation', [
-            Parameters.getParameter('tabSwitchInterval'),
-            Parameters.getParameter('flashTabSwitchInterval')
+        this.ws.sendCommand('startRotation', [
+            this.param.getParameter('tabSwitchInterval'),
+            this.param.getParameter('flashTabSwitchInterval')
         ]);
     }
 
     stopRotation() {
-        DashboardSwarmWebSocket.sendCommand('stopRotation');
+        this.ws.sendCommand('stopRotation');
     }
 
     getRotationStatus() {
-        DashboardSwarmWebSocket.sendCommand('getRotationStatus');
+        this.ws.sendCommand('getRotationStatus');
     }
 
     reloadTab(tabId) {
-        DashboardSwarmWebSocket.sendCommand('reloadTab', [tabId]);
+        this.ws.sendCommand('reloadTab', [tabId]);
     }
 
     sendToForeground(tabId) {
-        DashboardSwarmWebSocket.sendCommand('sendToForeground', [tabId]);
+        this.ws.sendCommand('sendToForeground', [tabId]);
     }
 
     displayStateFullscreen(display) {
-        DashboardSwarmWebSocket.sendCommand('displayStateFullscreen', [display]);
+        this.ws.sendCommand('displayStateFullscreen', [display]);
     }
 
     restart() {
-        DashboardSwarmWebSocket.sendCommand('restartMaster');
+        this.ws.sendCommand('restartMaster');
+    }
+
+    connect() {
+        this.ws.connect();
+    }
+
+    close() {
+        this.ws.close();
+    }
+
+    setServerUrl(serverUrl) {
+        this.ws.setServerUrl(serverUrl);
+    }
+
+    setConfig(newConfig) {
+        this.ws.sendCommand('setConfig', [newConfig]);
     }
 }
-
-const instance = new DashboardSwarmNode();
-Object.freeze(instance.instance);
-
-export default instance;

@@ -1,5 +1,3 @@
-import DashboardSwarmListener from "./DashboardSwarmListener";
-import DashboardSwarmWebSocket from "./DashboardSwarmWebSocket";
 import Rx from "rxjs";
 
 const paramsName = [
@@ -8,32 +6,29 @@ const paramsName = [
     'flashTabSwitchInterval',
 ];
 
-class Parameters {
-    constructor() {
-        if (!Parameters.instance) {
-            this.params = {};
+export class Parameters {
+    constructor(listener) {
+        this.dsws = listener.getDashboardSwarmWebSocket();
+        this.dsListener = listener;
 
+        this.params = {};
+
+        paramsName.forEach(paramName => {
+            this.params[paramName] = new Rx.BehaviorSubject(undefined);
+        });
+
+        listener.subscribeEvent('serverConfig', config => {
             paramsName.forEach(paramName => {
-                this.params[paramName] = new Rx.BehaviorSubject(undefined);
+                let upToDateValue = config[paramName];
+                let currentValue = this.getParameter(paramName);
+
+                if (currentValue !== upToDateValue) {
+                    this.params[paramName].next(config[paramName]);
+                }
             });
+        });
 
-            DashboardSwarmListener.subscribeEvent('serverConfig', config => {
-                paramsName.forEach(paramName => {
-                    let upToDateValue = config[paramName];
-                    let currentValue = this.getParameter(paramName);
-
-                    if (currentValue !== upToDateValue) {
-                        this.params[paramName].next(config[paramName]);
-                    }
-                });
-            });
-
-            DashboardSwarmWebSocket.sendCommand('getConfig');
-
-            Parameters.instance = this;
-        }
-
-        return Parameters.instance;
+        this.dsws.sendCommand('getConfig');
     }
 
     getParameters() {
@@ -46,7 +41,7 @@ class Parameters {
         return p;
     }
 
-    getParametersName() {
+    static getParametersName() {
         return paramsName;
     }
 
@@ -59,8 +54,3 @@ class Parameters {
         return this;
     }
 }
-
-const instance = new Parameters();
-Object.freeze(instance.instance);
-
-export default instance;

@@ -5,8 +5,6 @@ import DashboardSwarmListener from './classes/DashboardSwarmListener';
 // Saves options to chrome.storage.sync.
 function save_options() {
 
-
-
     chrome.storage.sync.get({
         master: false,
         server: 'localhost:8080',
