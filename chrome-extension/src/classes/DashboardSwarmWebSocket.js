@@ -104,7 +104,7 @@ export class DashboardSwarmWebSocket {
 
         this.getWebSocketReady().then(function (ws) {
             ws.send(JSON.stringify(data));
-            logger.debug("command sent");
+            logger.debug("command sent : " + JSON.stringify(data));
         }).catch(err => {
             logger.error("cannot send command `" + cmd + "`, socket is in error : " + err.code);
         });

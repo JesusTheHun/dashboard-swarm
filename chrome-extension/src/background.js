@@ -32,13 +32,15 @@ chrome.storage.sync.get({
 
     chrome.storage.onChanged.addListener((changes, areaName) => {
         logger.info("config changes detected, live apply");
+        console.log(changes);
 
         if (changes.master) {
+            logger.info("You are now master");
             node.setMaster(changes.master.newValue);
         }
 
         if (changes.server) {
-            logger.info("server url changed, reconnection...");
+            logger.info("server url changed to ` " + changes.server.newValue + "`, reconnection...");
             ws.setServerUrl(changes.server.newValue);
             ws.connect();
         }
