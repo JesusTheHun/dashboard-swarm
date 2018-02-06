@@ -1,11 +1,14 @@
 import { DashboardSwarmNode } from '../classes/DashboardSwarmNode';
 import { ExtendableProxy } from '../../../common/ExtendableProxy';
+import Logger from "js-logger/src/logger";
+
+const logger = Logger.get('NodeProxy');
 
 class NodeProxy extends ExtendableProxy {
     constructor() {
         super({
             get: (target, prop) => {
-                let targetFunction = Object.getPrototypeOf(DashboardSwarmNode)[prop];
+                let targetFunction = DashboardSwarmNode.prototype[prop];
 
                 if (typeof targetFunction === 'function') {
                     return (...args) => {
@@ -29,12 +32,10 @@ class NodeProxy extends ExtendableProxy {
 
         this.subscriptions = {};
 
-        let nodeProxy = this;
-
-        chrome.runtime.onMessage.addListener(function(data) {
+        chrome.runtime.onMessage.addListener(data => {
             if (data.target !== 'popup') return;
 
-            let subscriptions = nodeProxy.subscriptions[data.action];
+            let subscriptions = this.subscriptions[data.action];
 
             if (subscriptions instanceof Array && subscriptions.length > 0) {
                 subscriptions.forEach(subscription => {
