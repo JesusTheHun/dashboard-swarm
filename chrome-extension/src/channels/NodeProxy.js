@@ -1,5 +1,5 @@
-import DashboardSwarmNode from '../classes/DashboardSwarmNode';
-import ExtendableProxy from '../../../common/ExtendableProxy';
+import { DashboardSwarmNode } from '../classes/DashboardSwarmNode';
+import { ExtendableProxy } from '../../../common/ExtendableProxy';
 
 class NodeProxy extends ExtendableProxy {
     constructor() {

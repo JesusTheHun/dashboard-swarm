@@ -25,6 +25,7 @@ let buildComponents = [
     'build/popup.js',
     'build/contentScript.js',
     'build/content_script/keyframe.css',
+    ['env.prod.js', 'build/env.js'],
 ];
 
 fs.mkdir(dest, err => {
@@ -33,6 +34,13 @@ fs.mkdir(dest, err => {
     }
 
     buildComponents.map(filepath => {
+
+        let destination = filepath;
+
+        if (filepath instanceof Array) {
+            destination = filepath[1];
+            filepath = filepath[0];
+        }
 
         // Remove heading slash
         if (filepath.substring(0, 1) === '/') {
@@ -64,14 +72,14 @@ fs.mkdir(dest, err => {
             }
         });
 
-        fs.copyFile(filepath, dest + '/' + filepath, err => {
+        fs.copyFile(filepath, dest + '/' + destination, err => {
             if (err) {
-                console.log("Failed to copy file : " + filepath);
+                console.log("Failed to copy file : " + filepath + " to " + destination);
                 console.log(err);
                 return;
             }
 
-            console.log("Successfully copied file : " + filepath);
+            console.log("Successfully copied file : " + filepath + " to " + destination);
         });
     });
 
