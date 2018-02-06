@@ -84,7 +84,7 @@ fs.readFile(storageFilePath, (err, storageContent) => {
                                 args: [storage.tabs]
                             };
                             conn.send(JSON.stringify(event));
-                        break;
+                            break;
 
                         case 'getConfig':
                             event = {
@@ -108,11 +108,11 @@ fs.readFile(storageFilePath, (err, storageContent) => {
                             console.log("Broadcasting new config");
 
                             broadcast(JSON.stringify(event));
-                        break;
+                            break;
 
                         default:
                             broadcast(message);
-                        break;
+                            break;
                     }
                 }
 
@@ -163,6 +163,8 @@ fs.readFile(storageFilePath, (err, storageContent) => {
             }
         });
     });
+
+    console.log("Ready.");
 });
 
 function writeStorage() {
