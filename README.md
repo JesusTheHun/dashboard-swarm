@@ -1,3 +1,5 @@
+Master is the head of development. Use releases to build the extension.
+
 # Extension development
 
 In the extension directory :
