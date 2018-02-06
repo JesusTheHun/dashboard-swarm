@@ -1,10 +1,10 @@
 export class DashboardSwarmListener {
 
-    constructor(ws) {
-        this.ws = ws;
+    constructor(dsws) {
+        this.dsws = dsws;
         this.handlers = {'event': [], 'command': []};
 
-        this.ws.getWebSocketSubject().subscribe(ws => {
+        dsws.getWebSocketSubject().subscribe(ws => {
             if (ws === null) return;
             ws.onmessage = event => {
                 let message = event.data;
@@ -20,8 +20,8 @@ export class DashboardSwarmListener {
         });
     }
 
-    getWebSocket() {
-        return this.ws;
+    getDashboardSwarmWebSocket() {
+        return this.dsws;
     }
 
     subscribeEvent(eventName, callback) {

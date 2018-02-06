@@ -8,7 +8,7 @@ const paramsName = [
 
 export class Parameters {
     constructor(listener) {
-        this.ws = listener.getWebSocket();
+        this.dsws = listener.getDashboardSwarmWebSocket();
         this.dsListener = listener;
 
         this.params = {};
@@ -28,7 +28,7 @@ export class Parameters {
             });
         });
 
-        this.ws.sendCommand('getConfig');
+        this.dsws.sendCommand('getConfig');
     }
 
     getParameters() {

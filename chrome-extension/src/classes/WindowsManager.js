@@ -71,7 +71,7 @@ export class WindowsManager {
 
                             chrome.tabs.onUpdated.addListener(updateWhenTitleIsReady);
                         } else {
-                            dsListener.sendEvent('tabUpdated', [tabId, newProps]);
+                            dsListener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, newProps]);
                         }
                     });
                 }
@@ -80,7 +80,7 @@ export class WindowsManager {
                     wm.getWindowForDisplay(newProps.display).then(window => {
                         chrome.tabs.move(tabId, {windowId: window.id, index: -1}, tab => {
                             newProps.position = tab.index;
-                            dsListener.sendEvent('tabUpdated', [tabId, newProps]);
+                            dsListener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, newProps]);
                         });
                     });
                 }
@@ -88,7 +88,7 @@ export class WindowsManager {
                 if (newProps.zoom !== undefined) {
                     chrome.tabs.setZoom(tabId, parseFloat(newProps.zoom), tab => {
                         if (newProps.title === undefined) {
-                            dsListener.sendEvent('tabUpdated', [tabId, newProps]);
+                            dsListener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, newProps]);
                         }
                     });
                 }
@@ -96,7 +96,7 @@ export class WindowsManager {
                 if (newProps.scroll !== undefined) {
                     let tabProxy = new TabProxy(tabId);
                     tabProxy.scroll(newProps.scroll, response => {
-                        dsListener.sendEvent('tabUpdated', [tabId, {scroll: response}]);
+                        dsListener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, {scroll: response}]);
                     });
                 }
             }
@@ -105,7 +105,7 @@ export class WindowsManager {
         dsListener.subscribeCommand('getDisplays', () => {
             if (dsNode.isMaster()) {
                 wm.getDisplays().then(displays => {
-                    dsListener.sendEvent('masterDisplays', [displays]);
+                    dsListener.getDashboardSwarmWebSocket().sendEvent('masterDisplays', [displays]);
                 });
             }
         });
@@ -136,7 +136,7 @@ export class WindowsManager {
 
         dsListener.subscribeCommand('getRotationStatus', () => {
             if (dsNode.isMaster()) {
-                dsListener.sendEvent('rotationStatus', [wm.intervals[0] !== undefined]);
+                dsListener.getDashboardSwarmWebSocket().sendEvent('rotationStatus', [wm.intervals[0] !== undefined]);
             }
         });
 
@@ -207,7 +207,7 @@ export class WindowsManager {
                 tabs.sort((a, b) => a.position - b.position);
                 tabs.forEach(tab => {
                     wm.openTab(tab.display, tab.url).then(tabId => {
-                        dsListener.sendEvent('tabUpdated', [tab.id, {id: tabId}]);
+                        dsListener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tab.id, {id: tabId}]);
 
                         setTimeout(() => {
                             chrome.tabs.setZoom(tab.id, (tab.zoom || 1), () => {
@@ -428,7 +428,7 @@ export class WindowsManager {
 
         }, 100);
 
-        this.dsListener.sendEvent('rotationStarted', [display, interval, intervalFlash]);
+        this.dsListener.getDashboardSwarmWebSocket().sendEvent('rotationStarted', [display, interval, intervalFlash]);
     }
 
     /**
@@ -450,6 +450,6 @@ export class WindowsManager {
             });
         }
 
-        this.dsListener.sendEvent('rotationStopped');
+        this.dsListener.getDashboardSwarmWebSocket().sendEvent('rotationStopped');
     }
 }
