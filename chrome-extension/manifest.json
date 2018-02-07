@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "Dashboard swarm",
     "description": "This extension allows to display a set of tab in multiple browser's windows",
-    "version": "0.3",
+    "version": "0.4",
     "browser_action": {
         "default_icon": "icon.png",
         "default_popup": "popup.html"
