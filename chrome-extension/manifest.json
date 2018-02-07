@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
-    "name": "Dashboard swarm",
-    "description": "This extension allows to display a set of tab in multiple browser's windows",
+    "name": "Dashboard Swarm",
+    "description": "This extension allows to slideshow tabs in multiple windows on multiple screens, remotely from your desktop",
     "version": "0.4",
     "browser_action": {
         "default_icon": "icon.png",
