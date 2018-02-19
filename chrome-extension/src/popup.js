@@ -1,8 +1,13 @@
+/**
+ * TODO Need to clear this whole mess, make a proper stateful object
+ */
+
 import Rx from 'rxjs/Rx';
 import nodeProxy from './channels/NodeProxy';
-import popupConfig from './popup_config';
-import showTabTools from './popup_tabTools';
+
+import { showTabTools } from './popup_tabTools';
 import Logger from './logger';
+import {Parameters} from "./classes/Parameters";
 
 const logger = Logger.get('popup');
 const NodeProxy = new nodeProxy();
@@ -14,6 +19,7 @@ let displaysSubject = new Rx.BehaviorSubject({});
 let globalPlayerSubject = new Rx.BehaviorSubject(false);
 
 function load() {
+    logger.debug("load() called");
     clearTabsSpace();
 
     let masterTimeout = setTimeout(() => showWaitingMaster(), 500);
@@ -22,7 +28,12 @@ function load() {
         displaysSubject.next(response);
         clearTimeout(masterTimeout);
     });
-    NodeProxy.getTabs(response => tabsSubject.next(response));
+
+    NodeProxy.getTabs(response => {
+        logger.info("tab received, response from proxy : ");
+        logger.info(response);
+        tabsSubject.next(response)
+    });
     NodeProxy.getRotationStatus();
 }
 
@@ -56,10 +67,26 @@ NodeProxy.on('tabClosed', tabId => {
 
 NodeProxy.on('tabUpdated', (tabId, newProps) => {
     let currentTabs = tabsSubject.getValue();
+
+    if (currentTabs === undefined) {
+        logger.error("Whoops, empty tabs !");
+        return;
+    }
+
     let updatedTab = currentTabs.find(t => t.id === tabId);
 
     Object.assign(updatedTab, newProps);
     tabsSubject.next(currentTabs);
+});
+
+NodeProxy.on('getTabs', tabs => {
+    logger.debug("Event `getTabs` received with :");
+    logger.debug(tabs);
+    tabsSubject.next(tabs);
+});
+
+NodeProxy.on('getDisplays', displays => {
+    displaysSubject.next(displays);
 });
 
 function clearTabsSpace() {
@@ -81,6 +108,7 @@ function clearTabsSpace() {
 function showWaitingMaster() {
     let waitingMaster = document.getElementById('waitingMaster').cloneNode(true);
     waitingMaster.removeAttribute('id');
+    waitingMaster.classList.remove('hide');
     document.querySelector('#displays .panel .panel-body').appendChild(waitingMaster);
 }
 
@@ -91,8 +119,6 @@ function removeWaitingMaster() {
 document.addEventListener('DOMContentLoaded', () => {
 
     let domPanelTabBlock = document.querySelector('#displays .panel ul.tab-block');
-
-    showWaitingMaster();
 
     displaysSubject.subscribe(displays => {
         if ((typeof displays !== 'object') || Object.keys(displays).length === 0) {
@@ -172,6 +198,116 @@ document.addEventListener('DOMContentLoaded', () => {
         icon.classList.remove('fa-stop');
         icon.classList.add(isPlaying === true ? 'fa-stop' : 'fa-play');
     });
+
+    ////////////
+    // Config //
+    ////////////
+
+    let configLink = document.querySelector('#configLink');
+    configLink.addEventListener('click', e => {
+        e.preventDefault();
+
+        document.querySelector('div#displays').style.display = 'none';
+        document.querySelector('div#config').style.display = 'block';
+    });
+
+    let closeConfigLink = document.querySelector('#closeConfigLink');
+
+    closeConfigLink.addEventListener('click', e => {
+        e.preventDefault();
+
+        document.querySelector('div#displays').style.display = 'block';
+        document.querySelector('div#config').style.display = 'none';
+    });
+
+    let parameters = document.querySelector('#parameters');
+    parameters.setAttribute('disabled', 'disabled');
+
+    let isConnected = false;
+
+    document.querySelector('#connect').addEventListener('click', e => {
+        e.preventDefault();
+
+        if (isConnected) {
+            disconnect(e, response => {
+                isConnected = response;
+            });
+        } else {
+            connect(e, response => {
+                isConnected = response;
+
+                if (!isConnected) {
+                    return;
+                }
+
+                let configOptions = Parameters.getParametersName();
+
+                NodeProxy.on('serverConfig', config => {
+                    configOptions.forEach(configName => {
+                        let value = '';
+                        if (config[configName] !== undefined) {
+                            value = config[configName];
+                        }
+
+                        let input = document.querySelector('#' + configName);
+
+                        if (input) {
+                            input.value = value;
+                        }
+                    });
+                });
+
+                NodeProxy.getConfig();
+
+                document.querySelector('#save').addEventListener('click', e => {
+                    e.preventDefault();
+
+                    let newConfig = {};
+
+                    configOptions.forEach(configName => {
+                        let input = document.querySelector('#' + configName);
+                        newConfig[configName] = input.value;
+                    });
+
+                    chrome.storage.sync.set({
+                        server: document.querySelector('#serverUrl').value
+                    });
+
+                    NodeProxy.setConfig(newConfig);
+
+                    e.target.classList.add('successBackground');
+
+                    setTimeout(() => {
+                        e.target.classList.remove('successBackground');
+                    }, 500);
+                });
+            });
+        }
+    });
+
+    chrome.storage.sync.get({
+        master: false,
+        server: 'localhost:8080'
+    }, function(currentConfig) {
+
+        document.querySelector('#serverUrl').value = currentConfig.server;
+        document.querySelector('#master').checked = currentConfig.master;
+
+        document.querySelector('#master').addEventListener('change', e => {
+            chrome.storage.sync.set({
+                master: e.target.checked
+            });
+
+            if (!e.target.checked) {
+                load();
+            }
+        });
+    });
+
+    document.querySelector('#restart').addEventListener('click', (e) => {
+        e.preventDefault();
+        NodeProxy.restart();
+    });
 });
 
 function askOpenTab(isFlash) {
@@ -191,6 +327,9 @@ function showTabsForDisplay(display) {
     let domPanelBody = document.querySelector('#displays .panel .panel-body');
 
     tabsSubject.subscribe(tabs => {
+        logger.debug('received new tabs');
+        logger.debug(tabs);
+
         tabs.sort((a, b) => a.position - b.position);
         // Clear previous content
         while (domPanelBody.firstChild) {
@@ -339,4 +478,55 @@ function removeTabFromPanel(tabId) {
 
 function getDisplayName(i) {
     return "Display " + i;
+}
+
+function connect(e, callback) {
+    let serverUrlInput = document.querySelector('#serverUrl');
+    let serverUrl = serverUrlInput.value;
+
+    let connectionHint = document.querySelector('#connectionHint');
+
+    chrome.storage.sync.set({
+        server: serverUrl
+    }, () => {
+
+        NodeProxy.on('connectionSuccess', () => {
+            serverUrlInput.classList.add('is-success');
+            document.querySelector('#parameters').removeAttribute('disabled');
+            serverUrlInput.setAttribute('disabled', 'disabled');
+            document.querySelector('#connect').textContent = "Disconnect";
+
+            NodeProxy.refresh();
+
+            callback(true);
+        });
+
+        NodeProxy.on('connectionFailed', () => {
+            connectionHint.textContent = "Error : " + err;
+            serverUrlInput.classList.add('is-error');
+            callback(false);
+        });
+
+        NodeProxy.setServerUrl(serverUrl);
+        NodeProxy.connect();
+
+        serverUrlInput.classList.remove('is-success');
+        serverUrlInput.classList.remove('is-error');
+    });
+}
+
+function disconnect(e, callback) {
+    let serverUrlInput = document.querySelector('#serverUrl');
+    serverUrlInput.removeAttribute('disabled');
+    NodeProxy.close();
+
+    let configOptions = Parameters.getParametersName();
+
+    configOptions.forEach(configName => {
+        document.querySelector('#' + configName).value = '';
+    });
+
+    document.querySelector('#parameters').setAttribute('disabled', 'disabled');
+    document.querySelector('#connect').textContent = "Connect";
+    callback(false);
 }

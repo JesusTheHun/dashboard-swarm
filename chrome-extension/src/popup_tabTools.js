@@ -1,6 +1,3 @@
-import DashboardSwarmWebSocket from "./classes/DashboardSwarmWebSocket";
-import DashboardSwarmListener from "./classes/DashboardSwarmListener";
-import Parameters from "./classes/Parameters";
 import nodeProxy from "./channels/NodeProxy";
 import defer from "./function/defer";
 
@@ -13,7 +10,7 @@ function closeTabTools() {
     tabTools.classList.remove('active');
 }
 
-function showTabTools(tabsSubject, tabId) {
+export function showTabTools(tabsSubject, tabId) {
     let getDisplays = new defer();
     NodeProxy.getDisplays(response => getDisplays.resolve(response));
 
@@ -118,5 +115,3 @@ function showTabTools(tabsSubject, tabId) {
         }
     });
 }
-
-export default showTabTools;

@@ -5,6 +5,7 @@
     "main": "server.js",
     "author": "Jonathan MASSUCHETTI",
     "dependencies": {
+        "js-logger": "^1.4.1",
         "moment": "^2.19.1",
         "websocket": "^1.0.24"
     },

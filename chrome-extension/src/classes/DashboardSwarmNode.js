@@ -1,5 +1,6 @@
 import defer from "../function/defer";
 import Logger from "js-logger/src/logger";
+import * as Rx from "rxjs";
 
 const logger = Logger.get('DashboardSwarmNode');
 
@@ -11,27 +12,25 @@ export class DashboardSwarmNode {
         this.param = param;
 
         this.master = 0;
-        this.tabs = [];
+        this.masterSubject = new Rx.BehaviorSubject(null);
+        this.tabsSubject = new Rx.BehaviorSubject(null);
         this.displays = null;
         this.rotation = false;
-        this.tabsDefer = new defer();
         this.displaysDefer = new defer();
-
-        let node = this;
 
         ws.getWebSocketSubject().subscribe(newConnection => {
             logger.info("new connection received");
             logger.debug(newConnection);
 
-            this.tabsDefer = new defer();
             this.displaysDefer = new defer();
+            this.tabsSubject.next(null);
 
             if (newConnection === null) {
                 chrome.runtime.sendMessage({ target: 'popup', action: 'connectionFailed', data: []});
                 return;
             }
 
-            node.refresh();
+            this.refresh();
             chrome.runtime.sendMessage({ target: 'popup', action: 'connectionSuccess', data: []});
         });
 
@@ -42,14 +41,13 @@ export class DashboardSwarmNode {
         });
 
         listener.subscribeEvent('serverTabs', tabs => {
-            node.tabs = tabs;
-            node.tabsDefer.resolve(tabs);
+            this.tabsSubject.next(tabs);
             chrome.runtime.sendMessage({ target: 'popup', action: 'getTabs', data: tabs});
         });
 
         listener.subscribeEvent('masterDisplays', displays => {
-            node.displays = displays;
-            node.displaysDefer.resolve(displays);
+            this.displays = displays;
+            this.displaysDefer.resolve(displays);
             chrome.runtime.sendMessage({ target: 'popup', action: 'getDisplays', data: displays});
         });
 
@@ -64,30 +62,38 @@ export class DashboardSwarmNode {
                 zoom: zoom,
                 scroll: scroll
             };
-            node.tabs.push(tab);
+
+            let tabs = this.getTabs().getValue();
+            tabs.push(tab);
+
+            this.getTabs().next(tabs);
+
             chrome.runtime.sendMessage({target: 'popup', action: 'tabOpened', data: tab});
         });
 
         listener.subscribeEvent('tabClosed', tabId => {
-            node.getTabs().then(tabs => {
-                let tabIdx = tabs.findIndex(t => t.id === tabId);
-                if (tabIdx === -1) {
-                    return;
-                }
-                node.tabs.splice(tabIdx, 1);
-                chrome.runtime.sendMessage({ target: 'popup', action: 'tabClosed', data: tabId});
-            });
+            let tabs = this.getTabs().getValue();
+            let tabIdx = tabs.findIndex(t => t.id === tabId);
+            if (tabIdx === -1) {
+                return;
+            }
+            tabs.splice(tabIdx, 1);
+            this.getTabs().next(tabs);
+
+            chrome.runtime.sendMessage({ target: 'popup', action: 'tabClosed', data: tabId});
         });
 
         listener.subscribeEvent('tabUpdated', (tabId, newProps) => {
-            node.getTabs().then(tabs => {
-                let currentTab = tabs.find(t => t.id === tabId);
-                if (currentTab === undefined) {
-                    return;
-                }
-                Object.assign(currentTab, newProps);
-                chrome.runtime.sendMessage({target: 'popup', action: 'tabUpdated', data: [tabId, newProps]});
-            });
+            let tabs = this.getTabs().getValue();
+            let currentTab = tabs.find(t => t.id === tabId);
+            if (currentTab === undefined) {
+                return;
+            }
+            Object.assign(currentTab, newProps);
+
+            this.getTabs().next(tabs);
+
+            chrome.runtime.sendMessage({target: 'popup', action: 'tabUpdated', data: [tabId, newProps]});
         });
 
         listener.subscribeEvent('rotationStarted', (display, interval, intervalFlash) => {
@@ -132,8 +138,8 @@ export class DashboardSwarmNode {
          * Bridge for the popup
          */
         chrome.runtime.onMessage.addListener((request, sender, response) => {
-            if (request.hasOwnProperty('node') && typeof node[request.node] === 'function') {
-                let result = node[request.node].apply(node, request.args);
+            if (request.hasOwnProperty('node') && typeof this[request.node] === 'function') {
+                let result = this[request.node].apply(this, request.args);
 
                 // Resolve then promise before sending the response through the NodeProxy
                 if (result instanceof Promise) {
@@ -141,6 +147,10 @@ export class DashboardSwarmNode {
                         response(q);
                     });
                     return true;
+                } else if (result instanceof Rx.BehaviorSubject) {
+                    logger.debug("Bridge asking for a Rx, transmitting value : ");
+                    logger.debug(result.getValue());
+                    response(result.getValue());
                 } else {
                     response(result);
                 }
@@ -158,10 +168,18 @@ export class DashboardSwarmNode {
 
     /**
      * Define the node as master (it owns the displays)
-     * @param {bool} bool
+     * @param {bool} isMaster
      */
-    setMaster(bool) {
-        this.master = bool;
+    setMaster(isMaster) {
+        logger.info("This node is now master : " + (isMaster ? "yes" : "no"));
+        this.master = isMaster;
+        this.isMasterSubject().next(isMaster);
+
+        if (isMaster) {
+            this.refresh();
+        } else {
+            this.wm
+        }
     }
 
     /**
@@ -176,6 +194,7 @@ export class DashboardSwarmNode {
      * Ask the server for its tabs and refresh the node content with it
      */
     refresh() {
+        logger.debug();
         this.ws.sendCommand('getTabs');
         this.ws.sendCommand('getDisplays');
     }
@@ -208,10 +227,10 @@ export class DashboardSwarmNode {
     }
 
     /**
-     * @returns {Promise<Array>} A copy of node's tabs.
+     * @returns {Rx.BehaviorSubject<Array>} A copy of node's tabs.
      */
     getTabs() {
-        return this.tabsDefer;
+        return this.tabsSubject;
     }
 
     /**

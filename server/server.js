@@ -2,6 +2,30 @@ const moment = require('moment');
 const WebSocketServer = require('websocket').server;
 const http = require('http');
 const fs = require('fs');
+const Logger = require("js-logger");
+
+let handler = Logger.createDefaultHandler({
+    formatter: (messages, context) => {
+
+        let date = new Date;
+        let time = '[ ' + enforceDigits(date.getHours(), 2) +':'+ enforceDigits(date.getMinutes(), 2) +':'+ enforceDigits(date.getSeconds(), 2) +'.'+ enforceDigits(date.getMilliseconds(), 3) + ' ]';
+
+        if (context.name) {
+            messages.unshift('[ ' + context.name + ' ]');
+        }
+
+        messages.unshift('[ ' + context.level.name + ' ]');
+        messages.unshift(time);
+
+        if (typeof messages[0] !== 'string') {
+            messages[0] = 'Object : ';
+            Logger.info(messages[0]);
+        }
+    }
+});
+
+Logger.setHandler(handler);
+Logger.setLevel(Logger.DEBUG);
 
 const defaultConfig = {
     hostname: 'localhost',
@@ -18,20 +42,21 @@ if (process.argv[4] !== undefined) storageFilePath = process.argv[4];
 
 
 let server = http.createServer((req, res) => {
-    console.log((new Date()) + " http connection");
+    Logger.info("http connection");
     res.write("Hello.");
     res.end();
 });
 
 server.listen(config.port, config.hostname, () => {
-    console.log((new Date()) + " Server is listening on " + config.hostname + ":" + config.port);
+    Logger.info("Server is listening on " + config.hostname + ":" + config.port);
 });
 
-console.log(storageFilePath);
+Logger.info("Storage file : " + storageFilePath);
 
 let wss;
 let clients = [];
 let storage;
+
 
 fs.readFile(storageFilePath, (err, storageContent) => {
     if (err) throw err;
@@ -53,22 +78,22 @@ fs.readFile(storageFilePath, (err, storageContent) => {
     wss = new WebSocketServer({ httpServer: server });
 
     wss.on('request', request => {
-        console.log((new Date()) + ' Connection from origin ' + request.origin + '.');
+        Logger.info('Connection from origin ' + request.origin + '.');
 
         let conn = request.accept(null, request.origin);
         let clientIndex = clients.push(conn);
 
-        console.log((new Date()) + ' Connection accepted.');
+        Logger.info('Connection accepted.');
 
         conn.on('close', conn => {
             clients.splice(clientIndex, 1);
-            console.log((new Date()) + ' Connection closed.');
+            Logger.info('Connection closed.');
         });
 
         conn.on('message', packet => {
             let message = packet.utf8Data;
 
-            console.log("Received : " + message);
+            Logger.info("Received : " + message);
 
             try {
                 let data = JSON.parse(message);
@@ -83,6 +108,8 @@ fs.readFile(storageFilePath, (err, storageContent) => {
                                 event: 'serverTabs',
                                 args: [storage.tabs]
                             };
+                            Logger.info("sending tabs :");
+                            Logger.info(storage.tabs);
                             conn.send(JSON.stringify(event));
                             break;
 
@@ -105,7 +132,7 @@ fs.readFile(storageFilePath, (err, storageContent) => {
                                 args: [storage.config]
                             };
 
-                            console.log("Broadcasting new config");
+                            Logger.info("Broadcasting new config");
 
                             broadcast(JSON.stringify(event));
                             break;
@@ -159,20 +186,20 @@ fs.readFile(storageFilePath, (err, storageContent) => {
                 }
 
             } catch (err) {
-                console.log(err);
+                Logger.info(err);
             }
         });
     });
 
-    console.log("Ready.");
+    Logger.info("Ready.");
 });
 
 function writeStorage() {
     fs.writeFile(storageFilePath, JSON.stringify(storage), err => {
-        if (err) console.log(err);
+        if (err) Logger.info(err);
 
-        console.log("Storage written : ");
-        console.log(JSON.stringify(storage));
+        // Logger.info("Storage written : ");
+        // Logger.info(JSON.stringify(storage));
     });
 }
 
@@ -194,8 +221,8 @@ function removeExpiredFlashTabs(tabs) {
 
             if (expirationDate < new Date()) {
 
-                console.log("Expired flash tab detected, expiration date");
-                console.log(expirationDate);
+                Logger.info("Expired flash tab detected, expiration date");
+                Logger.info(expirationDate);
 
                 removedTabId.push(tab.id);
                 broadcast(JSON.stringify({
@@ -207,4 +234,19 @@ function removeExpiredFlashTabs(tabs) {
     });
 
     return removedTabId;
+}
+
+function enforceDigits (number, digits) {
+    let str = number.toString();
+
+    while (str.length < digits) {
+        str = '0' + str;
+    }
+
+    return str;
+}
+
+function getCurrentDatetime() {
+    let date = new Date;
+    return enforceDigits(date.getHours(), 2) + ':' + enforceDigits(date.getMinutes(), 2) + ':' + enforceDigits(date.getSeconds(), 2) + '.' + enforceDigits(date.getMilliseconds(), 3);
 }

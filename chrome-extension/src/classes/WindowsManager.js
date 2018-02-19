@@ -6,35 +6,28 @@ const logger = Logger.get('WindowsManager');
 
 export class WindowsManager {
 
-    constructor(dsListener, dsNode) {
-        this.dsListener = dsListener;
-
+    initInstanceVars() {
         this.windows = {};
         this.windowsPromises = {};
         this.tabs = {};
         this.intervals = {};
+    }
 
-        let wm = this;
+    constructor(dsListener, dsNode) {
+        this.dsListener = dsListener;
 
-        dsListener.subscribeEvent('serverTabs', tabs => {
-            logger.info("serverTabs received");
-            logger.debug(tabs);
-            if (dsNode.isMaster()) {
-                logger.info("this node is a master one, setting tabs");
-                wm.setTabs(tabs);
-            }
-        });
+        this.initInstanceVars();
 
         dsListener.subscribeCommand('openTab', (display, url, isFlash) => {
             if (dsNode.isMaster()) {
-                wm.openTab(display, url).then(tabId => {
+                this.openTab(display, url).then(tabId => {
                     let updateWhenTitleIsReady = (changedTabId, changeInfo, tab) => {
                         if (changedTabId === tabId && changeInfo.title !== undefined && changeInfo.title !== '') {
                             let scroll = {top: 0, left: 0};
 
                             chrome.tabs.getZoom(tabId, zoom => {
                                 let flash = isFlash ? new Date() : undefined;
-                                wm.tabs[tab.id].flash = flash;
+                                this.tabs[tab.id].flash = flash;
                                 dsListener.getDashboardSwarmWebSocket().sendEvent('tabOpened', [tabId, display, url, changeInfo.title, tab.index, flash, zoom, scroll]);
                             });
                             chrome.tabs.onUpdated.removeListener(updateWhenTitleIsReady);
@@ -47,19 +40,19 @@ export class WindowsManager {
         });
 
         dsListener.subscribeCommand('closeTab', tabId => {
-            if (dsNode.isMaster() && wm.tabs[tabId] !== undefined) {
-                wm.closeTab(tabId).then(tabId => {
+            if (dsNode.isMaster() && this.tabs[tabId] !== undefined) {
+                this.closeTab(tabId).then(tabId => {
                     dsListener.sendEvent('tabClosed', [tabId]);
                 });
             }
         });
 
         dsListener.subscribeCommand('updateTab', (tabId, newProps) => {
-            if (dsNode.isMaster() && wm.getTab(tabId) !== undefined) {
+            if (dsNode.isMaster() && this.getTab(tabId) !== undefined) {
                 if (newProps.position !== undefined) {
                     chrome.tabs.move(tabId, {index: newProps.position}, movedTab => {
                         chrome.windows.get(movedTab.windowId, {populate: true}, window => {
-                            window.tabs.filter(wTab => wTab.index !== wm.getTab(wTab.id).position).forEach(wTab => {
+                            window.tabs.filter(wTab => wTab.index !== this.getTab(wTab.id).position).forEach(wTab => {
                                 dsListener.sendEvent('tabUpdated', [wTab.id, {position: wTab.index}]);
                             })
                         });
@@ -85,7 +78,7 @@ export class WindowsManager {
                 }
 
                 if (newProps.display !== undefined) {
-                    wm.getWindowForDisplay(newProps.display).then(window => {
+                    this.getWindowForDisplay(newProps.display).then(window => {
                         chrome.tabs.move(tabId, {windowId: window.id, index: -1}, tab => {
                             newProps.position = tab.index;
                             dsListener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, newProps]);
@@ -112,7 +105,7 @@ export class WindowsManager {
 
         dsListener.subscribeCommand('getDisplays', () => {
             if (dsNode.isMaster()) {
-                wm.getDisplays().then(displays => {
+                this.getDisplays().then(displays => {
                     dsListener.getDashboardSwarmWebSocket().sendEvent('masterDisplays', [displays]);
                 });
             }
@@ -120,10 +113,10 @@ export class WindowsManager {
 
         dsListener.subscribeCommand('startRotation', (interval, intervalFlash) => {
             if (dsNode.isMaster()) {
-                wm.getDisplays().then(displays => {
+                this.getDisplays().then(displays => {
                     Object.keys(displays).forEach(display => {
-                        if (wm.windows[display] !== undefined) {
-                            wm.startRotation(display, interval, intervalFlash);
+                        if (this.windows[display] !== undefined) {
+                            this.startRotation(display, interval, intervalFlash);
                         }
                     })
                 });
@@ -132,10 +125,10 @@ export class WindowsManager {
 
         dsListener.subscribeCommand('stopRotation', () => {
             if (dsNode.isMaster()) {
-                wm.getDisplays().then(displays => {
+                this.getDisplays().then(displays => {
                     Object.keys(displays).forEach(display => {
-                        if (wm.windows[display] !== undefined) {
-                            wm.stopRotation(display);
+                        if (this.windows[display] !== undefined) {
+                            this.stopRotation(display);
                         }
                     })
                 });
@@ -144,7 +137,7 @@ export class WindowsManager {
 
         dsListener.subscribeCommand('getRotationStatus', () => {
             if (dsNode.isMaster()) {
-                dsListener.getDashboardSwarmWebSocket().sendEvent('rotationStatus', [wm.intervals[0] !== undefined]);
+                dsListener.getDashboardSwarmWebSocket().sendEvent('rotationStatus', [this.intervals[0] !== undefined]);
             }
         });
 
@@ -204,13 +197,12 @@ export class WindowsManager {
      * @param {Array<{display: number, url: string}>} tabs
      */
     setTabs(tabs) {
-        let wm = this;
-        wm.closeEverything().then(windowClosedCount => {
+        this.closeEverything().then(windowClosedCount => {
             logger.debug("everything has been closed (" + windowClosedCount + " windows closed) ");
             setTimeout(() => {
                 tabs.sort((a, b) => a.position - b.position);
                 tabs.forEach(tab => {
-                    wm.openTab(tab.display, tab.url).then(tabId => {
+                    this.openTab(tab.display, tab.url).then(tabId => {
                         this.dsListener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tab.id, {id: tabId}]);
 
                         setTimeout(() => {
@@ -362,8 +354,12 @@ export class WindowsManager {
         }
 
         return new Promise((resolve, reject) => {
+            let timeout = setTimeout(() => reject("Close command timeout"), 1000);
+
             closed.subscribe(newValue => {
                 if (toBeClosed === newValue) {
+                    this.initInstanceVars();
+                    clearTimeout(timeout);
                     resolve(toBeClosed);
                 }
             });

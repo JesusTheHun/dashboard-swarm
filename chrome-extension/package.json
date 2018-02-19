@@ -1,6 +1,6 @@
 {
     "name": "dashboard-swarm-chrome-extension",
-    "version": "0.0.1",
+    "version": "0.4.1",
     "description": "This extension allows to display a set of tab in multiple browser's windows",
     "main": "FrontController.js",
     "author": "Jonathan MASSUCHETTI",
@@ -16,9 +16,9 @@
         "dist": "webpack && node dist"
     },
     "devDependencies": {
-        "babel-core": "^6.26.0",
+        "@babel/core": "^7.0.0-beta.40",
+        "@babel/preset-env": "^7.0.0-beta.40",
         "babel-loader": "^7.1.2",
-        "babel-preset-env": "^1.6.0",
         "clean-webpack-plugin": "^0.1.16",
         "copy-webpack-plugin": "^4.1.1",
         "css-loader": "^0.28.7",
