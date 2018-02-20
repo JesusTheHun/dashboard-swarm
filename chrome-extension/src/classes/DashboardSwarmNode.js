@@ -1,4 +1,3 @@
-import defer from "../function/defer";
 import Logger from "js-logger/src/logger";
 import * as Rx from "rxjs";
 
@@ -14,16 +13,15 @@ export class DashboardSwarmNode {
         this.master = 0;
         this.masterSubject = new Rx.BehaviorSubject(null);
         this.tabsSubject = new Rx.BehaviorSubject(null);
-        this.displays = null;
+        this.displaysSubject = new Rx.BehaviorSubject(null);
         this.rotation = false;
-        this.displaysDefer = new defer();
 
         ws.getWebSocketSubject().subscribe(newConnection => {
             logger.info("new connection received");
             logger.debug(newConnection);
 
-            this.displaysDefer = new defer();
             this.tabsSubject.next(null);
+            this.displaysSubject.next(null);
 
             if (newConnection === null) {
                 chrome.runtime.sendMessage({ target: 'popup', action: 'connectionFailed', data: []});
@@ -46,8 +44,7 @@ export class DashboardSwarmNode {
         });
 
         listener.subscribeEvent('masterDisplays', displays => {
-            this.displays = displays;
-            this.displaysDefer.resolve(displays);
+            this.displaysSubject.next(displays);
             chrome.runtime.sendMessage({ target: 'popup', action: 'getDisplays', data: displays});
         });
 
@@ -148,7 +145,7 @@ export class DashboardSwarmNode {
                     });
                     return true;
                 } else if (result instanceof Rx.BehaviorSubject) {
-                    logger.debug("Bridge asking for a Rx, transmitting value : ");
+                    logger.debug("Node Bridge asking for a Rx `"+ request.node +"()`, transmitting value : ");
                     logger.debug(result.getValue());
                     response(result.getValue());
                 } else {
@@ -171,15 +168,13 @@ export class DashboardSwarmNode {
      * @param {bool} isMaster
      */
     setMaster(isMaster) {
-        logger.info("This node is now master : " + (isMaster ? "yes" : "no"));
+        logger.debug("This node is now master : " + (isMaster ? "yes" : "no"));
         this.master = isMaster;
         this.isMasterSubject().next(isMaster);
+    }
 
-        if (isMaster) {
-            this.refresh();
-        } else {
-            this.wm
-        }
+    isMasterSubject() {
+        return this.masterSubject;
     }
 
     /**
@@ -194,7 +189,7 @@ export class DashboardSwarmNode {
      * Ask the server for its tabs and refresh the node content with it
      */
     refresh() {
-        logger.debug();
+        logger.debug("Refresh");
         this.ws.sendCommand('getTabs');
         this.ws.sendCommand('getDisplays');
     }
@@ -237,7 +232,7 @@ export class DashboardSwarmNode {
      * @returns {Promise<*>} A copy of displays details
      */
     getDisplays() {
-        return this.displaysDefer;
+        return this.displaysSubject;
     }
 
     getConfig() {

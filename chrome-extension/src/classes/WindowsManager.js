@@ -18,6 +18,36 @@ export class WindowsManager {
 
         this.initInstanceVars();
 
+        let tabSubscription;
+
+        dsNode.isMasterSubject().subscribe(isMaster => {
+            if (isMaster === null) return;
+
+            logger.info("master updated, master status : " + (isMaster ? "yes" : "no"));
+
+            if (isMaster) {
+
+                logger.info("this node is now master, broadcasting displays");
+                this.getDisplays().then(displays => {
+                    logger.debug("displays", displays);
+                    dsListener.getDashboardSwarmWebSocket().sendEvent('masterDisplays', [displays]);
+                });
+
+                let tabs = dsNode.getTabs().getValue();
+
+                if (tabs instanceof Array && tabs.length > 0) {
+                    this.setTabs(tabs);
+                }
+
+            } else {
+                if (tabSubscription) {
+                    tabSubscription.unsubscribe();
+                }
+                this.closeEverything();
+                dsListener.getDashboardSwarmWebSocket().sendEvent('masterDisplays', [null]);
+            }
+        });
+
         dsListener.subscribeCommand('openTab', (display, url, isFlash) => {
             if (dsNode.isMaster()) {
                 this.openTab(display, url).then(tabId => {
@@ -104,6 +134,7 @@ export class WindowsManager {
         });
 
         dsListener.subscribeCommand('getDisplays', () => {
+            logger.debug("displays request received");
             if (dsNode.isMaster()) {
                 this.getDisplays().then(displays => {
                     dsListener.getDashboardSwarmWebSocket().sendEvent('masterDisplays', [displays]);
@@ -141,11 +172,11 @@ export class WindowsManager {
             }
         });
 
-            dsListener.subscribeCommand('reloadTab', tabId => {
-                if (dsNode.isMaster()) {
-                    chrome.tabs.reload(tabId);
-                }
-            });
+        dsListener.subscribeCommand('reloadTab', tabId => {
+            if (dsNode.isMaster()) {
+                chrome.tabs.reload(tabId);
+            }
+        });
 
         dsListener.subscribeCommand('sendToForeground', tabId => {
             if (dsNode.isMaster()) {
@@ -224,13 +255,11 @@ export class WindowsManager {
      * @returns {Promise<number>} A promise that resolve the tab ID
      */
     openTab(display, tabUrl) {
-        let wm = this;
-
         return new Promise((resolve, reject) => {
             try {
                 this.getWindowForDisplay(display).then((window) => {
                     chrome.tabs.create({ windowId: window.id, url: tabUrl, active: true}, tab => {
-                        wm.tabs[tab.id] = tab;
+                        this.tabs[tab.id] = tab;
                         resolve(tab.id);
                     });
                 });
@@ -247,10 +276,8 @@ export class WindowsManager {
      * @returns {Promise<Window>} A promise that resolve the Window
      */
     getWindowForDisplay(display) {
-        let wm = this;
-
-        if (wm.windows[display] !== undefined) {
-            return new Promise((resolve, reject) => resolve(wm.windows[display]));
+        if (this.windows[display] !== undefined) {
+            return new Promise((resolve, reject) => resolve(this.windows[display]));
         }
 
         if (this.windowsPromises[display] !== undefined) {
@@ -258,13 +285,13 @@ export class WindowsManager {
         }
 
         this.windowsPromises[display] = new Promise((resolve, reject) => {
-            wm.getDisplays().then(displays => {
+            this.getDisplays().then(displays => {
                 try {
                     chrome.windows.create({
                         'top': displays[display].workArea.top,
                         'left': displays[display].workArea.left
                     }, createdWindow => {
-                        wm.windows[display] = createdWindow;
+                        this.windows[display] = createdWindow;
 
                         let newWindowTabsId = createdWindow.tabs.map(tab => tab.id);
 
@@ -289,8 +316,8 @@ export class WindowsManager {
 
                         chrome.windows.onRemoved.addListener(windowId => {
                             if (windowId === createdWindow.id) {
-                                delete wm.windowsPromises[display];
-                                delete wm.windows[display];
+                                delete this.windowsPromises[display];
+                                delete this.windows[display];
                             }
                         });
 
@@ -383,28 +410,27 @@ export class WindowsManager {
             return;
         }
 
-        let wm = this;
         let rotationStartDate;
 
         chrome.tabs.query({active: true, windowId: wm.windows[display].id}, tabs => {
             let tab = tabs[0];
-            let tabDuration = wm.getTab(tab.id).flash ? intervalFlash : interval;
+            let tabDuration = this.getTab(tab.id).flash ? intervalFlash : interval;
 
             let tabScript = new TabProxy(tab.id);
             tabScript.rearmCountdown(tabDuration * 1000);
             rotationStartDate = new Date();
         });
 
-        wm.intervals[display] = setInterval(() => {
+        this.intervals[display] = setInterval(() => {
             if (rotationStartDate === undefined) {
                 return;
             }
 
-            if (wm.windows[display] !== undefined) { // Prevent re-opening a closed window
+            if (this.windows[display] !== undefined) { // Prevent re-opening a closed window
 
                 let elapsedMilliseconds = new Date() - rotationStartDate;
 
-                chrome.windows.get(wm.windows[display].id, {populate: true}, window => {
+                chrome.windows.get(this.windows[display].id, {populate: true}, window => {
                     let tabs = window.tabs.sort((a, b) => a.index - b.index);
                     let activeTab = tabs.find(t => t.active === true);
 
@@ -413,7 +439,7 @@ export class WindowsManager {
                     let tabToActivate = activeTabIndex === maxIndex ? 0 : activeTabIndex + 1;
                     let nextTabId = tabs[tabToActivate].id;
 
-                    let tabDuration = wm.getTab(activeTab.id).flash ? intervalFlash : interval;
+                    let tabDuration = this.getTab(activeTab.id).flash ? intervalFlash : interval;
 
                     if (elapsedMilliseconds < (tabDuration * 1000)) {
                         return;
@@ -437,12 +463,11 @@ export class WindowsManager {
      * @param display Display you want to stop rotating
      */
     stopRotation(display) {
-        let wm = this;
-        let w = wm.windows[display];
+        let w = this.windows[display];
 
-        if (wm.intervals[display] !== undefined) {
+        if (this.intervals[display] !== undefined) {
             clearInterval(wm.intervals[display]);
-            delete wm.intervals[display];
+            delete this.intervals[display];
 
             chrome.tabs.query({active: true, windowId: w.id}, tabs => {
                 let tab = tabs[0];

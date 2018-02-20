@@ -35,14 +35,13 @@ class NodeProxy extends ExtendableProxy {
         chrome.runtime.onMessage.addListener(data => {
             if (data.target !== 'popup') return;
 
-            logger.info("Event: " + data.action);
+            logger.debug("Event: ", data);
 
             let subscriptions = this.subscriptions[data.action];
 
             if (subscriptions instanceof Array && subscriptions.length > 0) {
                 subscriptions.forEach(subscription => {
-                    let args = data.data instanceof Array ? data.data : [data.data];
-                    subscription.apply(data, args);
+                    subscription.apply(data, [data.data]);
                 });
             }
         });

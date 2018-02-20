@@ -12,6 +12,7 @@ import {Parameters} from "./classes/Parameters";
 const logger = Logger.get('popup');
 const NodeProxy = new nodeProxy();
 
+let waitingMaster = null;
 let activePanelTab = 0;
 
 let tabsSubject = new Rx.BehaviorSubject([]);
@@ -25,14 +26,17 @@ function load() {
     let masterTimeout = setTimeout(() => showWaitingMaster(), 500);
 
     NodeProxy.getDisplays(response => {
-        displaysSubject.next(response);
-        clearTimeout(masterTimeout);
+        logger.info("displays received, response from proxy : ", response);
+        if (response !== null) {
+            displaysSubject.next(response);
+            clearTimeout(masterTimeout);
+            removeWaitingMaster();
+        }
     });
 
     NodeProxy.getTabs(response => {
-        logger.info("tab received, response from proxy : ");
-        logger.info(response);
-        tabsSubject.next(response)
+        logger.info("tab received, response from proxy : ", response);
+        tabsSubject.next(response);
     });
     NodeProxy.getRotationStatus();
 }
@@ -41,6 +45,11 @@ load();
 
 NodeProxy.on('connectionSuccess', () => {
     logger.info("new successful connection detected");
+    load();
+});
+
+NodeProxy.on('connectionFailed', () => {
+    logger.info("new connection attempt failed");
     load();
 });
 
@@ -68,7 +77,7 @@ NodeProxy.on('tabClosed', tabId => {
 NodeProxy.on('tabUpdated', (tabId, newProps) => {
     let currentTabs = tabsSubject.getValue();
 
-    if (currentTabs === undefined) {
+    if (!currentTabs) {
         logger.error("Whoops, empty tabs !");
         return;
     }
@@ -80,13 +89,19 @@ NodeProxy.on('tabUpdated', (tabId, newProps) => {
 });
 
 NodeProxy.on('getTabs', tabs => {
-    logger.debug("Event `getTabs` received with :");
-    logger.debug(tabs);
+    logger.debug("Event `getTabs` received with : ", tabs);
     tabsSubject.next(tabs);
 });
 
 NodeProxy.on('getDisplays', displays => {
+    logger.debug("Event `getDisplays` received with : ", displays);
     displaysSubject.next(displays);
+
+    if (displays === null) {
+        showWaitingMaster();
+    } else {
+        removeWaitingMaster();
+    }
 });
 
 function clearTabsSpace() {
@@ -106,14 +121,23 @@ function clearTabsSpace() {
 }
 
 function showWaitingMaster() {
-    let waitingMaster = document.getElementById('waitingMaster').cloneNode(true);
+    if (waitingMaster) {
+        return;
+    }
+
+    waitingMaster = document.getElementById('waitingMaster').cloneNode(true);
     waitingMaster.removeAttribute('id');
     waitingMaster.classList.remove('hide');
     document.querySelector('#displays .panel .panel-body').appendChild(waitingMaster);
 }
 
 function removeWaitingMaster() {
-    document.querySelector('#displays .panel .panel-body .empty').remove();
+    if (!waitingMaster) {
+        return;
+    }
+
+    waitingMaster.remove();
+    waitingMaster = null;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -121,11 +145,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let domPanelTabBlock = document.querySelector('#displays .panel ul.tab-block');
 
     displaysSubject.subscribe(displays => {
-        if ((typeof displays !== 'object') || Object.keys(displays).length === 0) {
-            return;
-        }
+
+        logger.debug("new displays, subscriber triggers : ", displays);
 
         clearTabsSpace();
+
+        if (displays === null || Object.keys(displays).length === 0) {
+            return;
+        }
 
         for (let i in displays) {
             if (displays.hasOwnProperty(i)) {
@@ -294,13 +321,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('#master').checked = currentConfig.master;
 
         document.querySelector('#master').addEventListener('change', e => {
+            logger.info("This node is now master : " + (e.target.checked ? "yes" : "no"));
             chrome.storage.sync.set({
                 master: e.target.checked
             });
-
-            if (!e.target.checked) {
-                load();
-            }
         });
     });
 
@@ -327,9 +351,6 @@ function showTabsForDisplay(display) {
     let domPanelBody = document.querySelector('#displays .panel .panel-body');
 
     tabsSubject.subscribe(tabs => {
-        logger.debug('received new tabs');
-        logger.debug(tabs);
-
         tabs.sort((a, b) => a.position - b.position);
         // Clear previous content
         while (domPanelBody.firstChild) {
@@ -481,6 +502,8 @@ function getDisplayName(i) {
 }
 
 function connect(e, callback) {
+    logger.info("connection attempt");
+
     let serverUrlInput = document.querySelector('#serverUrl');
     let serverUrl = serverUrlInput.value;
 
@@ -491,18 +514,18 @@ function connect(e, callback) {
     }, () => {
 
         NodeProxy.on('connectionSuccess', () => {
+            logger.info("connectionSuccess");
             serverUrlInput.classList.add('is-success');
             document.querySelector('#parameters').removeAttribute('disabled');
             serverUrlInput.setAttribute('disabled', 'disabled');
             document.querySelector('#connect').textContent = "Disconnect";
 
-            NodeProxy.refresh();
-
             callback(true);
         });
 
         NodeProxy.on('connectionFailed', () => {
-            connectionHint.textContent = "Error : " + err;
+            logger.info("connectionFailed");
+            connectionHint.textContent = "Connection failed";
             serverUrlInput.classList.add('is-error');
             callback(false);
         });

@@ -4,7 +4,9 @@ import { DashboardSwarmListener } from './classes/DashboardSwarmListener';
 import { WindowsManager } from './classes/WindowsManager';
 import { Parameters } from './classes/Parameters';
 
-import logger from './logger';
+import Logger from './logger';
+
+const logger = Logger.get('background');
 
 ///////////////////////////////
 // Load displays information //
@@ -35,7 +37,7 @@ chrome.storage.sync.get({
         console.log(changes);
 
         if (changes.master) {
-            logger.info("You are now master");
+            logger.info("This node is now master : " + (changes.master.newValue ? "yes" : "no"));
             node.setMaster(changes.master.newValue);
         }
 
