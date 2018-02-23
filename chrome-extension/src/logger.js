@@ -23,11 +23,6 @@ let handler = Logger.createDefaultHandler({
 
         messages.unshift('[ ' + context.level.name + ' ]');
         messages.unshift(time);
-
-        if (typeof messages[0] !== 'string') {
-            messages[0] = 'Object : ';
-            console.log(messages[0]);
-        }
     }
 });
 

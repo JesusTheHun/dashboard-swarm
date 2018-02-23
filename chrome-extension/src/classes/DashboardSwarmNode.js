@@ -192,6 +192,7 @@ export class DashboardSwarmNode {
         logger.debug("Refresh");
         this.ws.sendCommand('getTabs');
         this.ws.sendCommand('getDisplays');
+        this.ws.sendCommand('getRotationStatus');
     }
 
     /**
