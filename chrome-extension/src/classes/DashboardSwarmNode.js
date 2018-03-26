@@ -1,33 +1,36 @@
+/*global chrome*/
+
 import Logger from "js-logger/src/logger";
 import * as Rx from "rxjs";
+import {DashboardSwarmNodeMaster} from "./DashboardSwarmNodeMaster";
 
 const logger = Logger.get('DashboardSwarmNode');
 
 export class DashboardSwarmNode {
 
-    constructor(ws, listener, param) {
+    constructor(ws, listener, wm, param) {
         this.ws = ws;
-        this.dsListener = listener;
+        this.listener = listener;
+        this.wm = wm;
         this.param = param;
+
+        this.nodeMaster = new DashboardSwarmNodeMaster(this, listener, wm);
 
         this.master = 0;
         this.masterSubject = new Rx.BehaviorSubject(null);
-        this.tabsSubject = new Rx.BehaviorSubject(null);
-        this.displaysSubject = new Rx.BehaviorSubject(null);
         this.rotation = false;
+        this.connected = false;
 
         ws.getWebSocketSubject().subscribe(newConnection => {
-            logger.info("new connection received");
-            logger.debug(newConnection);
-
-            this.tabsSubject.next(null);
-            this.displaysSubject.next(null);
+            logger.info("new connection received", newConnection);
 
             if (newConnection === null) {
+                this.connected = false;
                 chrome.runtime.sendMessage({ target: 'popup', action: 'connectionFailed', data: []});
                 return;
             }
 
+            this.connected = true;
             this.refresh();
             chrome.runtime.sendMessage({ target: 'popup', action: 'connectionSuccess', data: []});
         });
@@ -39,12 +42,10 @@ export class DashboardSwarmNode {
         });
 
         listener.subscribeEvent('serverTabs', tabs => {
-            this.tabsSubject.next(tabs);
             chrome.runtime.sendMessage({ target: 'popup', action: 'getTabs', data: tabs});
         });
 
         listener.subscribeEvent('masterDisplays', displays => {
-            this.displaysSubject.next(displays);
             chrome.runtime.sendMessage({ target: 'popup', action: 'getDisplays', data: displays});
         });
 
@@ -60,36 +61,14 @@ export class DashboardSwarmNode {
                 scroll: scroll
             };
 
-            let tabs = this.getTabs().getValue();
-            tabs.push(tab);
-
-            this.getTabs().next(tabs);
-
             chrome.runtime.sendMessage({target: 'popup', action: 'tabOpened', data: tab});
         });
 
         listener.subscribeEvent('tabClosed', tabId => {
-            let tabs = this.getTabs().getValue();
-            let tabIdx = tabs.findIndex(t => t.id === tabId);
-            if (tabIdx === -1) {
-                return;
-            }
-            tabs.splice(tabIdx, 1);
-            this.getTabs().next(tabs);
-
             chrome.runtime.sendMessage({ target: 'popup', action: 'tabClosed', data: tabId});
         });
 
         listener.subscribeEvent('tabUpdated', (tabId, newProps) => {
-            let tabs = this.getTabs().getValue();
-            let currentTab = tabs.find(t => t.id === tabId);
-            if (currentTab === undefined) {
-                return;
-            }
-            Object.assign(currentTab, newProps);
-
-            this.getTabs().next(tabs);
-
             chrome.runtime.sendMessage({target: 'popup', action: 'tabUpdated', data: [tabId, newProps]});
         });
 
@@ -145,8 +124,6 @@ export class DashboardSwarmNode {
                     });
                     return true;
                 } else if (result instanceof Rx.BehaviorSubject) {
-                    logger.debug("Node Bridge asking for a Rx `"+ request.node +"()`, transmitting value : ");
-                    logger.debug(result.getValue());
                     response(result.getValue());
                 } else {
                     response(result);
@@ -160,7 +137,7 @@ export class DashboardSwarmNode {
      * @returns DashboardSwarmListener
      */
     getListener() {
-        return this.dsListener;
+        return this.listener;
     }
 
     /**
@@ -171,6 +148,8 @@ export class DashboardSwarmNode {
         logger.debug("This node is now master : " + (isMaster ? "yes" : "no"));
         this.master = isMaster;
         this.isMasterSubject().next(isMaster);
+
+        isMaster ? this.nodeMaster.on() : this.nodeMaster.off();
     }
 
     isMasterSubject() {
@@ -222,18 +201,12 @@ export class DashboardSwarmNode {
         this.ws.sendCommand('updateTab', [tabId, newProps]);
     }
 
-    /**
-     * @returns {Rx.BehaviorSubject<Array>} A copy of node's tabs.
-     */
     getTabs() {
-        return this.tabsSubject;
+        this.ws.sendCommand('getTabs');
     }
 
-    /**
-     * @returns {Promise<*>} A copy of displays details
-     */
     getDisplays() {
-        return this.displaysSubject;
+        this.ws.sendCommand('getDisplays');
     }
 
     getConfig() {
@@ -272,6 +245,7 @@ export class DashboardSwarmNode {
     }
 
     connect() {
+        chrome.runtime.sendMessage({ target: 'popup', action: 'connectionAttempt', data: []});
         this.ws.connect();
     }
 
@@ -285,5 +259,9 @@ export class DashboardSwarmNode {
 
     setConfig(newConfig) {
         this.ws.sendCommand('setConfig', [newConfig]);
+    }
+
+    isConnected() {
+        return this.connected;
     }
 }

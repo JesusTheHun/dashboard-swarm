@@ -1,5 +1,5 @@
-import { ContentScript } from '../contentScript';
-import { ExtendableProxy } from '../../../common/ExtendableProxy';
+import { ContentScript } from '../../contentScript';
+import { ExtendableProxy } from './ExtendableProxy';
 
 class TabProxy extends ExtendableProxy {
 

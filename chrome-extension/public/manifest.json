@@ -1,23 +1,23 @@
 {
     "manifest_version": 2,
-    "name": "Dashboard Swarm",
-    "description": "This extension allows to slideshow tabs in multiple windows on multiple screens, remotely from your desktop",
-    "version": "0.4",
+    "name": "Dashboard Swarm React",
+    "short_name": "Dashboard Swarm",
+    "version": "0.5",
     "browser_action": {
-        "default_icon": "icon.png",
-        "default_popup": "popup.html"
+        "default_popup": "index.html",
+        "default_title": "React Ext"
     },
     "background": {
         "scripts": [
-            "build/background.js"
+            "background.js"
         ]
     },
     "content_scripts": [{
         "run_at": "document_idle",
         "matches": ["*://*/*"],
         "include_globs": ["*"],
-        "css": ["build/content_script/keyframe.css"],
-        "js": ["build/contentScript.js"]
+        "css": ["content_script/keyframe.css"],
+        "js": ["contentScript.js"]
     }],
     "permissions": [
         "background",

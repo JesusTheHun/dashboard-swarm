@@ -9,7 +9,7 @@ const paramsName = [
 export class Parameters {
     constructor(listener) {
         this.dsws = listener.getDashboardSwarmWebSocket();
-        this.dsListener = listener;
+        this.listener = listener;
 
         this.params = {};
 

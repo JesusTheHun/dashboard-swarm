@@ -1,3 +1,7 @@
+import Logger from "js-logger/src/logger";
+
+const logger = Logger.get('DashboardSwarmListener');
+
 export class DashboardSwarmListener {
 
     constructor(dsws) {
@@ -28,16 +32,8 @@ export class DashboardSwarmListener {
         return subscribe.call(this, 'event', eventName, callback);
     }
 
-    unsubscribeEvent(eventName, callback) {
-        return unsubscribe.call(this, 'event', eventName, callback);
-    }
-
     subscribeCommand(commandName, callback) {
         return subscribe.call(this, 'command', commandName, callback);
-    }
-
-    unsubscribeCommand(commandName, callback) {
-        return unsubscribe.call(this, 'command', commandName, callback);
     }
 
     dispatch(data) {
@@ -64,25 +60,22 @@ export class DashboardSwarmListener {
     }
 }
 
+/**
+ * Return unsubscribe method
+ * @param namespace
+ * @param name
+ * @param callback
+ * @returns {function} Unsubscribe function
+ */
 function subscribe(namespace, name, callback) {
     if (this.handlers[namespace][name] === undefined) {
         this.handlers[namespace][name] = [];
     }
 
     this.handlers[namespace][name].push(callback);
-    return true;
-}
 
-function unsubscribe(namespace, name, callback) {
-    if (this.handlers[namespace][name] === undefined) {
-        return false;
+    return () => {
+        logger.debug("unsubscribed", namespace, event);
+        this.handlers[namespace][name] = this.handlers[namespace][name].filter(cb => cb !== callback);
     }
-
-    let foundCallback = this.handlers[namespace][name].find(cb => cb === callback);
-
-    if (foundCallback !== undefined) {
-        this.handlers[namespace][name].splice(foundCallback, 1);
-    }
-
-    return foundCallback !== undefined;
 }

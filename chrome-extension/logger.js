@@ -1,4 +1,4 @@
-import {DEBUG_LEVEL} from "./env";
+import {DEBUG_LEVEL} from "./src/env";
 import Logger from "js-logger/src/logger";
 
 let enforceDigits = (number, digits) => {

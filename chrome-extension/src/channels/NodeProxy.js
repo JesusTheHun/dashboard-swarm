@@ -1,5 +1,7 @@
+/*global chrome*/
+
 import { DashboardSwarmNode } from '../classes/DashboardSwarmNode';
-import { ExtendableProxy } from '../../../common/ExtendableProxy';
+import { ExtendableProxy } from './ExtendableProxy';
 import Logger from "js-logger/src/logger";
 
 const logger = Logger.get('NodeProxy');
@@ -32,25 +34,30 @@ class NodeProxy extends ExtendableProxy {
 
         this.subscriptions = {};
 
-        chrome.runtime.onMessage.addListener(data => {
-            if (data.target !== 'popup') return;
+        if (chrome.runtime.onMessage) {
+            chrome.runtime.onMessage.addListener(data => {
+                if (data.target !== 'popup') return;
 
-            logger.debug("Event: ", data);
+                let subscriptions = this.subscriptions[data.action];
 
-            let subscriptions = this.subscriptions[data.action];
-
-            if (subscriptions instanceof Array && subscriptions.length > 0) {
-                subscriptions.forEach(subscription => {
-                    subscription.apply(data, [data.data]);
-                });
-            }
-        });
+                if (subscriptions instanceof Array && subscriptions.length > 0) {
+                    subscriptions.forEach(subscription => {
+                        subscription.apply(data, [data.data]);
+                    });
+                }
+            });
+        }
     }
 
     on(event, callback) {
+        logger.debug("subscribed", event);
         let events = this.subscriptions[event] || [];
         events.push(callback);
         this.subscriptions[event] = events;
+        return () => {
+            logger.debug("unsubscribed", event);
+            events = events.filter(cb => cb !== callback);
+        };
     }
 }
 

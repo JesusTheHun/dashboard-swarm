@@ -1,8 +1,8 @@
-import { DashboardSwarmNode } from './classes/DashboardSwarmNode';
-import { DashboardSwarmWebSocket } from './classes/DashboardSwarmWebSocket';
-import { DashboardSwarmListener } from './classes/DashboardSwarmListener';
-import { WindowsManager } from './classes/WindowsManager';
-import { Parameters } from './classes/Parameters';
+import { DashboardSwarmNode } from './src/classes/DashboardSwarmNode';
+import { DashboardSwarmWebSocket } from './src/classes/DashboardSwarmWebSocket';
+import { DashboardSwarmListener } from './src/classes/DashboardSwarmListener';
+import { WindowsManager } from './src/classes/WindowsManager';
+import { Parameters } from './src/classes/Parameters';
 
 import Logger from './logger';
 
@@ -26,27 +26,11 @@ chrome.storage.sync.get({
     let ws = new DashboardSwarmWebSocket();
     let listener = new DashboardSwarmListener(ws);
     let param =  new Parameters(listener);
-    let node = new DashboardSwarmNode(ws, listener, param);
-    let wm =  new WindowsManager(listener, node);
+    let wm =  new WindowsManager(listener);
+    let node = new DashboardSwarmNode(ws, listener, wm, param);
 
     node.setMaster(items.master);
     node.setServerUrl(items.server);
-
-    chrome.storage.onChanged.addListener((changes, areaName) => {
-        logger.info("config changes detected, live apply");
-        console.log(changes);
-
-        if (changes.master) {
-            logger.info("This node is now master : " + (changes.master.newValue ? "yes" : "no"));
-            node.setMaster(changes.master.newValue);
-        }
-
-        if (changes.server) {
-            logger.info("server url changed to ` " + changes.server.newValue + "`, reconnection...");
-            ws.setServerUrl(changes.server.newValue);
-            ws.connect();
-        }
-    });
 
     ws.getWebSocketSubject().subscribe(ws => {
         if (ws === null) return;

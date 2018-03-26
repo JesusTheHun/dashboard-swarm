@@ -6,7 +6,6 @@ const buildDirectory = 'build';
 const path = require('path');
 
 // Plugins
-const CleanWebpackPlugin = require('clean-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 /////////
@@ -14,10 +13,9 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 /////////
 
 module.exports = {
-    context: path.join(__dirname, 'src'),
+    context: __dirname,
     entry: {
         background: './background.js',
-        popup: './popup.js',
         contentScript: './contentScript.js'
     },
     output: {
@@ -25,9 +23,8 @@ module.exports = {
         path: path.resolve(__dirname, buildDirectory),
     },
     plugins: [
-        new CleanWebpackPlugin([buildDirectory]),
         new CopyWebpackPlugin([
-            {from: '../env.dev.js', to: 'env.js'},
+            {from: 'env.dev.js', to: 'env.js'},
             {from: 'content_script/**/*', to: 'content_script/[name].[ext]'}
         ])
     ],

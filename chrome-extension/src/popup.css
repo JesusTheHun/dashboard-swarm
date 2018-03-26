@@ -1,11 +1,8 @@
 /** Template */
-#empty, #waitingMaster {
-    display: none;
-}
 
 #displays .empty {
     min-width: 300px;
-    /*margin-top: 16px;*/
+    margin-top: .8rem;
 }
 
 #displays .empty.empty-sm {
@@ -57,11 +54,6 @@
     font-size: 0.7em;
 }
 
-#displays .panel .panel-body {
-    padding-top: 1rem;
-    padding-bottom: 0.3rem;
-}
-
 .panel .panel-body .tile .tile-content .tile-subtitle {
     font-style: italic;
     font-size: 0.6rem;
@@ -78,7 +70,6 @@
 }
 
 #player {
-    margin-top: 20px;
     text-align: center;
 }
 
@@ -86,18 +77,17 @@
     font-size: 1.3rem;
 }
 
-a#configLink, a#closeConfigLink {
+#displayList {
+    margin-top: 20px;
+}
+
+a#configLink {
     float: right;
     width: 20px;
 }
 
-#config {
-    display: none;
-    min-width: 400px;
-}
-
 #config .panel {
-    min-width: 400px;
+    min-width: 398px;
 }
 
 #save {
@@ -180,14 +170,24 @@ a#configLink, a#closeConfigLink {
     min-height: 220px;
 }
 
-#tabTemplate {
-    display: none;
-}
-
 .js-param-button i {
     visibility: hidden;
 }
 
 .tile:hover .js-param-button i {
     visibility: visible;
+}
+
+fieldset#client {
+    margin-top: 20px;
+}
+
+fieldset#parameters legend {
+    border-top: 1px solid grey;
+    width: 100%;
+    padding-top: 10px;
+}
+
+ul#tabs {
+    margin: 10px 0 0 0;
 }

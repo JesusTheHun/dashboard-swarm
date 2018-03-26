@@ -4,6 +4,7 @@ import Logger from "js-logger/src/logger";
 
 const logger = Logger.get('WindowsManager');
 
+// TODO delegate listeners to DsNode
 export class WindowsManager {
 
     initInstanceVars() {
@@ -13,184 +14,9 @@ export class WindowsManager {
         this.intervals = {};
     }
 
-    constructor(dsListener, dsNode) {
-        this.dsListener = dsListener;
-
+    constructor(dsListener) {
+        this.listener = dsListener;
         this.initInstanceVars();
-
-        let tabSubscription;
-
-        dsNode.isMasterSubject().subscribe(isMaster => {
-            if (isMaster === null) return;
-
-            logger.info("master updated, master status : " + (isMaster ? "yes" : "no"));
-
-            if (isMaster) {
-
-                logger.info("this node is now master, broadcasting displays");
-                this.getDisplays().then(displays => {
-                    logger.debug("displays", displays);
-                    dsListener.getDashboardSwarmWebSocket().sendEvent('masterDisplays', [displays]);
-                });
-
-                let tabs = dsNode.getTabs().getValue();
-
-                if (tabs instanceof Array && tabs.length > 0) {
-                    this.setTabs(tabs);
-                }
-
-            } else {
-                if (tabSubscription) {
-                    tabSubscription.unsubscribe();
-                }
-                this.closeEverything();
-                dsListener.getDashboardSwarmWebSocket().sendEvent('masterDisplays', [null]);
-            }
-        });
-
-        dsListener.subscribeCommand('openTab', (display, url, isFlash) => {
-            if (dsNode.isMaster()) {
-                this.openTab(display, url).then(tabId => {
-                    let updateWhenTitleIsReady = (changedTabId, changeInfo, tab) => {
-                        if (changedTabId === tabId && changeInfo.title !== undefined && changeInfo.title !== '') {
-                            let scroll = {top: 0, left: 0};
-
-                            chrome.tabs.getZoom(tabId, zoom => {
-                                let flash = isFlash ? new Date() : undefined;
-                                this.tabs[tab.id].flash = flash;
-                                dsListener.getDashboardSwarmWebSocket().sendEvent('tabOpened', [tabId, display, url, changeInfo.title, tab.index, flash, zoom, scroll]);
-                            });
-                            chrome.tabs.onUpdated.removeListener(updateWhenTitleIsReady);
-                        }
-                    };
-
-                    chrome.tabs.onUpdated.addListener(updateWhenTitleIsReady);
-                });
-            }
-        });
-
-        dsListener.subscribeCommand('closeTab', tabId => {
-            if (dsNode.isMaster() && this.tabs[tabId] !== undefined) {
-                this.closeTab(tabId).then(tabId => {
-                    dsListener.sendEvent('tabClosed', [tabId]);
-                });
-            }
-        });
-
-        dsListener.subscribeCommand('updateTab', (tabId, newProps) => {
-            if (dsNode.isMaster() && this.getTab(tabId) !== undefined) {
-                if (newProps.position !== undefined) {
-                    chrome.tabs.move(tabId, {index: newProps.position}, movedTab => {
-                        chrome.windows.get(movedTab.windowId, {populate: true}, window => {
-                            window.tabs.filter(wTab => wTab.index !== this.getTab(wTab.id).position).forEach(wTab => {
-                                dsListener.sendEvent('tabUpdated', [wTab.id, {position: wTab.index}]);
-                            })
-                        });
-                    });
-                }
-
-                if (newProps.url !== undefined) {
-                    chrome.tabs.update(tabId, {url: newProps.url}, tab => {
-                        if (newProps.title === undefined) {
-                            let updateWhenTitleIsReady = (changedTabId, changeInfo, tab) => {
-                                if (changedTabId === tabId && changeInfo.title !== undefined && changeInfo.title !== '') {
-                                    newProps.title = changeInfo.title;
-                                    dsListener.sendEvent('tabUpdated', [tabId, newProps]);
-                                    chrome.tabs.onUpdated.removeListener(updateWhenTitleIsReady);
-                                }
-                            };
-
-                            chrome.tabs.onUpdated.addListener(updateWhenTitleIsReady);
-                        } else {
-                            dsListener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, newProps]);
-                        }
-                    });
-                }
-
-                if (newProps.display !== undefined) {
-                    this.getWindowForDisplay(newProps.display).then(window => {
-                        chrome.tabs.move(tabId, {windowId: window.id, index: -1}, tab => {
-                            newProps.position = tab.index;
-                            dsListener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, newProps]);
-                        });
-                    });
-                }
-
-                if (newProps.zoom !== undefined) {
-                    chrome.tabs.setZoom(tabId, parseFloat(newProps.zoom), tab => {
-                        if (newProps.title === undefined) {
-                            dsListener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, newProps]);
-                        }
-                    });
-                }
-
-                if (newProps.scroll !== undefined) {
-                    let tabProxy = new TabProxy(tabId);
-                    tabProxy.scroll(newProps.scroll, response => {
-                        dsListener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, {scroll: response}]);
-                    });
-                }
-            }
-        });
-
-        dsListener.subscribeCommand('getDisplays', () => {
-            logger.debug("displays request received");
-            if (dsNode.isMaster()) {
-                this.getDisplays().then(displays => {
-                    dsListener.getDashboardSwarmWebSocket().sendEvent('masterDisplays', [displays]);
-                });
-            }
-        });
-
-        dsListener.subscribeCommand('startRotation', (interval, intervalFlash) => {
-            if (dsNode.isMaster()) {
-                this.getDisplays().then(displays => {
-                    Object.keys(displays).forEach(display => {
-                        if (this.windows[display] !== undefined) {
-                            this.startRotation(display, interval, intervalFlash);
-                        }
-                    })
-                });
-            }
-        });
-
-        dsListener.subscribeCommand('stopRotation', () => {
-            if (dsNode.isMaster()) {
-                this.getDisplays().then(displays => {
-                    Object.keys(displays).forEach(display => {
-                        if (this.windows[display] !== undefined) {
-                            this.stopRotation(display);
-                        }
-                    })
-                });
-            }
-        });
-
-        dsListener.subscribeCommand('getRotationStatus', () => {
-            if (dsNode.isMaster()) {
-                dsListener.getDashboardSwarmWebSocket().sendEvent('rotationStatus', [this.intervals[0] !== undefined]);
-            }
-        });
-
-        dsListener.subscribeCommand('reloadTab', tabId => {
-            if (dsNode.isMaster()) {
-                chrome.tabs.reload(tabId);
-            }
-        });
-
-        dsListener.subscribeCommand('sendToForeground', tabId => {
-            if (dsNode.isMaster()) {
-                chrome.tabs.update(tabId, {active: true});
-            }
-        });
-
-        dsListener.subscribeCommand('restartMaster', () => {
-            if (dsNode.isMaster()) {
-                this.closeEverything().then(windowClosedCount => {
-                    chrome.runtime.reload();
-                });
-            }
-        });
     }
 
     /**
@@ -228,17 +54,21 @@ export class WindowsManager {
      * @param {Array<{display: number, url: string}>} tabs
      */
     setTabs(tabs) {
+        if (tabs.length === 0 && Object.keys(this.windows).length === 0 && Object.keys(this.windowsPromises).length === 0) {
+            return;
+        }
+
         this.closeEverything().then(windowClosedCount => {
             logger.debug("everything has been closed (" + windowClosedCount + " windows closed) ");
             setTimeout(() => {
                 tabs.sort((a, b) => a.position - b.position);
                 tabs.forEach(tab => {
                     this.openTab(tab.display, tab.url).then(tabId => {
-                        this.dsListener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tab.id, {id: tabId}]);
+                        this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tab.id, {id: tabId}]);
 
                         setTimeout(() => {
-                            chrome.tabs.setZoom(tab.id, (tab.zoom || 1), () => {
-                                let tabScript = new TabProxy(tab.id);
+                            chrome.tabs.setZoom(tabId, (tab.zoom || 1), () => {
+                                let tabScript = new TabProxy(tabId);
                                 tabScript.scrollTo(tab.scroll);
                             });
                         }, 2500);
@@ -353,14 +183,6 @@ export class WindowsManager {
         });
     }
 
-    getWindowDisplay(windowId) {
-        for (let i in this.windows) {
-            if (this.windows.hasOwnProperty(i) && this.windows[i].id === windowId) {
-                return i;
-            }
-        }
-    }
-
     /**
      * Close everything. No event is emited
      * @return Promise<number>
@@ -393,10 +215,14 @@ export class WindowsManager {
         });
     }
 
-    dumpInternal() {
-        this.getDisplays().then((data) => console.log(data));
-        console.log(this.tabs);
-        console.log(this.windows);
+    startRotation(interval, intervalFlash) {
+        this.getDisplays().then(displays => {
+            Object.keys(displays).forEach(display => {
+                if (this.windows[display] !== undefined) {
+                    this.startRotationForDisplay(display, interval, intervalFlash);
+                }
+            })
+        });
     }
 
     /**
@@ -405,14 +231,14 @@ export class WindowsManager {
      * @param {number} interval Pause duration between two tabs. In milliseconds
      * @param {number} intervalFlash Pause duration for a flash tab. In milliseconds
      */
-    startRotation(display, interval, intervalFlash) {
+    startRotationForDisplay(display, interval, intervalFlash) {
         if (!interval || interval < 1 || !intervalFlash || intervalFlash < 1) {
             return;
         }
 
         let rotationStartDate;
 
-        chrome.tabs.query({active: true, windowId: wm.windows[display].id}, tabs => {
+        chrome.tabs.query({active: true, windowId: this.windows[display].id}, tabs => {
             let tab = tabs[0];
             let tabDuration = this.getTab(tab.id).flash ? intervalFlash : interval;
 
@@ -455,18 +281,18 @@ export class WindowsManager {
 
         }, 100);
 
-        this.dsListener.getDashboardSwarmWebSocket().sendEvent('rotationStarted', [display, interval, intervalFlash]);
+        this.listener.getDashboardSwarmWebSocket().sendEvent('rotationStarted', [display, interval, intervalFlash]);
     }
 
     /**
      * Stop the rotation of thabs for a particular display
      * @param display Display you want to stop rotating
      */
-    stopRotation(display) {
+    stopRotationForDisplay(display) {
         let w = this.windows[display];
 
         if (this.intervals[display] !== undefined) {
-            clearInterval(wm.intervals[display]);
+            clearInterval(this.intervals[display]);
             delete this.intervals[display];
 
             chrome.tabs.query({active: true, windowId: w.id}, tabs => {
@@ -476,6 +302,70 @@ export class WindowsManager {
             });
         }
 
-        this.dsListener.getDashboardSwarmWebSocket().sendEvent('rotationStopped');
+        this.listener.getDashboardSwarmWebSocket().sendEvent('rotationStopped');
+    }
+
+    stopRotation() {
+        this.getDisplays().then(displays => {
+            Object.keys(displays).forEach(display => {
+                if (this.windows[display] !== undefined) {
+                    this.stopRotationForDisplay(display);
+                }
+            })
+        });
+    }
+
+    setTabPosition(tabId, position) {
+        chrome.tabs.move(tabId, {index: position}, movedTab => {
+            chrome.windows.get(movedTab.windowId, {populate: true}, window => {
+                window.tabs.filter(wTab => wTab.index !== this.getTab(wTab.id).position).forEach(wTab => {
+                    this.listener.sendEvent('tabUpdated', [wTab.id, {position: wTab.index}]);
+                })
+            });
+        });
+    }
+
+    setTabUrl(tabId, url, title) {
+        chrome.tabs.update(tabId, {url: url}, tab => {
+            if (title === undefined) {
+                let updateWhenTitleIsReady = (changedTabId, changeInfo, tab) => {
+                    if (changedTabId === tabId && changeInfo.title !== undefined && changeInfo.title !== '') {
+                        title = changeInfo.title;
+                        this.listener.sendEvent('tabUpdated', [tabId, {url, title}]);
+                        chrome.tabs.onUpdated.removeListener(updateWhenTitleIsReady);
+                    }
+                };
+
+                chrome.tabs.onUpdated.addListener(updateWhenTitleIsReady);
+            } else {
+                this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, {url, title}]);
+            }
+        });
+    }
+
+    setTabDisplay(tabId, display) {
+        this.getWindowForDisplay(display).then(window => {
+            chrome.tabs.move(tabId, {windowId: window.id, index: -1}, tab => {
+                let newProps = {display};
+                newProps.position = tab.index;
+                this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, newProps]);
+            });
+        });
+    }
+
+    setTabZoom(tabId, zoom) {
+        chrome.tabs.setZoom(tabId, parseFloat(zoom), tab => {
+            this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, {zoom}]);
+        });
+    }
+
+    setTabScroll(tabId, scroll) {
+        new TabProxy(tabId).scroll(scroll, response => {
+            this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, {scroll: response}]);
+        });
+    }
+
+    isRotationActive() {
+        return this.intervals[0] !== undefined;
     }
 }
