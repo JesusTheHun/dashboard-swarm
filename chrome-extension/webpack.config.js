@@ -25,7 +25,7 @@ module.exports = {
     plugins: [
         new CopyWebpackPlugin([
             {from: 'env.dev.js', to: 'env.js'},
-            {from: 'content_script/**/*', to: 'content_script/[name].[ext]'}
+            {from: 'contentScript.css', to: './[name].[ext]'}
         ])
     ],
     module: {

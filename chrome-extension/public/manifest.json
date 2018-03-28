@@ -1,11 +1,11 @@
 {
     "manifest_version": 2,
-    "name": "Dashboard Swarm React",
+    "name": "Dashboard Swarm",
     "short_name": "Dashboard Swarm",
     "version": "0.5",
     "browser_action": {
         "default_popup": "index.html",
-        "default_title": "React Ext"
+        "default_title": "Dashboard Swarm"
     },
     "background": {
         "scripts": [
@@ -16,7 +16,7 @@
         "run_at": "document_idle",
         "matches": ["*://*/*"],
         "include_globs": ["*"],
-        "css": ["content_script/keyframe.css"],
+        "css": ["contentScript.css"],
         "js": ["contentScript.js"]
     }],
     "permissions": [
