@@ -9,7 +9,7 @@ const reducer = (state = [], action) => {
             ];
         case 'REMOVE_TAB':
             return state.filter(tab => tab.id === action.id);
-        case 'TAB_UPDATE':
+        case 'UPDATE_TAB':
             let tabIndex = state.findIndex(tab => tab.id === action.id);
             let tab = state.find(tab => tab.id === action.id);
             let updatedTab = Object.assign({}, tab, action.props);

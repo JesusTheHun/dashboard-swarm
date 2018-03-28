@@ -14,7 +14,6 @@ import logger from "./logger";
 import defer from "./function/defer";
 import reducers from "./reducers";
 import {applyMiddleware, createStore} from "redux";
-import {saveClientConfig} from "./middleware/saveClientConfig";
 import {actionLogger} from "./middleware/actionLogger";
 import {backgroundBridge} from "./middleware/backgroundBridge";
 
@@ -33,7 +32,7 @@ if (chrome.storage) {
     initialStateLoaded.resolve({});
 }
 
-let middlewares = [actionLogger, saveClientConfig, backgroundBridge];
+let middlewares = [actionLogger, backgroundBridge];
 
 initialStateLoaded.then(stateTree => {
 

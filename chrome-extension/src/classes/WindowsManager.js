@@ -319,7 +319,7 @@ export class WindowsManager {
         chrome.tabs.move(tabId, {index: position}, movedTab => {
             chrome.windows.get(movedTab.windowId, {populate: true}, window => {
                 window.tabs.filter(wTab => wTab.index !== this.getTab(wTab.id).position).forEach(wTab => {
-                    this.listener.sendEvent('tabUpdated', [wTab.id, {position: wTab.index}]);
+                    this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [wTab.id, {position: wTab.index}]);
                 })
             });
         });
@@ -331,7 +331,7 @@ export class WindowsManager {
                 let updateWhenTitleIsReady = (changedTabId, changeInfo, tab) => {
                     if (changedTabId === tabId && changeInfo.title !== undefined && changeInfo.title !== '') {
                         title = changeInfo.title;
-                        this.listener.sendEvent('tabUpdated', [tabId, {url, title}]);
+                        this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, {url, title}]);
                         chrome.tabs.onUpdated.removeListener(updateWhenTitleIsReady);
                     }
                 };

@@ -1,5 +1,7 @@
 import React from "react";
 import {Tab} from "./Tab";
+import {connect} from "react-redux";
+import {Scene} from "./Scene";
 
 export class Tabs extends React.Component {
 
@@ -8,7 +10,7 @@ export class Tabs extends React.Component {
             <React.Fragment>
             { this.props.tabs.length > 0 ?
                 <ul id="tabs">
-                    {this.props.tabs.map(tab => {
+                    {this.props.tabs.sort((a,b) => a.position - b.position).map(tab => {
                         return <Tab key={tab.id} {...tab} />
                     })}
                 </ul>
