@@ -19,7 +19,7 @@ export class ConfigMaster extends React.Component {
 
     setMaster(isMaster) {
         this.props.dispatch({
-            type: 'SET_MASTER',
+            type: 'MASTER',
             master: isMaster
         });
     }

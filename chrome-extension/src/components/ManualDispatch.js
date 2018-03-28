@@ -27,28 +27,28 @@ export class ManualDispatch extends React.Component {
 
     waitingMaster(bool) {
         this.props.dispatch({
-            type: 'SET_WAITING_MASTER',
+            type: 'WAITING_MASTER',
             waiting: bool
         });
     }
 
     play() {
         this.props.dispatch({
-            type: 'SET_ROTATION_PLAYING',
+            type: 'ROTATION_PLAYING',
             playing: true
         });
     }
 
     stop() {
         this.props.dispatch({
-            type: 'SET_ROTATION_PLAYING',
+            type: 'ROTATION_PLAYING',
             playing: false
         });
     }
 
     setDisplays() {
         this.props.dispatch({
-            type: 'SET_DISPLAYS',
+            type: 'DISPLAYS',
             displays: [
                 {},
                 {}
@@ -58,14 +58,14 @@ export class ManualDispatch extends React.Component {
 
     activeDisplay(i) {
         this.props.dispatch({
-            type: 'SET_ACTIVE_DISPLAY',
+            type: 'ACTIVE_DISPLAY',
             activeDisplay: i
         })
     }
 
     addTab(display) {
         this.props.dispatch({
-            type: 'ADD_TAB',
+            type: 'TAB_ADDED',
             tab: {
                 id: this.tabId++,
                 display,
@@ -76,7 +76,7 @@ export class ManualDispatch extends React.Component {
 
     setConnected(bool) {
         this.props.dispatch({
-            type: 'SET_CONNECTED',
+            type: 'CONNECTED',
             connected: bool
         });
     }

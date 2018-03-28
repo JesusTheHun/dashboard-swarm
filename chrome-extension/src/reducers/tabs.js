@@ -1,15 +1,15 @@
 const reducer = (state = [], action) => {
     switch (action.type) {
-        case 'SET_TABS':
+        case 'TABS_SET':
             return action.tabs;
-        case 'ADD_TAB':
+        case 'TAB_ADDED':
             return [
                 ...state,
                 action.tab
             ];
-        case 'REMOVE_TAB':
+        case 'TAB_REMOVED':
             return state.filter(tab => tab.id === action.id);
-        case 'UPDATE_TAB':
+        case 'TAB_UPDATED':
             let tabIndex = state.findIndex(tab => tab.id === action.id);
             let tab = state.find(tab => tab.id === action.id);
             let updatedTab = Object.assign({}, tab, action.props);

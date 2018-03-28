@@ -1,6 +1,6 @@
 const reducer = (state = [], action) => {
     switch (action.type) {
-        case 'SET_DISPLAYS':
+        case 'DISPLAYS':
             return action.displays;
         default:
             return state;

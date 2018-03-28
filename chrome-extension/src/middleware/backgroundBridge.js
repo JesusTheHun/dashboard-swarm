@@ -32,7 +32,7 @@ class BackgroundBridgeMiddleware {
 
         NodeProxy.isConnected(isConnected => {
             this.store.dispatch({
-                type: 'SET_CONNECTED',
+                type: 'CONNECTED',
                 connected: isConnected
             });
 
@@ -70,7 +70,7 @@ class BackgroundBridgeMiddleware {
         NodeProxy.on('connectionSuccess', () => {
             this.resetState();
             this.store.dispatch({
-                type: 'SET_CONNECTED',
+                type: 'CONNECTED',
                 connected: true
             });
 
@@ -80,7 +80,7 @@ class BackgroundBridgeMiddleware {
         NodeProxy.on('connectionFailed', () => {
             this.resetState();
             this.store.dispatch({
-                type: 'SET_CONNECTED',
+                type: 'CONNECTED',
                 connected: false
             });
         });
@@ -88,14 +88,14 @@ class BackgroundBridgeMiddleware {
         NodeProxy.on('connectionAttempt', () => {
             this.logger.debug('connectionAttempt');
             this.store.dispatch({
-                type: 'SET_WAITING_CONNECTION',
+                type: 'WAITING_CONNECTION',
                 connecting: true
             });
         });
 
         NodeProxy.on('serverConfig', parameters => {
             this.store.dispatch({
-                type: 'SET_SERVER_PARAMETERS',
+                type: 'SERVER_PARAMETERS',
                 parameters
             });
         });
@@ -103,12 +103,12 @@ class BackgroundBridgeMiddleware {
         NodeProxy.on('getDisplays', displays => {
             this.logger.debug("getDisplays", displays);
             this.store.dispatch({
-                type: 'SET_WAITING_MASTER',
+                type: 'WAITING_MASTER',
                 waiting: displays.length === 0
             });
 
             this.store.dispatch({
-                type: 'SET_DISPLAYS',
+                type: 'DISPLAYS',
                 displays
             });
         });
@@ -116,28 +116,28 @@ class BackgroundBridgeMiddleware {
         NodeProxy.on('getTabs', tabs => {
             this.logger.debug("getTabs", tabs);
             this.store.dispatch({
-                type: 'SET_TABS',
+                type: 'TABS_SET',
                 tabs
             });
         });
 
         NodeProxy.on('tabOpened', tab => {
             this.store.dispatch({
-                type: 'ADD_TAB',
+                type: 'TAB_ADDED',
                 tab
             });
         });
 
         NodeProxy.on('tabClosed', id => {
             this.store.dispatch({
-                type: 'REMOVE_TAB',
+                type: 'TAB_REMOVED',
                 id
             });
         });
 
         NodeProxy.on('tabUpdated', ([id, props]) => {
             this.store.dispatch({
-                type: 'UPDATE_TAB',
+                type: 'TAB_UPDATED',
                 id,
                 props
             });
@@ -145,21 +145,21 @@ class BackgroundBridgeMiddleware {
 
         NodeProxy.on('rotationStatus', status => {
             this.store.dispatch({
-                type: 'SET_ROTATION_PLAYING',
+                type: 'ROTATION_PLAYING',
                 playing: status
             });
         });
 
         NodeProxy.on('rotationStarted', () => {
             this.store.dispatch({
-                type: 'SET_ROTATION_PLAYING',
+                type: 'ROTATION_PLAYING',
                 playing: true
             });
         });
 
         NodeProxy.on('rotationStopped', () => {
             this.store.dispatch({
-                type: 'SET_ROTATION_PLAYING',
+                type: 'ROTATION_PLAYING',
                 playing: false
             });
         });
@@ -167,27 +167,27 @@ class BackgroundBridgeMiddleware {
 
     resetState() {
         this.store.dispatch({
-            type: 'SET_WAITING_MASTER',
+            type: 'WAITING_MASTER',
             waiting: true
         });
 
         this.store.dispatch({
-            type: 'SET_DISPLAYS',
+            type: 'DISPLAYS',
             displays: []
         });
 
         this.store.dispatch({
-            type: 'SET_TABS',
+            type: 'TABS_SET',
             tabs: []
         });
 
         this.store.dispatch({
-            type: 'SET_ACTIVE_DISPLAY',
+            type: 'ACTIVE_DISPLAY',
             activeDisplay: 0
         });
 
         this.store.dispatch({
-            type: 'SET_WAITING_CONNECTION',
+            type: 'WAITING_CONNECTION',
             connecting: false
         });
     }

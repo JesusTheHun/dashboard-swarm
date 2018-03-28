@@ -56,7 +56,7 @@ export class ConfigServerUrl extends React.Component {
         let serverUrl = this.serverUrlInput.value;
 
         this.props.dispatch({
-            type: 'SET_SERVER_URL',
+            type: 'SERVER_URL',
             serverUrl
         });
 

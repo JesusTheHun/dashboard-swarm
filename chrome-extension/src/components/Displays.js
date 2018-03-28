@@ -23,7 +23,7 @@ export class Displays extends React.Component {
 
     setActiveDisplay(id) {
         this.props.dispatch({
-            type: 'SET_ACTIVE_DISPLAY',
+            type: 'ACTIVE_DISPLAY',
             activeDisplay: id
         });
     }

@@ -5,13 +5,13 @@ let defaultConfig = {
 
 const reducer = (state = defaultConfig, action) => {
     switch (action.type) {
-        case 'SET_SERVER_URL':
+        case 'SERVER_URL':
             return {
                 ...state,
                 serverUrl: action.serverUrl
             };
 
-        case 'SET_MASTER':
+        case 'MASTER':
             return {
                 ...state,
                 master: action.master
