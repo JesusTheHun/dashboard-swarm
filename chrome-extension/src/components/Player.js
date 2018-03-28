@@ -6,7 +6,7 @@ export class Player extends React.Component {
         return (
             <div id="player">
                 <div className="btn btn-link" id="playPause">
-                    <i className={"fa " + (this.props.playing ? 'fa-stop' : 'fa-play') } onClick={event => () => this.togglePlay() } />
+                    <i className={"fa " + (this.props.playing ? 'fa-stop' : 'fa-play') } onClick={ () => this.togglePlay() } />
                 </div>
             </div>
         );
@@ -17,10 +17,14 @@ export class Player extends React.Component {
     }
 
     play() {
-
+        this.props.dispatch({
+            type: 'ROTATION_START'
+        });
     }
 
     stop() {
-
+        this.props.dispatch({
+            type: 'ROTATION_STOP'
+        });
     }
 }
