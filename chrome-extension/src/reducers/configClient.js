@@ -1,9 +1,4 @@
-let defaultConfig = {
-    master: false,
-    serverUrl: 'localhost:8080'
-};
-
-const reducer = (state = defaultConfig, action) => {
+const reducer = (state = {}, action) => {
     switch (action.type) {
         case 'SERVER_URL':
             return {

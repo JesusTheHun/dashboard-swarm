@@ -2,6 +2,7 @@
 
 import Logger from "../logger";
 import nodeProxy from "../channels/NodeProxy";
+import {ApiEvent} from "../actions/events";
 
 const NodeProxy = new nodeProxy();
 
@@ -31,10 +32,7 @@ class BackgroundBridgeMiddleware {
         this.listenApiEvents();
 
         NodeProxy.isConnected(isConnected => {
-            this.store.dispatch({
-                type: 'CONNECTED',
-                connected: isConnected
-            });
+            this.store.dispatch(ApiEvent.CONNECTED(isConnected));
 
             if (isConnected) {
                 NodeProxy.getDisplays();
@@ -69,126 +67,65 @@ class BackgroundBridgeMiddleware {
     listenApiEvents() {
         NodeProxy.on('connectionSuccess', () => {
             this.resetState();
-            this.store.dispatch({
-                type: 'CONNECTED',
-                connected: true
-            });
-
+            this.store.dispatch(ApiEvent.CONNECTED(true));
             NodeProxy.getConfig();
         });
 
         NodeProxy.on('connectionFailed', () => {
             this.resetState();
-            this.store.dispatch({
-                type: 'CONNECTED',
-                connected: false
-            });
+            this.store.dispatch(ApiEvent.CONNECTED(false));
         });
 
         NodeProxy.on('connectionAttempt', () => {
             this.logger.debug('connectionAttempt');
-            this.store.dispatch({
-                type: 'WAITING_CONNECTION',
-                connecting: true
-            });
+            this.store.dispatch(ApiEvent.WAITING_CONNECTION(true));
         });
 
-        NodeProxy.on('serverConfig', parameters => {
-            this.store.dispatch({
-                type: 'SERVER_PARAMETERS',
-                parameters
-            });
+        NodeProxy.on('serverConfig', config => {
+            this.store.dispatch(ApiEvent.SERVER_CONFIG(config));
         });
 
         NodeProxy.on('getDisplays', displays => {
             this.logger.debug("getDisplays", displays);
-            this.store.dispatch({
-                type: 'WAITING_MASTER',
-                waiting: displays.length === 0
-            });
-
-            this.store.dispatch({
-                type: 'DISPLAYS',
-                displays
-            });
+            this.store.dispatch(ApiEvent.WAITING_MASTER(displays.length === 0));
+            this.store.dispatch(ApiEvent.DISPLAYS(displays));
         });
 
         NodeProxy.on('getTabs', tabs => {
             this.logger.debug("getTabs", tabs);
-            this.store.dispatch({
-                type: 'TABS_SET',
-                tabs
-            });
+            this.store.dispatch(ApiEvent.TABS_SET);
         });
 
         NodeProxy.on('tabOpened', tab => {
-            this.store.dispatch({
-                type: 'TAB_ADDED',
-                tab
-            });
+            this.store.dispatch(ApiEvent.TAB_ADDED(tab));
         });
 
         NodeProxy.on('tabClosed', id => {
-            this.store.dispatch({
-                type: 'TAB_REMOVED',
-                id
-            });
+            this.store.dispatch(ApiEvent.TAB_REMOVED(id));
         });
 
         NodeProxy.on('tabUpdated', ([id, props]) => {
-            this.store.dispatch({
-                type: 'TAB_UPDATED',
-                id,
-                props
-            });
+            this.store.dispatch(ApiEvent.TAB_UPDATED(id, props));
         });
 
-        NodeProxy.on('rotationStatus', status => {
-            this.store.dispatch({
-                type: 'ROTATION_PLAYING',
-                playing: status
-            });
+        NodeProxy.on('rotationStatus', playing => {
+            this.store.dispatch(ApiEvent.ROTATION_PLAYING(playing));
         });
 
         NodeProxy.on('rotationStarted', () => {
-            this.store.dispatch({
-                type: 'ROTATION_PLAYING',
-                playing: true
-            });
+            this.store.dispatch(ApiEvent.ROTATION_PLAYING(true));
         });
 
         NodeProxy.on('rotationStopped', () => {
-            this.store.dispatch({
-                type: 'ROTATION_PLAYING',
-                playing: false
-            });
+            this.store.dispatch(ApiEvent.ROTATION_PLAYING(false));
         });
     }
 
     resetState() {
-        this.store.dispatch({
-            type: 'WAITING_MASTER',
-            waiting: true
-        });
-
-        this.store.dispatch({
-            type: 'DISPLAYS',
-            displays: []
-        });
-
-        this.store.dispatch({
-            type: 'TABS_SET',
-            tabs: []
-        });
-
-        this.store.dispatch({
-            type: 'ACTIVE_DISPLAY',
-            activeDisplay: 0
-        });
-
-        this.store.dispatch({
-            type: 'WAITING_CONNECTION',
-            connecting: false
-        });
+        this.store.dispatch(ApiEvent.WAITING_MASTER(true));
+        this.store.dispatch(ApiEvent.DISPLAYS([]));
+        this.store.dispatch(ApiEvent.TABS_SET([]));
+        this.store.dispatch(ApiEvent.ACTIVE_DISPLAY(0));
+        this.store.dispatch(ApiEvent.WAITING_CONNECTION(false));
     }
 }
