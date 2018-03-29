@@ -41,28 +41,26 @@ export class DashboardSwarmNodeMaster {
         });
 
         subscriptions[key++] = this.listener.subscribeCommand('openTab', (display, url, isFlash) => {
-            if (this.node.isMaster()) {
-                this.wm.openTab(display, url).then(tabId => {
-                    let updateWhenTitleIsReady = (changedTabId, changeInfo, tab) => {
-                        if (changedTabId === tabId && changeInfo.title !== undefined && changeInfo.title !== '') {
-                            let scroll = {top: 0, left: 0};
+            this.wm.openTab(display, url).then(tabId => {
+                let updateWhenTitleIsReady = (changedTabId, changeInfo, tab) => {
+                    if (changedTabId === tabId && changeInfo.title !== undefined && changeInfo.title !== '') {
+                        let scroll = {top: 0, left: 0};
 
-                            chrome.tabs.getZoom(tabId, zoom => {
-                                let flash = isFlash ? new Date() : undefined;
-                                this.wm.getTab(tabId).flash = flash;
-                                this.listener.getDashboardSwarmWebSocket().sendEvent('tabOpened', [tabId, display, url, changeInfo.title, tab.index, flash, zoom, scroll]);
-                            });
-                            chrome.tabs.onUpdated.removeListener(updateWhenTitleIsReady);
-                        }
-                    };
+                        chrome.tabs.getZoom(tabId, zoom => {
+                            let flash = isFlash ? new Date() : undefined;
+                            this.wm.getTab(tabId).flash = flash;
+                            this.listener.getDashboardSwarmWebSocket().sendEvent('tabOpened', [tabId, display, url, changeInfo.title, tab.index, flash, zoom, scroll]);
+                        });
+                        chrome.tabs.onUpdated.removeListener(updateWhenTitleIsReady);
+                    }
+                };
 
-                    chrome.tabs.onUpdated.addListener(updateWhenTitleIsReady);
-                });
-            }
+                chrome.tabs.onUpdated.addListener(updateWhenTitleIsReady);
+            });
         });
 
         subscriptions[key++] = this.listener.subscribeCommand('closeTab', tabId => {
-            if (this.node.isMaster() && this.wm.getTab(tabId) !== undefined) {
+            if (this.wm.getTab(tabId) !== undefined) {
                 this.wm.closeTab(tabId).then(tabId => {
                     this.listener.sendEvent('tabClosed', [tabId]);
                 });
@@ -70,7 +68,7 @@ export class DashboardSwarmNodeMaster {
         });
 
         subscriptions[key++] = this.listener.subscribeCommand('updateTab', (tabId, newProps) => {
-            if (this.node.isMaster() && this.wm.getTab(tabId) !== undefined) {
+            if (this.wm.getTab(tabId) !== undefined) {
                 if (newProps.position !== undefined) {
                     this.wm.setTabPosition(tabId, newProps.position);
                 }
@@ -95,49 +93,35 @@ export class DashboardSwarmNodeMaster {
 
         subscriptions[key++] = this.listener.subscribeCommand('getDisplays', () => {
             logger.debug("displays request received");
-            if (this.node.isMaster()) {
-                this.wm.getDisplays().then(displays => {
-                    this.listener.getDashboardSwarmWebSocket().sendEvent('masterDisplays', [displays]);
-                });
-            }
+            this.wm.getDisplays().then(displays => {
+                this.listener.getDashboardSwarmWebSocket().sendEvent('masterDisplays', [displays]);
+            });
         });
 
         subscriptions[key++] = this.listener.subscribeCommand('startRotation', (interval, intervalFlash) => {
-            if (this.node.isMaster()) {
-                this.wm.startRotation(interval, intervalFlash);
-            }
+            this.wm.startRotation(interval, intervalFlash);
         });
 
         subscriptions[key++] = this.listener.subscribeCommand('stopRotation', () => {
-            if (this.node.isMaster()) {
-                this.wm.stopRotation();
-            }
+            this.wm.stopRotation();
         });
 
         subscriptions[key++] = this.listener.subscribeCommand('getRotationStatus', () => {
-            if (this.node.isMaster()) {
-                this.listener.getDashboardSwarmWebSocket().sendEvent('rotationStatus', [this.wm.isRotationActive()]);
-            }
+            this.listener.getDashboardSwarmWebSocket().sendEvent('rotationStatus', [this.wm.isRotationActive()]);
         });
 
         subscriptions[key++] = this.listener.subscribeCommand('reloadTab', tabId => {
-            if (this.node.isMaster()) {
-                chrome.tabs.reload(tabId);
-            }
+            chrome.tabs.reload(tabId);
         });
 
         subscriptions[key++] = this.listener.subscribeCommand('sendToForeground', tabId => {
-            if (this.node.isMaster()) {
-                chrome.tabs.update(tabId, {active: true});
-            }
+            chrome.tabs.update(tabId, {active: true});
         });
 
         subscriptions[key++] = this.listener.subscribeCommand('restartMaster', () => {
-            if (this.node.isMaster()) {
-                this.wm.closeEverything().then(windowClosedCount => {
-                    chrome.runtime.reload();
-                });
-            }
+            this.wm.closeEverything().then(windowClosedCount => {
+                chrome.runtime.reload();
+            });
         });
 
         this.subscriptions = subscriptions;
