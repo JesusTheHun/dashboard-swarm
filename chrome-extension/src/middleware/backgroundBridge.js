@@ -4,6 +4,7 @@ import Logger from "../logger";
 import nodeProxy from "../channels/NodeProxy";
 import {ApiEvent} from "../actions/events";
 import {ApiCommandType} from "../actions/commands";
+import {LocalAction} from "../actions/local";
 
 const NodeProxy = new nodeProxy();
 
@@ -130,7 +131,7 @@ class BackgroundBridgeMiddleware {
         this.store.dispatch(ApiEvent.WAITING_MASTER(true));
         this.store.dispatch(ApiEvent.DISPLAYS([]));
         this.store.dispatch(ApiEvent.TABS_SET([]));
-        this.store.dispatch(ApiEvent.ACTIVE_DISPLAY(0));
         this.store.dispatch(ApiEvent.WAITING_CONNECTION(false));
+        this.store.dispatch(LocalAction.ACTIVE_DISPLAY(0));
     }
 }
