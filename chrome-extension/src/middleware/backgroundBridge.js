@@ -98,7 +98,7 @@ class BackgroundBridgeMiddleware {
 
         NodeProxy.on('getTabs', tabs => {
             this.logger.debug("getTabs", tabs);
-            this.store.dispatch(ApiEvent.TABS_SET);
+            this.store.dispatch(ApiEvent.TABS_SET(tabs));
         });
 
         NodeProxy.on('tabOpened', tab => {
