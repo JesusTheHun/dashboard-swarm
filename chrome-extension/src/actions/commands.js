@@ -9,9 +9,9 @@ export const ApiCommandType = {
 
 let apiCommands = {};
 
-apiCommands[ApiCommandType.MASTER] = isConnected => ({
+apiCommands[ApiCommandType.MASTER] = isMaster => ({
     type: ApiCommandType.MASTER,
-    connected: isConnected
+    master: isMaster
 });
 
 apiCommands[ApiCommandType.SERVER_URL] = serverUrl => ({
