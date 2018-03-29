@@ -301,18 +301,18 @@ export class WindowsManager {
                 tabScript.clearCountdown();
             });
         }
-
-        this.listener.getDashboardSwarmWebSocket().sendEvent('rotationStopped');
     }
 
     stopRotation() {
+        logger.debug("stopping rotation", this.windows);
         this.getDisplays().then(displays => {
             Object.keys(displays).forEach(display => {
+                logger.debug("stopping rotation of display", display);
                 if (this.windows[display] !== undefined) {
                     this.stopRotationForDisplay(display);
                 }
             })
-        });
+        }).then(() => this.listener.getDashboardSwarmWebSocket().sendEvent('rotationStopped'));
     }
 
     setTabPosition(tabId, position) {
