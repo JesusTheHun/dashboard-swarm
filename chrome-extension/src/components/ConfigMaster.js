@@ -1,8 +1,5 @@
 import React from "react";
-
-import Logger from "js-logger/src/logger";
-
-const logger = Logger.get('ConfigMasterComponent');
+import {ApiCommand} from "../actions/commands";
 
 export class ConfigMaster extends React.Component {
     render() {
@@ -18,9 +15,6 @@ export class ConfigMaster extends React.Component {
     }
 
     setMaster(isMaster) {
-        this.props.dispatch({
-            type: 'MASTER',
-            master: isMaster
-        });
+        this.props.dispatch(ApiCommand.MASTER(isMaster));
     }
 }

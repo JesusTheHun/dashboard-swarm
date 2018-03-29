@@ -1,7 +1,5 @@
 import React from "react";
 import {Tab} from "./Tab";
-import {connect} from "react-redux";
-import {Scene} from "./Scene";
 
 export class Tabs extends React.Component {
 

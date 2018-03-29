@@ -1,4 +1,5 @@
 import React from "react";
+import {LocalAction} from "../actions/local";
 
 export class Displays extends React.Component {
     render() {
@@ -22,9 +23,6 @@ export class Displays extends React.Component {
     }
 
     setActiveDisplay(id) {
-        this.props.dispatch({
-            type: 'ACTIVE_DISPLAY',
-            activeDisplay: id
-        });
+        this.props.dispatch(LocalAction.ACTIVE_DISPLAY(id));
     }
 }

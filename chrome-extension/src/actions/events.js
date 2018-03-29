@@ -1,5 +1,5 @@
 export const ApiEventType = {
-    CONNNECTED: 'CONNECTED',
+    CONNECTED: 'CONNECTED',
     WAITING_CONNECTION: 'WAITING_CONNECTION',
     WAITING_MASTER: 'WAITING_MASTER',
     SERVER_CONFIG: 'SERVER_CONFIG',
@@ -64,11 +64,5 @@ apiEvents[ApiEventType.ROTATION_PLAYING] = playing => ({
     type: ApiEventType.ROTATION_PLAYING,
     playing
 });
-
-apiEvents[ApiEventType.ACTIVE_DISPLAY] = activeDisplay => ({
-    type: ApiEventType.ACTIVE_DISPLAY,
-    activeDisplay
-});
-
 
 export const ApiEvent = apiEvents;

@@ -1,8 +1,10 @@
+import {ApiEventType} from "../actions/events";
+
 const reducer = (state = {connected: false, connecting: false}, action) => {
     switch (action.type) {
-        case 'CONNECTED':
+        case ApiEventType.CONNECTED:
             return {...state, connected: action.connected};
-        case 'WAITING_CONNECTION':
+        case ApiEventType.WAITING_CONNECTION:
             return {...state, connecting: action.connecting};
         default:
             return state;

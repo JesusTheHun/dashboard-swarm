@@ -1,9 +1,5 @@
 import React from "react";
-import nodeProxy from "../channels/NodeProxy";
-import Logger from "js-logger/src/logger";
-
-const NodeProxy = new nodeProxy();
-const logger = Logger.get('configServerUrl');
+import {ApiCommand} from "../actions/commands";
 
 export class ConfigServerUrl extends React.Component {
     constructor(props) {
@@ -53,22 +49,15 @@ export class ConfigServerUrl extends React.Component {
             return;
         }
 
-        let serverUrl = this.serverUrlInput.value;
-
-        this.props.dispatch({
-            type: 'SERVER_URL',
-            serverUrl
-        });
-
+        this.props.dispatch(ApiCommand.SERVER_URL(this.serverUrlInput.value));
         this.connect();
     }
 
     connect() {
-        NodeProxy.setServerUrl(this.props.configClient.serverUrl);
-        NodeProxy.connect();
+        this.props.dispatch(ApiCommand.CONNECT());
     }
 
     disconnect() {
-        NodeProxy.close();
+        this.props.dispatch(ApiCommand.DISCONNECT());
     }
 }

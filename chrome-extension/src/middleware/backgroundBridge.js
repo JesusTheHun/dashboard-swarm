@@ -3,6 +3,7 @@
 import Logger from "../logger";
 import nodeProxy from "../channels/NodeProxy";
 import {ApiEvent} from "../actions/events";
+import {ApiCommandType} from "../actions/commands";
 
 const NodeProxy = new nodeProxy();
 
@@ -44,8 +45,12 @@ class BackgroundBridgeMiddleware {
     }
 
     handleApiCall(action) {
-        if (action.type === 'ROTATION_START') NodeProxy.startRotation();
-        if (action.type === 'ROTATION_STOP') NodeProxy.stopRotation();
+        if (action.type === ApiCommandType.START_ROTATION) NodeProxy.startRotation();
+        if (action.type === ApiCommandType.STOP_ROTATION) NodeProxy.stopRotation();
+        if (action.type === ApiCommandType.MASTER) NodeProxy.setMaster(action.master);
+        if (action.type === ApiCommandType.SERVER_URL) NodeProxy.setServerUrl(action.serverUrl);
+        if (action.type === ApiCommandType.CONNECT) NodeProxy.connect();
+        if (action.type === ApiCommandType.DISCONNECT) NodeProxy.close();
     }
 
     handleConfigChanges(previousConfig, latestConfig) {
