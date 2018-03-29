@@ -1,4 +1,5 @@
 import React from "react";
+import {ApiCommandType} from "../actions/commands";
 
 export class Player extends React.Component {
 
@@ -17,14 +18,10 @@ export class Player extends React.Component {
     }
 
     play() {
-        this.props.dispatch({
-            type: 'ROTATION_START'
-        });
+        this.props.dispatch(ApiCommandType.START_ROTATION());
     }
 
     stop() {
-        this.props.dispatch({
-            type: 'ROTATION_STOP'
-        });
+        this.props.dispatch(ApiCommandType.STOP_ROTATION());
     }
 }
