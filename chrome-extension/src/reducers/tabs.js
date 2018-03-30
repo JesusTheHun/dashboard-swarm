@@ -10,7 +10,7 @@ const reducer = (state = [], action) => {
                 action.tab
             ];
         case ApiEventType.TAB_REMOVED:
-            return state.filter(tab => tab.id === action.id);
+            return state.filter(tab => tab.id !== action.id);
         case ApiEventType.TAB_UPDATED:
             let tabIndex = state.findIndex(tab => tab.id === action.id);
             let tab = state.find(tab => tab.id === action.id);

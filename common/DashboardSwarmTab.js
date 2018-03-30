@@ -1,4 +1,4 @@
-import ExtendableProxy from "./ExtendableProxy";
+import {ExtendableProxy} from "./ExtendableProxy";
 
 export class DashboardSwarmTab extends ExtendableProxy {
     constructor(tabData) {

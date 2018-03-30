@@ -9,7 +9,11 @@ export class Tabs extends React.Component {
             { this.props.tabs.length > 0 ?
                 <ul id="tabs">
                     {this.props.tabs.sort((a,b) => a.position - b.position).map(tab => {
-                        return <Tab key={tab.id} {...tab} />
+                        return <Tab
+                            openTabActions={() => this.props.openTabActions(tab.id)}
+                            key={tab.id}
+                            {...tab}
+                        />
                     })}
                 </ul>
                 :

@@ -17,28 +17,32 @@ export class Popup extends React.Component {
         super(props);
 
         this.state = {
-            isConfigOpen: false
+            configOpen: false
         };
     }
 
     render() {
         const LiveScene = connect(store => {
-            return { waitingMaster: store.waitingMaster }
+            return { waitingMaster: store.waitingMaster, tabs: store.tabs }
         })(Scene);
 
         const LiveConfig = connect(store => {
            return { config: store.config }
         })(Config);
 
+        const LiveFooter = connect(store => {
+            return { activeDisplay: store.activeDisplay }
+        })(Footer);
+
         const LiveManualDispatch = connect()(ManualDispatch);
 
         return (
             <div className="Popup" id="displays">
                 <div className="panel">
-                    <Header toggleConfig={ () => this.toggleConfig() } open={this.state.isConfigOpen}>Dashboard Swarm</Header>
-                    { this.state.isConfigOpen ?
+                    <Header toggleConfig={ () => this.toggleConfig() } open={this.state.configOpen}>Dashboard Swarm</Header>
+                    { this.state.configOpen ?
                         <LiveConfig/>
-                        : <div><LiveScene/><Footer /></div>
+                        : <div><LiveScene/><LiveFooter /></div>
                     }
 
                     { !chrome || !chrome.runtime.onMessage ? <LiveManualDispatch/> : ''}
@@ -49,7 +53,7 @@ export class Popup extends React.Component {
 
     toggleConfig() {
         this.setState(prev => {
-            return {isConfigOpen: !prev.isConfigOpen};
+            return {configOpen: !prev.configOpen};
         });
     }
 }

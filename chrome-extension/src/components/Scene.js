@@ -7,7 +7,7 @@ export class Scene extends React.Component {
     render() {
         return (
             <div>
-                {this.props.waitingMaster ? <WaitingMaster/> : <ControlCenter /> }
+                {this.props.waitingMaster ? <WaitingMaster/> : <ControlCenter tabs={this.props.tabs} /> }
             </div>
         )
     }

@@ -15,7 +15,7 @@ export class Tab extends React.Component {
                     <div className="tile-subtitle">{this.props.url}</div>
                 </div>
                 <div className="tile-action">
-                    <div className="btn btn-link btn-action btn-lg js-param-button" onClick={() => alert('yo')}>
+                    <div className="btn btn-link btn-action btn-lg js-param-button" onClick={() => this.props.openTabActions()}>
                         <i className="icon icon-caret"/>
                     </div>
                 </div>

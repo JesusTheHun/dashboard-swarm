@@ -52,6 +52,13 @@ class BackgroundBridgeMiddleware {
         if (action.type === ApiCommandType.SERVER_URL) NodeProxy.setServerUrl(action.serverUrl);
         if (action.type === ApiCommandType.CONNECT) NodeProxy.connect();
         if (action.type === ApiCommandType.DISCONNECT) NodeProxy.close();
+        if (action.type === ApiCommandType.OPEN_TAB) NodeProxy.openTab(action.display, action.url, action.isFlash);
+        if (action.type === ApiCommandType.CLOSE_TAB) NodeProxy.closeTab(action.id);
+        if (action.type === ApiCommandType.SEND_TAB_TO_FOREGROUND) NodeProxy.sendToForeground(action.id);
+        if (action.type === ApiCommandType.RELOAD_TAB) NodeProxy.reloadTab(action.id);
+        if (action.type === ApiCommandType.SEND_TAB_TO_DISPLAY) NodeProxy.updateTab(action.id, {display: parseInt(action.display)});
+        if (action.type === ApiCommandType.ZOOM_TAB) NodeProxy.updateTab(action.id, {zoom: action.zoom});
+        if (action.type === ApiCommandType.SCROLL_TAB) NodeProxy.updateTab(action.id, {scroll: action.scroll});
     }
 
     handleConfigChanges(previousConfig, latestConfig) {

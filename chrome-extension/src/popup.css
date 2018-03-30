@@ -135,39 +135,44 @@ a#configLink {
     opacity: 0.4;
 }
 
-#tabTools {
+#tabActions {
     align-items: flex-end;
     margin-bottom: -8px;
+    /*display: none;*/
 }
 
-#tabTools .modal-container {
+#tabActions .modal-container {
     width: 100%;
 }
 
-#tabTools h6 {
+#tabActions h6 {
     margin-bottom: 0;
 }
 
-#tabTools .displays {
+#tabActions .displays {
     margin-top: 0.2rem;
     display: flex;
     flex-wrap: wrap;
 }
 
-#tabTools .displays .btn {
+#tabActions .displays .btn {
     height: 1.2rem;
     width: 1.6rem;
     line-height: 0.4rem;
     margin-right: 0.2rem;
 }
 
-#tabTools #zoomAndScroll {
+#tabActions #zoomAndScroll {
     display: flex;
     justify-content: space-between;
 }
 
-#tabTools .modal-body {
+#tabActions .modal-body {
     min-height: 220px;
+}
+
+#tabActions .button-row button {
+    margin-right: 10px;
 }
 
 .js-param-button i {

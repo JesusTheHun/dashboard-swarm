@@ -62,7 +62,7 @@ export class DashboardSwarmNodeMaster {
         subscriptions[key++] = this.listener.subscribeCommand('closeTab', tabId => {
             if (this.wm.getTab(tabId) !== undefined) {
                 this.wm.closeTab(tabId).then(tabId => {
-                    this.listener.sendEvent('tabClosed', [tabId]);
+                    this.listener.getDashboardSwarmWebSocket().sendEvent('tabClosed', [tabId]);
                 });
             }
         });

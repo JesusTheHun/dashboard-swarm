@@ -9,7 +9,6 @@ export const ApiEventType = {
     TAB_REMOVED: 'TAB_REMOVED',
     TAB_UPDATED: 'TAB_UPDATED',
     ROTATION_PLAYING: 'ROTATION_PLAYING',
-    ACTIVE_DISPLAY: 'ACTIVE_DISPLAY',
 };
 
 let apiEvents = {};
