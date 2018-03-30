@@ -8,7 +8,8 @@ In the extension directory :
 npm run dev
 ```
 
-This will watch your modifications and bundle everything into the build directory, from where it will be loaded by Google Chrome
+This will watch your **extension background** modifications and bundle everything into the build directory, from where it will be loaded by Google Chrome.
+Unfortunately there is no current way to watch ReactJS, used for the popup.
 
 # Start WebSocket server
 
@@ -28,4 +29,6 @@ npm start -- localhost 8080 storage.json
 npm run dist
 ```
 
-The script will execute `dist.js` which will copy required files into the dist directory.
+# License
+
+GPL v3
