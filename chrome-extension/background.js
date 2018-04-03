@@ -23,16 +23,16 @@ chrome.storage.sync.get({
 
     // Bootstrap app //
 
-    let ws = new DashboardSwarmWebSocket();
-    let listener = new DashboardSwarmListener(ws);
+    let dsws = new DashboardSwarmWebSocket();
+    let listener = new DashboardSwarmListener(dsws);
     let param =  new Parameters(listener);
     let wm =  new WindowsManager(listener);
-    let node = new DashboardSwarmNode(ws, listener, wm, param);
+    let node = new DashboardSwarmNode(dsws, listener, wm, param);
 
     node.setMaster(items.master);
     node.setServerUrl(items.server);
 
-    ws.getWebSocketSubject().subscribe(ws => {
+    dsws.getWebSocketSubject().subscribe(ws => {
         if (ws === null) return;
 
         chrome.browserAction.setBadgeText({"text": "ON"});
@@ -42,16 +42,32 @@ chrome.storage.sync.get({
         };
     });
 
-    ws.setServerConnectionErrorHandler(err => {
+    dsws.setServerConnectionErrorHandler(err => {
         logger.error(err);
         chrome.browserAction.setBadgeText({"text": "ERR"});
     });
 
-    ws.connect();
+    dsws.connect();
 
+    // Restore closed connection
     setInterval(() => {
+        let ws = dsws.getWebSocketSubject().getValue();
         if (!ws || ws.readyState === WebSocket.CLOSED) {
-            ws.connect();
+            logger.info("retrying connection...");
+            dsws.connect();
         }
+    }, 10000);
+
+    // Reload crashed tabs
+    setInterval(() => {
+        logger.info("verifying tabs are alive...");
+        Object.keys(wm.getTabs()).forEach(tabId => {
+            chrome.tabs.sendMessage(parseInt(tabId), 'areYouAlive?', {}, function() {
+                // If tab has crashed
+                if (chrome.runtime.lastError) {
+                    chrome.tabs.reload(parseInt(tabId));
+                }
+            });
+        });
     }, 10000);
 });
