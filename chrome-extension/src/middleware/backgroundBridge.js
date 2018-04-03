@@ -59,6 +59,9 @@ class BackgroundBridgeMiddleware {
         if (action.type === ApiCommandType.SEND_TAB_TO_DISPLAY) NodeProxy.updateTab(action.id, {display: parseInt(action.display)});
         if (action.type === ApiCommandType.ZOOM_TAB) NodeProxy.updateTab(action.id, {zoom: action.zoom});
         if (action.type === ApiCommandType.SCROLL_TAB) NodeProxy.updateTab(action.id, {scroll: action.scroll});
+        if (action.type === ApiCommandType.MOVE_TAB) NodeProxy.updateTab(action.id, {position: action.position});
+        if (action.type === ApiCommandType.SET_TAB_TITLE) NodeProxy.updateTab(action.id, {title: action.title});
+        if (action.type === ApiCommandType.SET_TAB_URL) NodeProxy.updateTab(action.id, {url: action.url});
     }
 
     handleConfigChanges(previousConfig, latestConfig) {

@@ -12,6 +12,9 @@ export const ApiCommandType = {
     SEND_TAB_TO_DISPLAY: 'SEND_TAB_TO_DISPLAY',
     ZOOM_TAB: 'ZOOM_TAB',
     SCROLL_TAB: 'SCROLL_TAB',
+    MOVE_TAB: 'MOVE_TAB',
+    SET_TAB_TITLE: 'SET_TAB_TITLE',
+    SET_TAB_URL: 'SET_TAB_URL',
 };
 
 let apiCommands = {};
@@ -80,6 +83,24 @@ apiCommands[ApiCommandType.SCROLL_TAB] = (id, scroll) => ({
     type: ApiCommandType.SCROLL_TAB,
     id,
     scroll
+});
+
+apiCommands[ApiCommandType.MOVE_TAB] = (id, position) => ({
+    type: ApiCommandType.MOVE_TAB,
+    id,
+    position
+});
+
+apiCommands[ApiCommandType.SET_TAB_TITLE] = (id, title) => ({
+    type: ApiCommandType.SET_TAB_TITLE,
+    id,
+    title
+});
+
+apiCommands[ApiCommandType.SET_TAB_URL] = (id, url) => ({
+    type: ApiCommandType.SET_TAB_URL,
+    id,
+    url
 });
 
 

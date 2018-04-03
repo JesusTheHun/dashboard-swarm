@@ -41,7 +41,11 @@ export class EditableText extends React.Component {
     }
 
     leaveEditMode() {
-        this.setState({editing: false, content: this.textInput.value});
+        return new Promise((res, rej) => {
+            this.setState({editing: false, content: this.textInput.value}, () => {
+                res(this.state);
+            });
+        });
     }
 
     enterEditMode() {
@@ -55,6 +59,7 @@ export class EditableText extends React.Component {
     }
 
     saveChanges() {
+        logger.debug("new value", this.state.content);
         if (this.props.editCallback) this.props.editCallback(this.state.content);
     }
 
@@ -62,15 +67,13 @@ export class EditableText extends React.Component {
         if (e.keyCode === 13) {
             e.preventDefault();
             e.stopPropagation();
-            this.leaveEditMode();
-            this.saveChanges();
+            this.leaveEditMode().then(() => this.saveChanges());
         }
 
         if (e.keyCode === 27) {
             e.preventDefault();
             e.stopPropagation();
-            this.leaveEditMode();
-            this.cancelChanges();
+            this.leaveEditMode().then(() => this.cancelChanges());
         }
     }
 }

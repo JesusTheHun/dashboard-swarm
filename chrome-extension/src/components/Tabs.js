@@ -1,5 +1,6 @@
 import React from "react";
 import {Tab} from "./Tab";
+import {connect} from "react-redux";
 
 export class Tabs extends React.Component {
 
@@ -9,7 +10,8 @@ export class Tabs extends React.Component {
             { this.props.tabs.length > 0 ?
                 <ul id="tabs">
                     {this.props.tabs.sort((a,b) => a.position - b.position).map(tab => {
-                        return <Tab
+                        let LiveTab = connect()(Tab);
+                        return <LiveTab
                             openTabActions={() => this.props.openTabActions(tab.id)}
                             key={tab.id}
                             {...tab}
