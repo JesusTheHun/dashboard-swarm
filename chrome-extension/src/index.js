@@ -11,7 +11,7 @@ import '../node_modules/font-awesome/css/font-awesome.min.css';
 import './popup.css';
 
 import logger from "./logger";
-import defer from "./function/defer";
+import defer from "./defer";
 import reducers from "./reducers";
 import {applyMiddleware, createStore} from "redux";
 import {actionLogger} from "./middleware/actionLogger";

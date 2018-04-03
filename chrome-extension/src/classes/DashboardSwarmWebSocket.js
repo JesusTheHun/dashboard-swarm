@@ -1,4 +1,4 @@
-import defer from '../function/defer';
+import defer from '../defer';
 import Rx from 'rxjs/Rx';
 import Logger from "js-logger/src/logger";
 
