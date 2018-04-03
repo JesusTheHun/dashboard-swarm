@@ -7,6 +7,7 @@ import rotationPlaying from "./rotationPlaying";
 import configClient from "./configClient";
 import configServer from "./configServer";
 import connection from "./connection";
+import browser from "./browser";
 
 const app = combineReducers({
     activeDisplay,
@@ -16,7 +17,8 @@ const app = combineReducers({
     rotationPlaying,
     configClient,
     configServer,
-    connection
+    connection,
+    browser,
 });
 
 export default app;

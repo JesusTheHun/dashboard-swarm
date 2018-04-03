@@ -16,6 +16,7 @@ import reducers from "./reducers";
 import {applyMiddleware, createStore} from "redux";
 import {actionLogger} from "./middleware/actionLogger";
 import {backgroundBridge} from "./middleware/backgroundBridge";
+import {browserData} from "./middleware/browserData";
 
 let initialStateLoaded = new defer();
 
@@ -32,7 +33,7 @@ if (chrome.storage) {
     initialStateLoaded.resolve({});
 }
 
-let middlewares = [actionLogger, backgroundBridge];
+let middlewares = [actionLogger, backgroundBridge, browserData];
 
 initialStateLoaded.then(stateTree => {
 

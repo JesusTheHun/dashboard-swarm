@@ -26,12 +26,8 @@ export class Popup extends React.Component {
             return { waitingMaster: store.waitingMaster, tabs: store.tabs }
         })(Scene);
 
-        const LiveConfig = connect(store => {
-           return { config: store.config }
-        })(Config);
-
         const LiveFooter = connect(store => {
-            return { activeDisplay: store.activeDisplay }
+            return { activeDisplay: store.activeDisplay, browserActiveTab: store.browser.activeTab }
         })(Footer);
 
         const LiveManualDispatch = connect()(ManualDispatch);
@@ -41,7 +37,7 @@ export class Popup extends React.Component {
                 <div className="panel">
                     <Header toggleConfig={ () => this.toggleConfig() } open={this.state.configOpen}>Dashboard Swarm</Header>
                     { this.state.configOpen ?
-                        <LiveConfig/>
+                        <Config/>
                         : <div><LiveScene/><LiveFooter /></div>
                     }
 
