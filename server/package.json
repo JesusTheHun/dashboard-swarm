@@ -1,6 +1,6 @@
 {
     "name": "dashboard-swarm-server",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "description": "Websocket Server for dashboard swarm google chrome extension",
     "main": "server.js",
     "author": "Jonathan MASSUCHETTI",

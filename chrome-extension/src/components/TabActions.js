@@ -91,7 +91,7 @@ export class TabActions extends React.Component {
         this.props.dispatch(ApiCommand.ZOOM_TAB(this.props.tab.id, (this.props.tab.zoom || 1) - 0.05));
     }
 
-    scroll() {
-        this.props.dispatch(ApiCommand.SCROLL_TAB(this.props.tab.id, (this.props.tab.scroll || {top: 0, left: 0}) ));
+    scroll(direction) {
+        this.props.dispatch(ApiCommand.SCROLL_TAB(this.props.tab.id, direction));
     }
 }
