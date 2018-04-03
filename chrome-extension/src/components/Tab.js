@@ -18,7 +18,7 @@ export class Tab extends React.Component {
                         <EditableText
                             inputAttributes={{className: "form-input low-profile"}}
                             editCallback={ (newTitle) => this.changeTitle(newTitle) }
-                        >{this.props.title}</EditableText>
+                        >{ this.props.userTitle ? this.props.userTitle : this.props.title}</EditableText>
                     </div>
                     <EditableText
                         inputAttributes={{className: "form-input low-profile"}}

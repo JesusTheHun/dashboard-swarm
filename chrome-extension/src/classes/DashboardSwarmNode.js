@@ -37,7 +37,7 @@ export class DashboardSwarmNode {
 
         listener.subscribeCommand('updateTab', (tabId, newProps) => {
             if (newProps.title !== undefined) {
-                ws.sendEvent('tabUpdated', [tabId, newProps]);
+                ws.sendEvent('tabUpdated', [tabId, {userTitle: newProps.title}]);
             }
         });
 

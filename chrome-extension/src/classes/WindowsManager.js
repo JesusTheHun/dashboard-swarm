@@ -325,21 +325,16 @@ export class WindowsManager {
         });
     }
 
-    setTabUrl(tabId, url, title) {
+    setTabUrl(tabId, url) {
         chrome.tabs.update(tabId, {url: url}, tab => {
-            if (title === undefined) {
-                let updateWhenTitleIsReady = (changedTabId, changeInfo, tab) => {
-                    if (changedTabId === tabId && changeInfo.title !== undefined && changeInfo.title !== '') {
-                        title = changeInfo.title;
-                        this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, {url, title}]);
-                        chrome.tabs.onUpdated.removeListener(updateWhenTitleIsReady);
-                    }
-                };
+            let updateWhenTitleIsReady = (changedTabId, changeInfo, tab) => {
+                if (changedTabId === tabId && changeInfo.title !== undefined && changeInfo.title !== '') {
+                    this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, {url, title: changeInfo.title}]);
+                    chrome.tabs.onUpdated.removeListener(updateWhenTitleIsReady);
+                }
+            };
 
-                chrome.tabs.onUpdated.addListener(updateWhenTitleIsReady);
-            } else {
-                this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, {url, title}]);
-            }
+            chrome.tabs.onUpdated.addListener(updateWhenTitleIsReady);
         });
     }
 

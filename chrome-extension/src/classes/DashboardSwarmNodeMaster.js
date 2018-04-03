@@ -74,7 +74,7 @@ export class DashboardSwarmNodeMaster {
                 }
 
                 if (newProps.url !== undefined) {
-                    this.wm.setTabUrl(tabId, newProps.url, newProps.title);
+                    this.wm.setTabUrl(tabId, newProps.url);
                 }
 
                 if (newProps.display !== undefined) {
