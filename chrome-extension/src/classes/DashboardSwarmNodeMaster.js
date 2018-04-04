@@ -11,13 +11,13 @@ export class DashboardSwarmNodeMaster {
         this.wm = wm;
         this.subscriptions = {};
     }
-    
+
     on() {
         this.subscribe();
         this.node.getTabs();
         this.node.getDisplays();
         this.node.getRotationStatus();
-        this.crashedTabCheckInterval = setInterval(this.reloadCrashedTabs, 10000);
+        this.crashedTabCheckInterval = setInterval(() => this.reloadCrashedTabs(), 10000);
     }
 
     off() {
