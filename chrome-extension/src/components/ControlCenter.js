@@ -37,11 +37,16 @@ export class ControlCenter extends React.Component {
         })(TabActions);
 
         return (
-            <div className="panel-body">
-                <LivePlayer/>
-                <LiveDisplayList/>
-                <LiveTabs openTabActions={(tabId) => this.openTabActions(tabId)} />
-                { this.state.tabActionsOpen ? <LiveTabActions closeTabActions={() => this.closeTabActions()} tab={this.props.tabs.find(tab => tab.id === this.state.tabId)} /> : ''}
+            <div className={'panel-body ' + (this.state.tabActionsOpen ? 'actionToolsOpen' : '')} ref={panel => this.panel = panel}>
+                { this.state.tabActionsOpen ?
+                    <LiveTabActions closeTabActions={() => this.closeTabActions()} tab={this.props.tabs.find(tab => tab.id === this.state.tabId)} />
+                    :
+                    <React.Fragment>
+                        <LivePlayer/>
+                        <LiveDisplayList/>
+                        <LiveTabs openTabActions={(tabId) => this.openTabActions(tabId)} />
+                    </React.Fragment>
+                }
             </div>
         )
     }

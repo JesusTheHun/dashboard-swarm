@@ -33,7 +33,7 @@ export class Popup extends React.Component {
         const LiveManualDispatch = connect()(ManualDispatch);
 
         return (
-            <div className="Popup" id="displays">
+            <div className="Popup" id="displays" ref={node => this.popup = node}>
                 <div className="panel">
                     <Header toggleConfig={ () => this.toggleConfig() } open={this.state.configOpen}>Dashboard Swarm</Header>
                     { this.state.configOpen ?

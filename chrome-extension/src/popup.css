@@ -63,6 +63,10 @@
     margin-right: 0.4rem;
 }
 
+.panel-body.actionToolsOpen {
+    min-height: 173px;
+}
+
 .menu {
     position: absolute;
     right: 1rem;
