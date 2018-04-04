@@ -75,7 +75,6 @@ function subscribe(namespace, name, callback) {
     this.handlers[namespace][name].push(callback);
 
     return () => {
-        logger.debug("unsubscribed", namespace, event);
         this.handlers[namespace][name] = this.handlers[namespace][name].filter(cb => cb !== callback);
     }
 }

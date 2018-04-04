@@ -57,17 +57,4 @@ chrome.storage.sync.get({
             dsws.connect();
         }
     }, 10000);
-
-    // Reload crashed tabs
-    setInterval(() => {
-        logger.info("verifying tabs are alive...");
-        Object.keys(wm.getTabs()).forEach(tabId => {
-            chrome.tabs.sendMessage(parseInt(tabId), 'areYouAlive?', {}, function() {
-                // If tab has crashed
-                if (chrome.runtime.lastError) {
-                    chrome.tabs.reload(parseInt(tabId), {}, () => logger.info("Crashed tab reloaded"));
-                }
-            });
-        });
-    }, 10000);
 });

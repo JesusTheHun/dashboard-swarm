@@ -17,12 +17,14 @@ export class DashboardSwarmNodeMaster {
         this.node.getTabs();
         this.node.getDisplays();
         this.node.getRotationStatus();
+        this.crashedTabCheckInterval = setInterval(this.reloadCrashedTabs, 10000);
     }
 
     off() {
         this.unsubscribe();
         this.wm.closeEverything();
         this.listener.getDashboardSwarmWebSocket().sendEvent('masterDisplays', [[]]);
+        clearInterval(this.crashedTabCheckInterval);
     }
 
     subscribe() {
@@ -129,5 +131,16 @@ export class DashboardSwarmNodeMaster {
 
     unsubscribe() {
         Object.keys(this.subscriptions).forEach(key => this.subscriptions[key]());
+    }
+
+    reloadCrashedTabs() {
+        Object.keys(this.wm.getTabs()).forEach(tabId => {
+            chrome.tabs.sendMessage(parseInt(tabId), 'areYouAlive?', {}, function() {
+                // If tab has crashed
+                if (chrome.runtime.lastError) {
+                    chrome.tabs.reload(parseInt(tabId), {}, () => logger.info("Crashed tab reloaded"));
+                }
+            });
+        });
     }
 }
