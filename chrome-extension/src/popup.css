@@ -206,3 +206,8 @@ ul#tabs {
     border: none;
     padding: 0;
 }
+
+/* Dirty hack, otherwise ReactJS re-rendering triggers an animation every time a prop is updated */
+.modal.active .modal-container, .modal:target .modal-container {
+    animation: none;
+}
