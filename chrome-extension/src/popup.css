@@ -207,8 +207,13 @@ ul#tabs {
 
 .form-input.low-profile {
     height: 22px;
+    line-height: 22px;
     border: none;
     padding: 0;
+}
+
+.form-input.low-profile:focus {
+    box-shadow: none;
 }
 
 /* Dirty hack, otherwise ReactJS re-rendering triggers an animation every time a prop is updated */
