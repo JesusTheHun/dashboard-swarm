@@ -1,9 +1,23 @@
+# Features
+
+* Remote control
+* Multi-screens support
+* Add tab
+* Close tab
+* Move tab from one screen to another
+* Start & stop rotation
+* Send tab to foreground
+* Change tab order
+* Rotation speed
+* Tab crash restoration
+* Auto-refresh tab
+
+# Extension development
+
 Master is the head of development. Use releases to build the extension.
 
 Vanilla ES6 is used for background & content scripts
 ReactJS is used for the popup
-
-# Extension development
 
 In the ```chrome-extension``` directory :
 
