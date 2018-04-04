@@ -79,6 +79,7 @@ export class DashboardSwarmNodeMaster {
 
         subscriptions[key++] = this.listener.subscribeCommand('updateTab', (tabId, newProps) => {
             if (this.wm.getTab(tabId) !== undefined) {
+
                 if (newProps.autorefresh !== undefined) {
                     this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, {autorefresh: newProps.autorefresh}]);
                 }
@@ -141,6 +142,11 @@ export class DashboardSwarmNodeMaster {
         subscriptions[key++] = this.listener.subscribeEvent('tabUpdated', (tabId, newProps) => {
             let tab = this.tabs.find(tab => tab.id === tabId);
             Object.assign(tab, newProps);
+
+            if (newProps.id !== undefined) {
+                this.tabAutorefreshIntervals[newProps.id] = this.tabAutorefreshIntervals[tabId];
+                delete this.tabAutorefreshIntervals[tabId];
+            }
         });
 
         this.subscriptions = subscriptions;
