@@ -18,6 +18,8 @@ export class DashboardSwarmNodeMaster {
         this.node.getDisplays();
         this.node.getRotationStatus();
         this.crashedTabCheckInterval = setInterval(() => this.reloadCrashedTabs(), 10000);
+        this.updateTabAutorefreshConfigInterval = setInterval(() => this.updateTabAutorefreshConfig(), 10000);
+        this.tabAutorefreshIntervals = {};
     }
 
     off() {
@@ -25,6 +27,11 @@ export class DashboardSwarmNodeMaster {
         this.wm.closeEverything();
         this.listener.getDashboardSwarmWebSocket().sendEvent('masterDisplays', [[]]);
         clearInterval(this.crashedTabCheckInterval);
+        clearInterval(this.updateTabAutorefreshConfigInterval);
+
+        Object.keys(this.tabAutorefreshIntervals).forEach(intervalConfig => {
+            clearInterval(intervalConfig.interval);
+        })
     }
 
     subscribe() {
@@ -32,8 +39,9 @@ export class DashboardSwarmNodeMaster {
         let subscriptions = {};
 
         subscriptions['serverTabs'] = this.listener.subscribeEvent('serverTabs', tabs => {
-            // Maybe it has been unsubscribe before we reach the callback
+            // Maybe it has been unsubscribed before we reach the callback
             if (subscriptions['serverTabs']) {
+                this.tabs = tabs;
                 this.wm.setTabs(tabs);
 
                 // Unsubscribe
@@ -71,6 +79,10 @@ export class DashboardSwarmNodeMaster {
 
         subscriptions[key++] = this.listener.subscribeCommand('updateTab', (tabId, newProps) => {
             if (this.wm.getTab(tabId) !== undefined) {
+                if (newProps.autorefresh !== undefined) {
+                    this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, {autorefresh: newProps.autorefresh}]);
+                }
+
                 if (newProps.position !== undefined) {
                     this.wm.setTabPosition(tabId, newProps.position);
                 }
@@ -126,6 +138,11 @@ export class DashboardSwarmNodeMaster {
             });
         });
 
+        subscriptions[key++] = this.listener.subscribeEvent('tabUpdated', (tabId, newProps) => {
+            let tab = this.tabs.find(tab => tab.id === tabId);
+            Object.assign(tab, newProps);
+        });
+
         this.subscriptions = subscriptions;
     }
 
@@ -141,6 +158,37 @@ export class DashboardSwarmNodeMaster {
                     chrome.tabs.reload(parseInt(tabId), {}, () => logger.info("Crashed tab reloaded"));
                 }
             });
+        });
+    }
+
+    updateTabAutorefreshConfig() {
+        logger.debug("update autorefresh config...", this.tabs);
+
+        this.tabs.forEach(tab => {
+            let intervalConfig = this.tabAutorefreshIntervals[tab.id];
+
+            if (intervalConfig) {
+                logger.debug(tab.id, "autorefresh already active");
+
+                if (intervalConfig.autorefresh === tab.autorefresh) {
+                    logger.debug(tab.id, "current config is ok, exit");
+                    return;
+                }
+
+                logger.debug(tab.id, "clear current config");
+                clearInterval(this.tabAutorefreshIntervals[tab.id].interval);
+                delete this.tabAutorefreshIntervals[tab.id];
+            }
+
+            if (tab.autorefresh > 0) {
+                logger.debug(tab.id, "new autorefresh detected", tab.autorefresh);
+
+                this.tabAutorefreshIntervals[tab.id] = {};
+                this.tabAutorefreshIntervals[tab.id].autorefresh = tab.autorefresh;
+                this.tabAutorefreshIntervals[tab.id].interval = setInterval(() => {
+                    chrome.tabs.reload(parseInt(tab.id), {}, () => logger.info("Tab autorefreshed"));
+                }, tab.autorefresh * 1000)
+            }
         });
     }
 }

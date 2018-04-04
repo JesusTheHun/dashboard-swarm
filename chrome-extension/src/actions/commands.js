@@ -15,6 +15,7 @@ export const ApiCommandType = {
     MOVE_TAB: 'MOVE_TAB',
     SET_TAB_TITLE: 'SET_TAB_TITLE',
     SET_TAB_URL: 'SET_TAB_URL',
+    SET_TAB_AUTOREFRESH: 'SET_TAB_AUTOREFRESH',
 };
 
 let apiCommands = {};
@@ -101,6 +102,12 @@ apiCommands[ApiCommandType.SET_TAB_URL] = (id, url) => ({
     type: ApiCommandType.SET_TAB_URL,
     id,
     url
+});
+
+apiCommands[ApiCommandType.SET_TAB_AUTOREFRESH] = (id, autorefresh) => ({
+    type: ApiCommandType.SET_TAB_AUTOREFRESH,
+    id,
+    autorefresh
 });
 
 

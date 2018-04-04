@@ -58,6 +58,26 @@ export class TabActions extends React.Component {
                                         </div>
                                     </div>
                                 </div>
+                                <div id="autorefresh">
+                                    <form action="#" className="form-horizontal">
+                                        <div className="form-group">
+                                            <div className="col-6">
+                                                <label className="form-label h6" htmlFor="tabAutorefresh">Interval in seconds</label>
+                                            </div>
+                                            <div className="col-3">
+                                                <input
+                                                    value={this.props.tab.autorefresh}
+                                                    onChange={(e) => this.setAutorefresh(e)}
+                                                    className="form-input"
+                                                    type="text"
+                                                    id="tabAutorefresh"
+                                                    placeholder="Seconds"
+                                                    size="6"
+                                                />
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -93,5 +113,9 @@ export class TabActions extends React.Component {
 
     scroll(direction) {
         this.props.dispatch(ApiCommand.SCROLL_TAB(this.props.tab.id, direction));
+    }
+
+    setAutorefresh(e) {
+        this.props.dispatch(ApiCommand.SET_TAB_AUTOREFRESH(this.props.tab.id, parseInt(e.target.value)));
     }
 }

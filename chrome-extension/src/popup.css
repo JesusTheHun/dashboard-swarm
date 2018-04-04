@@ -64,7 +64,7 @@
 }
 
 .panel-body.actionToolsOpen {
-    min-height: 173px;
+    min-height: 234px;
 }
 
 .menu {
@@ -179,6 +179,10 @@ a#configLink {
     margin-right: 10px;
 }
 
+#tabActions #autorefresh {
+    margin-top: 10px;
+}
+
 .js-param-button i {
     visibility: hidden;
 }
@@ -210,4 +214,8 @@ ul#tabs {
 /* Dirty hack, otherwise ReactJS re-rendering triggers an animation every time a prop is updated */
 .modal.active .modal-container, .modal:target .modal-container {
     animation: none;
+}
+
+.modal-container .modal-body {
+    max-height: none;
 }

@@ -31,7 +31,6 @@ export class Footer extends React.Component {
                         className="form-input"
                         placeholder="New dashboard url"
                         id="dashboardUrl"
-                        ref={node => this.tabUrlInput = node}
                         value={this.state.dashboardUrl}
                         onChange={ (e) => this.handleChange(e) }
                     />

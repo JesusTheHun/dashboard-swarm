@@ -62,6 +62,7 @@ class BackgroundBridgeMiddleware {
         if (action.type === ApiCommandType.MOVE_TAB) NodeProxy.updateTab(action.id, {position: action.position});
         if (action.type === ApiCommandType.SET_TAB_TITLE) NodeProxy.updateTab(action.id, {title: action.title});
         if (action.type === ApiCommandType.SET_TAB_URL) NodeProxy.updateTab(action.id, {url: action.url});
+        if (action.type === ApiCommandType.SET_TAB_AUTOREFRESH) NodeProxy.updateTab(action.id, {autorefresh: action.autorefresh});
     }
 
     handleConfigChanges(previousConfig, latestConfig) {
