@@ -65,7 +65,7 @@ chrome.storage.sync.get({
             chrome.tabs.sendMessage(parseInt(tabId), 'areYouAlive?', {}, function() {
                 // If tab has crashed
                 if (chrome.runtime.lastError) {
-                    chrome.tabs.reload(parseInt(tabId));
+                    chrome.tabs.reload(parseInt(tabId), {}, () => logger.info("Crashed tab reloaded"));
                 }
             });
         });

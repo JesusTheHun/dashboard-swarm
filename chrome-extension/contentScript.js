@@ -82,6 +82,10 @@ export class ContentScript {
 let contentScript = new ContentScript();
 
 chrome.runtime.onMessage.addListener((request, sender, response) => {
+    if (request === 'areYouAlive?') {
+        response(true);
+    }
+
     let targetFunction = contentScript[request.action];
 
     if (typeof targetFunction === 'function') {
