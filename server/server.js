@@ -8,7 +8,7 @@ let handler = Logger.createDefaultHandler({
     formatter: (messages, context) => {
 
         let date = new Date;
-        let time = '[ ' + enforceDigits(date.getHours(), 2) +':'+ enforceDigits(date.getMinutes(), 2) +':'+ enforceDigits(date.getSeconds(), 2) +'.'+ enforceDigits(date.getMilliseconds(), 3) + ' ]';
+        let time = '[ ' + getCurrentDatetime() + ' ]';
 
         if (context.name) {
             messages.unshift('[ ' + context.name + ' ]');
