@@ -61,10 +61,10 @@ export class TabActions extends React.Component {
                                 <div id="autorefresh">
                                     <form action="#" className="form-horizontal">
                                         <div className="form-group">
-                                            <div className="col-6">
-                                                <label className="form-label h6" htmlFor="tabAutorefresh">Interval in seconds</label>
+                                            <div className="col-4">
+                                                <label className="form-label h6" htmlFor="tabAutorefresh">Auto refresh</label>
                                             </div>
-                                            <div className="col-3">
+                                            <div className="col-2">
                                                 <input
                                                     value={this.props.tab.autorefresh}
                                                     onChange={(e) => this.setAutorefresh(e)}
@@ -74,6 +74,9 @@ export class TabActions extends React.Component {
                                                     placeholder="Seconds"
                                                     size="6"
                                                 />
+                                            </div>
+                                            <div className="col-5">
+                                                <label className="form-label" htmlFor="tabAutorefresh">&nbsp;&nbsp;seconds</label>
                                             </div>
                                         </div>
                                     </form>
