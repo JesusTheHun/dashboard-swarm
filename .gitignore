@@ -1,5 +1,7 @@
 .idea/
-build/
-node_modules/
-server/storage.json
 *.iml
+*/node_modules/
+
+chrome-extension/build/
+
+server/storage.json
