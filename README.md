@@ -20,30 +20,6 @@
 
 Visit https://chrome.google.com/webstore/detail/dashboard-swarm/cohiccdmoofaannbeahbjkhhabppmdnn
 
-# Extension development
-
-Master is the head of development. Use releases to build the extension.
-
-Vanilla ES6 is used for background & content scripts
-ReactJS is used for the popup
-
-In the ```chrome-extension``` directory :
-
-```bash
-npm run dev
-```
-
-This will watch your **extension background** modifications and bundle everything into the build directory, from where it will be loaded by Google Chrome.
-Unfortunately there is no current way to watch ReactJS, used for the popup.
-
-# Build extension
-
-To build the popup & the inner materials
-
-```bash
-npm run dist
-```
-
 # How to use
 
 Connect your screens to a machine. We'll call it the "master".
@@ -67,6 +43,30 @@ You can set parameters if the default config does not apply to you
 
 ```bash
 npm start -- <LAN_IP> <PORT> <STORAGE_FILE>
+```
+
+# Extension development
+
+Master is the head of development. Use releases to build the extension.
+
+Vanilla ES6 is used for background & content scripts
+ReactJS is used for the popup
+
+In the ```chrome-extension``` directory :
+
+```bash
+npm run dev
+```
+
+This will watch your **extension background** modifications and bundle everything into the build directory, from where it will be loaded by Google Chrome.
+Unfortunately there is no current way to watch ReactJS, used for the popup.
+
+# Build extension
+
+To build the popup & the inner materials
+
+```bash
+npm run dist
 ```
 
 # License
