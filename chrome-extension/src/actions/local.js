@@ -1,12 +1,20 @@
-export const ActionType = {
+const types = {
     ACTIVE_DISPLAY: 'ACTIVE_DISPLAY',
 };
 
-let localActions = {};
+const namespacedTypes = {};
 
-localActions[ActionType.ACTIVE_DISPLAY] = activeDisplay => ({
+Object.keys(types).forEach(type => {
+    namespacedTypes[type] = 'LOCAL_' + type;
+});
+
+export const ActionType = namespacedTypes;
+
+let LocalAction = {};
+
+LocalAction.ACTIVE_DISPLAY = activeDisplay => ({
     type: ActionType.ACTIVE_DISPLAY,
     activeDisplay
 });
 
-export const LocalAction = localActions;
+export {LocalAction};

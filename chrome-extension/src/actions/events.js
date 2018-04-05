@@ -1,4 +1,4 @@
-export const ApiEventType = {
+export const types = {
     CONNECTED: 'CONNECTED',
     WAITING_CONNECTION: 'WAITING_CONNECTION',
     WAITING_MASTER: 'WAITING_MASTER',
@@ -11,57 +11,65 @@ export const ApiEventType = {
     ROTATION_PLAYING: 'ROTATION_PLAYING',
 };
 
-let apiEvents = {};
+const namespacedTypes = {};
 
-apiEvents[ApiEventType.CONNECTED] = isConnected => ({
+Object.keys(types).forEach(type => {
+    namespacedTypes[type] = 'API_EVENT_' + type;
+});
+
+export const ApiEventType = namespacedTypes;
+
+let ApiEvent = {};
+
+ApiEvent.CONNECTED = isConnected => ({
     type: ApiEventType.CONNECTED,
     connected: isConnected
 });
 
-apiEvents[ApiEventType.WAITING_CONNECTION] = isWaiting => ({
+ApiEvent.WAITING_CONNECTION = isWaiting => ({
     type: ApiEventType.WAITING_CONNECTION,
     connecting: isWaiting
 });
 
-apiEvents[ApiEventType.WAITING_MASTER] = isWaiting => ({
+ApiEvent.WAITING_MASTER = isWaiting => ({
     type: ApiEventType.WAITING_MASTER,
     waiting: isWaiting
 });
 
-apiEvents[ApiEventType.SERVER_CONFIG] = config => ({
+ApiEvent.SERVER_CONFIG = config => ({
     type: ApiEventType.SERVER_CONFIG,
     parameters: config
 });
 
-apiEvents[ApiEventType.DISPLAYS] = displays => ({
+ApiEvent.DISPLAYS = displays => ({
     type: ApiEventType.DISPLAYS,
     displays
 });
 
-apiEvents[ApiEventType.TABS_SET] = tabs => ({
+ApiEvent.TABS_SET = tabs => ({
     type: ApiEventType.TABS_SET,
     tabs
 });
 
-apiEvents[ApiEventType.TAB_ADDED] = tab => ({
+ApiEvent.TAB_ADDED = tab => ({
     type: ApiEventType.TAB_ADDED,
     tab
 });
 
-apiEvents[ApiEventType.TAB_REMOVED] = id => ({
+ApiEvent.TAB_REMOVED = id => ({
     type: ApiEventType.TAB_REMOVED,
     id
 });
 
-apiEvents[ApiEventType.TAB_UPDATED] = (id, props) => ({
+ApiEvent.TAB_UPDATED = (id, props) => ({
     type: ApiEventType.TAB_UPDATED,
     id,
     props
 });
 
-apiEvents[ApiEventType.ROTATION_PLAYING] = playing => ({
+ApiEvent.ROTATION_PLAYING = playing => ({
     type: ApiEventType.ROTATION_PLAYING,
     playing
 });
 
-export const ApiEvent = apiEvents;
+export {ApiEvent};

@@ -31,7 +31,7 @@ class ConfigServerParametersComponent extends React.Component {
     handleChange(attributeName) {
         this.setState(prevState => {
             let attributes = {...prevState.attributes};
-            attributes[attributeName] = this.configInputsRefs[attributeName].value;
+            attributes[attributeName] = parseInt(this.configInputsRefs[attributeName].value);
             return {attributes: attributes};
         });
     }
@@ -80,7 +80,7 @@ class ConfigServerParametersComponent extends React.Component {
 
     send(e) {
         e.preventDefault();
-        // this.props.dispatch(ApiCommand.SERVER_CONFIG(this.state.attributes));
+        this.props.dispatch(ApiCommand.SERVER_CONFIG(this.state.attributes));
     }
 }
 
