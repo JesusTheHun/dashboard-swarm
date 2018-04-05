@@ -2,8 +2,9 @@
 
 import React from "react";
 import {ApiCommand} from "../actions/commands";
+import {connect} from "react-redux";
 
-export class TabActions extends React.Component {
+class TabActionsComponent extends React.Component {
     render() {
         return (
             <div className="modal active" id="tabActions">
@@ -122,3 +123,7 @@ export class TabActions extends React.Component {
         this.props.dispatch(ApiCommand.SET_TAB_AUTOREFRESH(this.props.tab.id, parseInt(e.target.value)));
     }
 }
+
+export const TabActions = connect(store => {
+    return { displays: store.displays };
+})(TabActionsComponent);

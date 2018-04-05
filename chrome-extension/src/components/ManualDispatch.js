@@ -1,6 +1,7 @@
 import React from "react";
+import {connect} from "react-redux";
 
-export class ManualDispatch extends React.Component {
+class ManualDispatchComponent extends React.Component {
     constructor(props) {
         super(props);
 
@@ -81,3 +82,5 @@ export class ManualDispatch extends React.Component {
         });
     }
 }
+
+export const ManualDispatch = connect()(ManualDispatchComponent);

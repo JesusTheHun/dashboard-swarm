@@ -23,6 +23,7 @@ export class DashboardSwarmWebSocket {
 
         let handleConnectionError = err => {
             logger.error(err);
+
             this.wsReady.reject(err);
             this.wsSubject.next(null);
 

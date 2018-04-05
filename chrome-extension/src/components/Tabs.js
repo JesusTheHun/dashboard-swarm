@@ -2,16 +2,14 @@ import React from "react";
 import {Tab} from "./Tab";
 import {connect} from "react-redux";
 
-export class Tabs extends React.Component {
-
+class TabsComponent extends React.Component {
     render() {
         return (
             <React.Fragment>
             { this.props.tabs.length > 0 ?
                 <ul id="tabs">
                     {this.props.tabs.sort((a,b) => a.position - b.position).map(tab => {
-                        let LiveTab = connect()(Tab);
-                        return <LiveTab
+                        return <Tab
                             openTabActions={() => this.props.openTabActions(tab.id)}
                             key={tab.id}
                             {...tab}
@@ -28,3 +26,9 @@ export class Tabs extends React.Component {
         )
     }
 }
+
+const getVisibleTabs = (tabs, displayId) => tabs.filter(tab => tab.display === displayId);
+
+export const Tabs = connect(store => {
+    return { tabs: getVisibleTabs(store.tabs, store.activeDisplay) };
+})(TabsComponent);

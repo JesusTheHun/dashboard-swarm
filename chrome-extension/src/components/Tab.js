@@ -3,8 +3,9 @@
 import React from "react";
 import {ApiCommand} from "../actions/commands";
 import {EditableText} from "./EditableText";
+import {connect} from "react-redux";
 
-export class Tab extends React.Component {
+class TabComponent extends React.Component {
     render() {
         return (
             <div className="tile" data-id={this.props.id}>
@@ -55,3 +56,5 @@ export class Tab extends React.Component {
         this.props.dispatch(ApiCommand.MOVE_TAB(this.props.id, this.props.position + 1));
     }
 }
+
+export const Tab = connect()(TabComponent);

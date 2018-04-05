@@ -2,10 +2,11 @@ import React from "react";
 import {ApiCommand} from "../actions/commands";
 
 import Logger from "js-logger/src/logger";
+import {connect} from "react-redux";
 
 const logger = Logger.get('FooterComponent');
 
-export class Footer extends React.Component {
+class FooterComponent extends React.Component {
     constructor(props) {
         super(props);
 
@@ -49,3 +50,7 @@ export class Footer extends React.Component {
         this.setState({dashboardUrl: e.target.value});
     }
 }
+
+export const Footer = connect(store => {
+    return { activeDisplay: store.activeDisplay, browserActiveTab: store.browser.activeTab }
+})(FooterComponent);

@@ -1,6 +1,5 @@
 import React from "react";
 import {Player} from "./Player";
-import {connect} from "react-redux";
 import {Displays} from "./Displays";
 import {Tabs} from "./Tabs";
 import {TabActions} from "./TabActions";
@@ -18,33 +17,15 @@ export class ControlCenter extends React.Component {
     }
 
     render() {
-        const LivePlayer = connect(store => {
-            return { playing: store.rotationPlaying }
-        })(Player);
-
-        const LiveDisplayList = connect(store => {
-            return { displays: store.displays, activeDisplay: store.activeDisplay }
-        })(Displays);
-
-        const getVisibleTabs = (tabs, displayId) => tabs.filter(tab => tab.display === displayId);
-
-        const LiveTabs = connect(store => {
-            return { tabs: getVisibleTabs(store.tabs, store.activeDisplay) };
-        })(Tabs);
-
-        const LiveTabActions = connect(store => {
-            return { displays: store.displays };
-        })(TabActions);
-
         return (
             <div className={'panel-body ' + (this.state.tabActionsOpen ? 'actionToolsOpen' : '')} ref={panel => this.panel = panel}>
                 { this.state.tabActionsOpen ?
-                    <LiveTabActions closeTabActions={() => this.closeTabActions()} tab={this.props.tabs.find(tab => tab.id === this.state.tabId)} />
+                    <TabActions closeTabActions={() => this.closeTabActions()} tab={this.props.tabs.find(tab => tab.id === this.state.tabId)} />
                     :
                     <React.Fragment>
-                        <LivePlayer/>
-                        <LiveDisplayList/>
-                        <LiveTabs openTabActions={(tabId) => this.openTabActions(tabId)} />
+                        <Player/>
+                        <Displays/>
+                        <Tabs openTabActions={(tabId) => this.openTabActions(tabId)} />
                     </React.Fragment>
                 }
             </div>

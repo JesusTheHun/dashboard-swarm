@@ -10,19 +10,6 @@ const NodeProxy = new nodeProxy();
 
 export class Config extends React.Component {
     render() {
-
-        const LiveConfigMaster = connect(store => {
-            return { configClient: store.configClient }
-        })(ConfigMaster);
-
-        const LiveConfigServerUrl = connect(store => {
-            return { configClient: store.configClient, connection: store.connection }
-        })(ConfigServerUrl);
-
-        const LiveConfigServerParameters = connect(store => {
-            return { configServer: store.configServer, connection: store.connection }
-        })(ConfigServerParameters);
-
         return (
             <div id="config">
                 <div className="panel-body">
@@ -32,10 +19,9 @@ export class Config extends React.Component {
                             <button id="restart" className="btn" onClick={() => this.restartSwarm()}>Restart the Swarm</button>
                         </div>
 
-                        <LiveConfigMaster />
-                        <LiveConfigServerUrl />
-                        <LiveConfigServerParameters />
-
+                        <ConfigMaster />
+                        <ConfigServerUrl />
+                        <ConfigServerParameters />
                     </form>
                 </div>
             </div>

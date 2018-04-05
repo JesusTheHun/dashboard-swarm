@@ -1,7 +1,8 @@
 import React from "react";
 import {ApiCommand} from "../actions/commands";
+import {connect} from "react-redux";
 
-export class Player extends React.Component {
+class PlayerComponent extends React.Component {
 
     render() {
         return (
@@ -25,3 +26,7 @@ export class Player extends React.Component {
         this.props.dispatch(ApiCommand.STOP_ROTATION());
     }
 }
+
+export const Player = connect(store => {
+    return { playing: store.rotationPlaying }
+})(PlayerComponent);
