@@ -16,6 +16,10 @@
 * Tab crash restoration
 * Auto-refresh tab
 
+# Available on the Chrome Store
+
+Visit https://chrome.google.com/webstore/detail/dashboard-swarm/cohiccdmoofaannbeahbjkhhabppmdnn
+
 # Extension development
 
 Master is the head of development. Use releases to build the extension.
