@@ -44,16 +44,29 @@ To build the popup & the inner materials
 npm run dist
 ```
 
-# Start WebSocket server
+# How to use
+
+Connect your screens to a machine. We'll call it the "master".
+On one machine of the network, usually on the master, install the server (instructions below).
+Install the extension on the master and every machine that will remotely control the dashboards.
+Open the extension, hit the cogs and set the server url and connect.
+
+Your setup is done.
+
+# Install the server
+
+Get the server code. You can get a .zip in the release section ( https://github.com/JesusTheHun/dashboard-swarm/releases ) or you can clone the repo through ```git clone git@github.com:JesusTheHun/dashboard-swarm.git```
+Open a command and execute this command :
 
 ```bash
-npm start -- <BIND_IP> <BIND_PORT> <STORAGE_FILE>
+npm start -- <LAN_IP>
 ```
 
-Default to
+It will listen on port ```8080``` and store your data in the ```storage.json``` file in this directory.
+You can set parameters if the default config does not apply to you
 
 ```bash
-npm start -- localhost 8080 storage.json
+npm start -- <LAN_IP> <PORT> <STORAGE_FILE>
 ```
 
 # License
