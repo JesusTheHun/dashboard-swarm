@@ -1,4 +1,4 @@
-# Features
+# Dashboard Swarm Features
 
 * Remote control
 * Multi-screens support
