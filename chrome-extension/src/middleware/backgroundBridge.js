@@ -51,7 +51,7 @@ class BackgroundBridgeMiddleware {
         if (action.type === ApiCommandType.MASTER) NodeProxy.setMaster(action.master);
         if (action.type === ApiCommandType.SERVER_URL) NodeProxy.setServerUrl(action.serverUrl);
         if (action.type === ApiCommandType.CONNECT) NodeProxy.connect();
-        if (action.type === ApiCommandType.DISCONNECT) NodeProxy.close();
+        if (action.type === ApiCommandType.DISCONNECT) NodeProxy.disconnect();
         if (action.type === ApiCommandType.OPEN_TAB) NodeProxy.openTab(action.display, action.url, action.isFlash);
         if (action.type === ApiCommandType.CLOSE_TAB) NodeProxy.closeTab(action.id);
         if (action.type === ApiCommandType.SEND_TAB_TO_FOREGROUND) NodeProxy.sendToForeground(action.id);
@@ -63,6 +63,7 @@ class BackgroundBridgeMiddleware {
         if (action.type === ApiCommandType.SET_TAB_TITLE) NodeProxy.updateTab(action.id, {title: action.title});
         if (action.type === ApiCommandType.SET_TAB_URL) NodeProxy.updateTab(action.id, {url: action.url});
         if (action.type === ApiCommandType.SET_TAB_AUTOREFRESH) NodeProxy.updateTab(action.id, {autorefresh: action.autorefresh});
+        if (action.type === ApiCommandType.SERVER_CONFIG) NodeProxy.setConfig(action.serverConfig);
     }
 
     handleConfigChanges(previousConfig, latestConfig) {

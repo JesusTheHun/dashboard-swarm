@@ -1,8 +1,9 @@
 import React from "react";
 import {WaitingMaster} from "./WaitingMaster";
 import {ControlCenter} from "./ControlCenter";
+import {connect} from "react-redux";
 
-export class Scene extends React.Component {
+class SceneComponent extends React.Component {
 
     render() {
         return (
@@ -12,3 +13,7 @@ export class Scene extends React.Component {
         )
     }
 }
+
+export const Scene = connect(store => {
+    return { waitingMaster: store.waitingMaster, tabs: store.tabs }
+})(SceneComponent);

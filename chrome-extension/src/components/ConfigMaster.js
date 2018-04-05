@@ -1,7 +1,8 @@
 import React from "react";
 import {ApiCommand} from "../actions/commands";
+import {connect} from "react-redux";
 
-export class ConfigMaster extends React.Component {
+class ConfigMasterComponent extends React.Component {
     render() {
         return (
             <fieldset id="client">
@@ -18,3 +19,7 @@ export class ConfigMaster extends React.Component {
         this.props.dispatch(ApiCommand.MASTER(isMaster));
     }
 }
+
+export const ConfigMaster = connect(store => {
+    return { configClient: store.configClient }
+})(ConfigMasterComponent);

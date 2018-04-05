@@ -246,10 +246,12 @@ export class DashboardSwarmNode {
 
     connect() {
         chrome.runtime.sendMessage({ target: 'popup', action: 'connectionAttempt', data: []});
+        chrome.runtime.sendMessage('userOpenedConnection');
         this.ws.connect();
     }
 
-    close() {
+    disconnect() {
+        chrome.runtime.sendMessage('userClosedConnection');
         this.ws.close();
     }
 

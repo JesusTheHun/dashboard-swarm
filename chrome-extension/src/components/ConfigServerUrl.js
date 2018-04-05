@@ -1,7 +1,8 @@
 import React from "react";
 import {ApiCommand} from "../actions/commands";
+import {connect} from "react-redux";
 
-export class ConfigServerUrl extends React.Component {
+class ConfigServerUrlComponent extends React.Component {
     constructor(props) {
         super(props);
     }
@@ -61,3 +62,7 @@ export class ConfigServerUrl extends React.Component {
         this.props.dispatch(ApiCommand.DISCONNECT());
     }
 }
+
+export const ConfigServerUrl = connect(store => {
+    return { configClient: store.configClient, connection: store.connection }
+})(ConfigServerUrlComponent);

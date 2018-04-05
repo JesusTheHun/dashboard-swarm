@@ -1,7 +1,8 @@
 import React from "react";
 import {LocalAction} from "../actions/local";
+import {connect} from "react-redux";
 
-export class Displays extends React.Component {
+class DisplaysComponent extends React.Component {
     render() {
         return (
             <div id="displayList" className="panel-nav">
@@ -26,3 +27,7 @@ export class Displays extends React.Component {
         this.props.dispatch(LocalAction.ACTIVE_DISPLAY(id));
     }
 }
+
+export const Displays = connect(store => {
+    return { displays: store.displays, activeDisplay: store.activeDisplay }
+})(DisplaysComponent);
