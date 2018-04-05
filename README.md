@@ -3,9 +3,13 @@
 * Remote control
 * Multi-screens support
 * Add tab
+* Custom tab name
 * Close tab
+* Refresh tab
 * Move tab from one screen to another
 * Start & stop rotation
+* Zoom tab
+* Scroll tab
 * Send tab to foreground
 * Change tab order
 * Rotation speed
