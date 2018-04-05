@@ -100,6 +100,7 @@ class BackgroundBridgeMiddleware {
         });
 
         NodeProxy.on('serverConfig', config => {
+            this.logger.debug("serverConfigReceived");
             this.store.dispatch(ApiEvent.SERVER_CONFIG(config));
         });
 
