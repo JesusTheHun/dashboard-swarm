@@ -72,7 +72,6 @@ class TabActionsComponent extends React.Component {
                                                     className="form-input"
                                                     type="text"
                                                     id="tabAutorefresh"
-                                                    placeholder="Seconds"
                                                     size="6"
                                                 />
                                             </div>
