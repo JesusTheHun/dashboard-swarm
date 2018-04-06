@@ -20,6 +20,12 @@ export class EditableText extends React.Component {
         };
     }
 
+    static getDerivedStateFromProps(nextProps, prevState) {
+        return {
+            content: nextProps.children
+        }
+    }
+
     render() {
         if (this.state.editing) {
             return <input
