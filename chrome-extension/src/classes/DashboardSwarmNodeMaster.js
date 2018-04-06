@@ -27,6 +27,8 @@ export class DashboardSwarmNodeMaster {
         this.unsubscribe();
         this.wm.closeEverything();
         this.listener.getDashboardSwarmWebSocket().sendEvent('masterDisplays', [[]]);
+        this.tabs = [];
+
         clearInterval(this.crashedTabCheckInterval);
         clearInterval(this.updateTabAutorefreshConfigInterval);
 
@@ -53,20 +55,14 @@ export class DashboardSwarmNodeMaster {
 
         subscriptions[key++] = this.listener.subscribeCommand('openTab', (display, url, isFlash) => {
             this.wm.openTab(display, url).then(tabId => {
-                let updateWhenTitleIsReady = (changedTabId, changeInfo, tab) => {
-                    if (changedTabId === tabId && changeInfo.title !== undefined && changeInfo.title !== '') {
-                        let scroll = {top: 0, left: 0};
+                let scroll = {top: 0, left: 0};
+                let flash = isFlash ? new Date() : undefined;
+                let tab = this.wm.getTab(tabId);
+                tab.flash = flash;
 
-                        chrome.tabs.getZoom(tabId, zoom => {
-                            let flash = isFlash ? new Date() : undefined;
-                            this.wm.getTab(tabId).flash = flash;
-                            this.listener.getDashboardSwarmWebSocket().sendEvent('tabOpened', [tabId, display, url, changeInfo.title, tab.index, flash, zoom, scroll]);
-                        });
-                        chrome.tabs.onUpdated.removeListener(updateWhenTitleIsReady);
-                    }
-                };
-
-                chrome.tabs.onUpdated.addListener(updateWhenTitleIsReady);
+                chrome.tabs.getZoom(tabId, zoom => {
+                    this.listener.getDashboardSwarmWebSocket().sendEvent('tabOpened', [tabId, display, url, 'Loading...', tab.index, flash, zoom, scroll]);
+                });
             });
         });
 
@@ -136,8 +132,17 @@ export class DashboardSwarmNodeMaster {
 
         subscriptions[key++] = this.listener.subscribeCommand('restartMaster', () => {
             this.wm.closeEverything().then(windowClosedCount => {
-                chrome.runtime.reload();
+                setTimeout(() => chrome.runtime.reload(), 2000);
             });
+        });
+
+        subscriptions[key++] = this.listener.subscribeEvent('tabOpened', (id, display, url, title, position, flash, zoom, scroll) => {
+            this.tabs.push({id, display, url, title, position, flash, zoom, scroll});
+        });
+
+        subscriptions[key++] = this.listener.subscribeEvent('tabClosed', (tabId) => {
+            let index = this.tabs.findIndex(tab => tab.id === tabId);
+            this.tabs.splice(index, 1);
         });
 
         subscriptions[key++] = this.listener.subscribeEvent('tabUpdated', (tabId, newProps) => {
@@ -150,11 +155,20 @@ export class DashboardSwarmNodeMaster {
             }
         });
 
+        this.tabTitleListener = (changedTabId, changeInfo, tab) => {
+            if (this.wm.getTab(changedTabId) !== undefined && changeInfo.title !== undefined && changeInfo.title !== '') {
+                this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [changedTabId, {title: changeInfo.title}]);
+            }
+        };
+
+        chrome.tabs.onUpdated.addListener(this.tabTitleListener);
+
         this.subscriptions = subscriptions;
     }
 
     unsubscribe() {
         Object.keys(this.subscriptions).forEach(key => this.subscriptions[key]());
+        chrome.tabs.onUpdated.removeListener(this.tabTitleListener);
     }
 
     reloadCrashedTabs() {
