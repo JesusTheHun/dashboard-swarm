@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "Dashboard Swarm",
     "description": "Manage your dashboards on multiple screen, remotely.",
-    "version": "0.5",
+    "version": "0.5.1",
     "browser_action": {
         "default_popup": "index.html",
         "default_title": "Dashboard Swarm"
