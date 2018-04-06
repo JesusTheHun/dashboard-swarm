@@ -174,6 +174,7 @@ export class WindowsManager {
         return new Promise((resolve, reject) => {
             try {
                 chrome.tabs.remove(tabId, () => {
+                    delete this.tabs[tabId];
                     resolve(tabId);
                 })
 
