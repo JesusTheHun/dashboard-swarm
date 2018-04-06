@@ -10,6 +10,7 @@ export class DashboardSwarmNodeMaster {
         this.listener = listener;
         this.wm = wm;
         this.subscriptions = {};
+        this.tabAutorefreshIntervals = {};
     }
 
     on() {
