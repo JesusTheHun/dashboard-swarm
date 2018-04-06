@@ -24,6 +24,7 @@ class ConfigServerUrlComponent extends React.Component {
                                 placeholder="localhost:8080"
                                 defaultValue={this.props.configClient.serverUrl}
                                 disabled={(this.props.connection.connecting || this.props.connection.connected) ? 'disabled' : ''}
+                                onKeyDown={(e) => this.handleKeyboardActions(e)}
                             />
                             <button
                                 className="btn btn-primary input-group-btn"
@@ -60,6 +61,14 @@ class ConfigServerUrlComponent extends React.Component {
 
     disconnect() {
         this.props.dispatch(ApiCommand.DISCONNECT());
+    }
+
+    handleKeyboardActions(e) {
+        if (e.keyCode === 13) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.connect();
+        }
     }
 }
 
