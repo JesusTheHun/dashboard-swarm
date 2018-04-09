@@ -61,7 +61,7 @@ export class EditableText extends React.Component {
     }
 
     cancelChanges() {
-        this.setState({content: this.textInput.defaultValue});
+        this.setState({content: this.props.children});
     }
 
     saveChanges() {
