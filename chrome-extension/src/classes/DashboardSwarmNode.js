@@ -20,6 +20,7 @@ export class DashboardSwarmNode {
         this.masterSubject = new Rx.BehaviorSubject(null);
         this.rotation = false;
         this.connected = false;
+        this.autoConnection = new Rx.BehaviorSubject(false);
 
         ws.getWebSocketSubject().subscribe(newConnection => {
             logger.info("new connection received", newConnection);
@@ -117,7 +118,7 @@ export class DashboardSwarmNode {
             if (request.hasOwnProperty('node') && typeof this[request.node] === 'function') {
                 let result = this[request.node].apply(this, request.args);
 
-                // Resolve then promise before sending the response through the NodeProxy
+                // Resolve promise before sending the response through the NodeProxy
                 if (result instanceof Promise) {
                     result.then(q => {
                         response(q);
@@ -246,12 +247,12 @@ export class DashboardSwarmNode {
 
     connect() {
         chrome.runtime.sendMessage({ target: 'popup', action: 'connectionAttempt', data: []});
-        chrome.runtime.sendMessage('userOpenedConnection');
+        this.autoConnection.next(true);
         this.ws.connect();
     }
 
     disconnect() {
-        chrome.runtime.sendMessage('userClosedConnection');
+        this.autoConnection.next(false);
         this.ws.close();
     }
 

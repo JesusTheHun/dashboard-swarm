@@ -49,21 +49,9 @@ chrome.storage.sync.get({
 
     dsws.connect();
 
-    let userClosed = false;
-
-    chrome.runtime.onMessage.addListener(message => {
-       if (message === 'userClosedConnection') {
-           userClosed = true;
-       }
-
-        if (message === 'userOpenedConnection') {
-            userClosed = false;
-        }
-    });
-
     // Restore closed connection
     setInterval(() => {
-        if (userClosed) return;
+        if (!node.autoConnection.getValue()) return;
         let ws = dsws.getWebSocketSubject().getValue();
         if (!ws || ws.readyState === WebSocket.CLOSED) {
             logger.info("retrying connection...");
