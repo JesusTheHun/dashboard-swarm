@@ -38,7 +38,7 @@ ApiEvent.WAITING_MASTER = isWaiting => ({
 
 ApiEvent.SERVER_CONFIG = config => ({
     type: ApiEventType.SERVER_CONFIG,
-    parameters: config
+    configServer: config
 });
 
 ApiEvent.DISPLAYS = displays => ({
