@@ -16,7 +16,7 @@ export class Config extends React.Component {
                     <form action="#" className="form-horizontal">
 
                         <div className="text-center">
-                            <button id="restart" className="btn" onClick={() => this.restartSwarm()}>Restart the Swarm</button>
+                            <button id="restart" className="btn" onClick={(e) => this.restartSwarm(e)}>Restart the Swarm</button>
                         </div>
 
                         <ConfigMaster />
@@ -28,7 +28,8 @@ export class Config extends React.Component {
         );
     }
 
-    restartSwarm() {
+    restartSwarm(e) {
+        e.preventDefault();
         NodeProxy.restart();
     }
 }
