@@ -70,16 +70,6 @@ class BackgroundBridgeMiddleware {
         if (previousConfig !== latestConfig && chrome && chrome.storage) {
             chrome.storage.sync.set(latestConfig, () => this.logger.debug("config saved", latestConfig));
         }
-
-        if (previousConfig.master !== latestConfig.master) {
-            NodeProxy.setMaster(latestConfig.master);
-        }
-
-        if (previousConfig.serverUrl !== latestConfig.serverUrl) {
-            this.logger.info("server url changed to ` " + latestConfig.serverUrl + "`, reconnection...");
-            NodeProxy.setServerUrl(latestConfig.serverUrl);
-            NodeProxy.connect();
-        }
     }
 
     listenApiEvents() {

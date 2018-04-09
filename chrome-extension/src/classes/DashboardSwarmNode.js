@@ -14,13 +14,16 @@ export class DashboardSwarmNode {
         this.wm = wm;
         this.param = param;
 
-        this.nodeMaster = new DashboardSwarmNodeMaster(this, listener, wm);
-
         this.master = 0;
         this.masterSubject = new Rx.BehaviorSubject(null);
         this.rotation = false;
         this.connected = false;
         this.autoConnection = new Rx.BehaviorSubject(false);
+
+        this.nodeMaster = new DashboardSwarmNodeMaster(this, listener, wm);
+        this.isMasterSubject().subscribe(isMaster => {
+            isMaster ? this.nodeMaster.on() : this.nodeMaster.off()
+        });
 
         ws.getWebSocketSubject().subscribe(newConnection => {
             logger.info("new connection received", newConnection);
@@ -149,8 +152,6 @@ export class DashboardSwarmNode {
         logger.debug("This node is now master : " + (isMaster ? "yes" : "no"));
         this.master = isMaster;
         this.isMasterSubject().next(isMaster);
-
-        isMaster ? this.nodeMaster.on() : this.nodeMaster.off();
     }
 
     isMasterSubject() {

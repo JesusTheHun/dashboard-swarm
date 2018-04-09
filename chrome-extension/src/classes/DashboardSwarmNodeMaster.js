@@ -38,6 +38,8 @@ export class DashboardSwarmNodeMaster {
     }
 
     subscribe() {
+        logger.debug("subscribe");
+
         let key = 0;
         let subscriptions = {};
 
@@ -171,6 +173,7 @@ export class DashboardSwarmNodeMaster {
     }
 
     unsubscribe() {
+        logger.debug("unsubscribe");
         Object.keys(this.subscriptions).forEach(key => this.subscriptions[key]());
         chrome.tabs.onUpdated.removeListener(this.tabTitleListener);
     }

@@ -100,8 +100,6 @@ export class DashboardSwarmWebSocket {
         data.cmd = cmd;
         data.args = args === undefined ? [] : args;
 
-        logger.debug("command rdy to be send : " + JSON.stringify(data));
-
         this.getWebSocketReady().then(function (ws) {
             ws.send(JSON.stringify(data));
             logger.debug("command sent : " + JSON.stringify(data));
@@ -119,8 +117,6 @@ export class DashboardSwarmWebSocket {
         let data = {};
         data.event = event;
         data.args = args === undefined ? [] : args;
-
-        logger.debug("sending event : " + JSON.stringify(data));
 
         this.getWebSocketReady().then(function (ws) {
             ws.send(JSON.stringify(data));
