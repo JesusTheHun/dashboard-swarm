@@ -27,5 +27,6 @@
         "storage",
         "http://*/",
         "https://*/"
-    ]
+    ],
+    "web_accessible_resources": ["kraken.gif"]
 }

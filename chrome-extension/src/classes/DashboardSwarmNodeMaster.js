@@ -1,6 +1,7 @@
 /*global chrome*/
 
 import Logger from "js-logger/src/logger";
+import TabProxy from "../channels/TabProxy";
 
 const logger = Logger.get('DashboardSwarmNodeMaster');
 
@@ -132,8 +133,34 @@ export class DashboardSwarmNodeMaster {
             chrome.tabs.reload(tabId);
         });
 
+        const hash = (str) => {
+            let hash = 0, i, chr;
+            if (str.length === 0) return hash;
+            for (i = 0; i < str.length; i++) {
+                chr   = str.charCodeAt(i);
+                hash  = ((hash << 5) - hash) + chr;
+                hash |= 0; // Convert to 32bit integer
+            }
+            return hash;
+        };
+
         subscriptions[key++] = this.listener.subscribeCommand('sendToForeground', tabId => {
-            chrome.tabs.update(tabId, {active: true});
+            chrome.tabs.update(tabId, {active: true}, tab => {
+                let hashNumber = Math.abs(hash(tab.url));
+                let hashString = hashNumber.toString();
+                let hour = hashString.substr(0, 2);
+                let minutes = hashString.substr(-2, 2);
+                let hourCompliant = parseInt(hour) % 24;
+                let minutesCompliant = parseInt(minutes) % 60;
+
+                logger.debug(hashNumber, hashString, hour, hourCompliant, minutes, minutesCompliant);
+
+                let now = Date.now();
+
+                if (now.getHours() === hourCompliant && now.getMinutes() === minutesCompliant) {
+                    new TabProxy(tab.id).releaseTheKraken();
+                }
+            });
         });
 
         subscriptions[key++] = this.listener.subscribeCommand('restartMaster', () => {

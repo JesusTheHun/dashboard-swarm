@@ -16,7 +16,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build && webpack",
+    "build": "cp contentScript.js src/contentScript.js && react-scripts build && webpack",
     "serve": "serve -s build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"

@@ -1,3 +1,5 @@
+/*global chrome*/
+
 import Logger from './logger';
 const logger = Logger.get('contentScript');
 
@@ -76,6 +78,23 @@ export class ContentScript {
     scrollTo(scroll, response) {
         window.scrollTo(scroll.left, scroll.top);
         response(this.getScroll());
+    }
+
+    releaseTheKraken() {
+        let imgHeight = 100;
+        let height = window.innerHeight;
+
+        let kraken = document.createElement('img');
+        kraken.src = chrome.runtime.getURL('kraken.gif');
+        kraken.style.height = imgHeight + "px";
+        kraken.style.position = 'absolute';
+        kraken.style.top = (height - imgHeight + this.getScroll().top) + "px";
+        kraken.style.zIndex = '9999';
+        kraken.classList.add('kraken');
+
+        document.querySelector('body').appendChild(kraken);
+
+        setTimeout(() => kraken.remove(), 3000); // 3000 is the animation duration
     }
 }
 

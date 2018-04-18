@@ -1,4 +1,6 @@
-import { ContentScript } from '../../contentScript';
+/*global chrome*/
+
+import { ContentScript } from '../contentScript';
 import { ExtendableProxy } from './ExtendableProxy';
 
 class TabProxy extends ExtendableProxy {
