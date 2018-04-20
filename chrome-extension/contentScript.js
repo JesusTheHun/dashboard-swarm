@@ -1,9 +1,36 @@
 /*global chrome*/
 
 import Logger from './logger';
+import * as Rx from "rxjs/Rx";
 const logger = Logger.get('contentScript');
 
 export class ContentScript {
+
+    isDocumentReady() {
+        return document.readyState === 'complete';
+    }
+
+    onDocumentReady() {
+        if (this.documentReady) {
+            return this.documentReady;
+        }
+
+        this.documentReady = new Promise((res, rej) => {
+            if (this.isDocumentReady()) {
+                res(true);
+            }
+
+            document.onreadystatechange = () => {
+                logger.debug(document.readyState);
+                if (this.isDocumentReady()) {
+                    res(true);
+                }
+            }
+        });
+
+        return this.documentReady;
+    }
+
     rearmCountdown(countdownInterval) {
         let barHeight = 8;
         let height = window.innerHeight;
@@ -75,9 +102,9 @@ export class ContentScript {
         return this.getScroll();
     }
 
-    scrollTo(scroll, response) {
+    scrollTo(scroll) {
         window.scrollTo(scroll.left, scroll.top);
-        response(this.getScroll());
+        return this.getScroll();
     }
 
     releaseTheKraken() {
@@ -108,19 +135,28 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
     let targetFunction = contentScript[request.action];
 
     if (typeof targetFunction === 'function') {
-        let givenArgsLength = request.args.length;
-        let async = givenArgsLength < targetFunction.length;
-
-        if (async) {
-            request.args.push(response);
-        }
-
+        logger.debug("called", targetFunction.name);
         let result = targetFunction.apply(contentScript, request.args);
 
-        if (!async) {
-            response(result);
-        } else {
+        // Resolve promise before sending the response through the TabProxy
+        if (result instanceof Promise) {
+            result.then(q => {
+                response(q);
+            });
             return true;
+        } else if (result instanceof Rx.BehaviorSubject) {
+            response(result.getValue());
+        } else {
+            response(result);
         }
     }
 });
+
+contentScript.onDocumentReady().then(() => {
+    logger.debug("ready");
+    chrome.runtime.sendMessage({
+        action: 'tabListening'
+    });
+});
+
+logger.debug("loaded");

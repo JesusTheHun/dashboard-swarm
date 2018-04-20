@@ -3,8 +3,10 @@ import Rx from 'rxjs/Rx';
 import Logger from "js-logger/src/logger";
 
 const logger = Logger.get('WindowsManager');
+const TAB_LISTENING = 0;
+const TAB_WAITING = 1;
+const TAB_READY = 2;
 
-// TODO delegate listeners to DsNode
 export class WindowsManager {
 
     initInstanceVars() {
@@ -12,11 +14,44 @@ export class WindowsManager {
         this.windowsPromises = {};
         this.tabs = {};
         this.intervals = {};
+        this.tabsStatus = new Rx.BehaviorSubject({});
+        this.tabReadyPromise = {};
     }
 
     constructor(dsListener) {
         this.listener = dsListener;
         this.initInstanceVars();
+
+        // Listen to add-on input of page status
+        this.tabsReadyStateListener = (request, sender, response) => {
+            let tabId = sender.tab.id;
+
+            if (request.action === 'tabWaitingAddon') {
+                logger.debug("tab " + tabId + " marked as waiting addon");
+                this.setTabStatus(tabId, TAB_WAITING);
+            }
+
+            if (request.action === 'tabReady') {
+                logger.debug("tab " + tabId + " marked as ready");
+                this.setTabStatus(tabId, TAB_READY);
+            }
+        };
+
+        chrome.runtime.onMessageExternal.addListener(this.tabsReadyStateListener);
+
+        // Local input of page status
+        this.tabsReadyStateListener = (request, sender, response) => {
+            let tabId = sender.tab.id;
+
+            if (request.action === 'tabListening') {
+                if (this.getTabStatus(tabId) === null) {
+                    logger.debug("tab " + tabId + " marked as listening");
+                    this.setTabStatus(tabId, TAB_LISTENING);
+                }
+            }
+        };
+
+        chrome.runtime.onMessage.addListener(this.tabsReadyStateListener);
     }
 
     /**
@@ -51,14 +86,14 @@ export class WindowsManager {
 
     /**
      * Close everything and open those tabs. Tabs are sorted by position.
-     * @param {Array<{display: number, url: string}>} tabs
+     * @param {Array<{display: number, url: string, position: number}>} tabs
      */
     setTabs(tabs) {
         if (tabs.length === 0 && Object.keys(this.windows).length === 0 && Object.keys(this.windowsPromises).length === 0) {
             return;
         }
 
-        this.closeEverything().then(windowClosedCount => {
+        return this.closeEverything().then(windowClosedCount => {
             logger.debug("everything has been closed (" + windowClosedCount + " windows closed) ");
             setTimeout(() => {
                 tabs.sort((a, b) => a.position - b.position);
@@ -66,16 +101,32 @@ export class WindowsManager {
                     this.openTab(tab.display, tab.url).then(tabId => {
                         this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tab.id, {id: tabId}]);
 
-                        setTimeout(() => {
+                        this.onTabReady(tabId).then(() => {
+                            logger.debug("tab is ready", tabId);
                             chrome.tabs.setZoom(tabId, (tab.zoom || 1), () => {
-                                let tabScript = new TabProxy(tabId);
-                                tabScript.scrollTo(tab.scroll);
+                                logger.debug("zoom set", tabId);
+                                logger.debug("calling scroll", tabId, tab.scroll);
+                                new TabProxy(tabId).scrollTo(tab.scroll);
                             });
-                        }, 2500);
+                        });
                     });
                 });
             }, 1000);
         });
+    }
+
+    setTabStatus(tabId, status) {
+        let value = this.tabsStatus.getValue();
+        value[tabId] =  status;
+        this.tabsStatus.next(value);
+    }
+
+    getTabStatus(tabId) {
+        return this.tabsStatus.getValue()[tabId];
+    }
+
+    onTabReady(tabId) {
+        return this.tabReadyPromise[tabId];
     }
 
     /**
@@ -90,6 +141,8 @@ export class WindowsManager {
                 this.getWindowForDisplay(display).then((window) => {
                     chrome.tabs.create({ windowId: window.id, url: tabUrl, active: true}, tab => {
                         this.tabs[tab.id] = tab;
+                        this.setTabStatus(tab.id, null);
+                        this.initTabReadyPromise(tab.id);
                         resolve(tab.id);
                     });
                 });
@@ -97,6 +150,33 @@ export class WindowsManager {
             } catch (err) {
                 reject(err);
             }
+        });
+    }
+
+    initTabReadyPromise(tabId) {
+        this.tabReadyPromise[tabId] = new Promise((res, rej) => {
+            logger.debug("init tabReady promise", tabId);
+
+            let sub;
+            let listeningTimeout;
+
+            sub = this.tabsStatus.subscribe(tabsStatus => {
+                if (tabsStatus[tabId] === TAB_LISTENING) {
+                    logger.debug("status listening, starting timeout", tabId);
+                    listeningTimeout = setTimeout(() => res(), 2500);
+                }
+
+                if (tabsStatus[tabId] === TAB_WAITING) {
+                    logger.debug("status waiting, clearing timeout", tabId);
+                    clearTimeout(listeningTimeout);
+                }
+
+                if (tabsStatus[tabId] === TAB_READY) {
+                    logger.debug("status ready reached", tabId);
+                    res();
+                    sub.unsubscribe();
+                }
+            });
         });
     }
 
@@ -151,11 +231,12 @@ export class WindowsManager {
                             }
                         });
 
-                        resolve(createdWindow);
-
                         chrome.windows.update(createdWindow.id, {
                             'state': "fullscreen"
+                        }, (window) => {
+                            resolve(createdWindow);
                         });
+
                     });
                 } catch (err) {
                     reject(err);
@@ -243,9 +324,10 @@ export class WindowsManager {
             let tab = tabs[0];
             let tabDuration = this.getTab(tab.id).flash ? intervalFlash : interval;
 
-            let tabScript = new TabProxy(tab.id);
-            tabScript.rearmCountdown(tabDuration * 1000);
-            rotationStartDate = new Date();
+            this.onTabReady(tab.id).then(() => {
+                new TabProxy(tab.id).rearmCountdown(tabDuration * 1000);
+                rotationStartDate = new Date();
+            });
         });
 
         this.intervals[display] = setInterval(() => {
@@ -273,9 +355,10 @@ export class WindowsManager {
                     }
 
                     chrome.tabs.update(nextTabId, {active: true}, tab => {
-                        let tabScript = new TabProxy(tab.id);
-                        tabScript.rearmCountdown(tabDuration * 1000);
-                        rotationStartDate = new Date();
+                        this.onTabReady(tab.id).then(() => {
+                            new TabProxy(tab.id).rearmCountdown(tabDuration * 1000);
+                            rotationStartDate = new Date();
+                        });
                     });
                 });
             }
@@ -298,8 +381,10 @@ export class WindowsManager {
 
             chrome.tabs.query({active: true, windowId: w.id}, tabs => {
                 let tab = tabs[0];
-                let tabScript = new TabProxy(tab.id);
-                tabScript.clearCountdown();
+
+                this.onTabReady(tab.id).then(() => {
+                    new TabProxy(tab.id).clearCountdown();
+                });
             });
         }
     }
@@ -350,18 +435,28 @@ export class WindowsManager {
     }
 
     setTabZoom(tabId, zoom) {
-        chrome.tabs.setZoom(tabId, parseFloat(zoom), tab => {
-            this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, {zoom}]);
+        this.onTabReady(tabId).then(() => {
+            chrome.tabs.setZoom(tabId, parseFloat(zoom), tab => {
+                this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, {zoom}]);
+            });
         });
     }
 
     setTabScroll(tabId, scroll) {
-        new TabProxy(tabId).scroll(scroll, response => {
-            this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, {scroll: response}]);
+        this.onTabReady(tabId).then(() => {
+            new TabProxy(tabId).scroll(scroll, response => {
+                this.listener.getDashboardSwarmWebSocket().sendEvent('tabUpdated', [tabId, {scroll: response}]);
+            });
         });
     }
 
     isRotationActive() {
         return this.intervals[0] !== undefined;
+    }
+
+    releaseTheKraken(tabId) {
+        this.onTabReady(tabId).then(() => {
+            new TabProxy(tabId).releaseTheKraken();
+        });
     }
 }

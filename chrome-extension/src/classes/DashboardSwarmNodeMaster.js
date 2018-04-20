@@ -1,7 +1,6 @@
 /*global chrome*/
 
 import Logger from "js-logger/src/logger";
-import TabProxy from "../channels/TabProxy";
 
 const logger = Logger.get('DashboardSwarmNodeMaster');
 
@@ -19,7 +18,7 @@ export class DashboardSwarmNodeMaster {
         this.node.getTabs();
         this.node.getDisplays();
         this.node.getRotationStatus();
-        this.crashedTabCheckInterval = setInterval(() => this.reloadCrashedTabs(), 10000);
+        this.crashedTabCheckInterval = setInterval(() => this.reloadCrashedTabs(), 60000);
         this.updateTabAutorefreshConfigInterval = setInterval(() => this.updateTabAutorefreshConfig(), 10000);
         this.tabAutorefreshIntervals = {};
     }
@@ -153,12 +152,10 @@ export class DashboardSwarmNodeMaster {
                 let hourCompliant = parseInt(hour) % 24;
                 let minutesCompliant = parseInt(minutes) % 60;
 
-                logger.debug(hashNumber, hashString, hour, hourCompliant, minutes, minutesCompliant);
-
-                let now = Date.now();
+                let now = new Date();
 
                 if (now.getHours() === hourCompliant && now.getMinutes() === minutesCompliant) {
-                    new TabProxy(tab.id).releaseTheKraken();
+                    this.wm.releaseTheKraken(tab.id);
                 }
             });
         });
@@ -217,8 +214,6 @@ export class DashboardSwarmNodeMaster {
     }
 
     updateTabAutorefreshConfig() {
-        logger.debug("update autorefresh config...", this.tabs);
-
         this.tabs.forEach(tab => {
             let intervalConfig = this.tabAutorefreshIntervals[tab.id];
 
