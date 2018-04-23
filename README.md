@@ -15,6 +15,7 @@
 * Rotation speed
 * Tab crash restoration
 * Auto-refresh tab
+* Add-on enhancement
 
 # Available on the Chrome Store
 
@@ -28,6 +29,11 @@ Install the extension on the master and every machine that will remotely control
 Open the extension, hit the cogs and set the server url and connect.
 
 Your setup is done.
+
+# Add-on
+
+Enjoy add-on enhancement by simply install the add-on extension from the Chrome Store.
+To developer your own visit https://github.com/JesusTheHun/dashboard-swarm-addon-splunk
 
 # Install the server
 
