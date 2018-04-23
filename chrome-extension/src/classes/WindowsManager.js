@@ -41,12 +41,14 @@ export class WindowsManager {
 
         // Local input of page status
         this.tabsReadyStateListener = (request, sender, response) => {
-            let tabId = sender.tab.id;
+            if (sender.tab) {
+                let tabId = sender.tab.id;
 
-            if (request.action === 'tabListening') {
-                if (this.getTabStatus(tabId) === null) {
-                    logger.debug("tab " + tabId + " marked as listening");
-                    this.setTabStatus(tabId, TAB_LISTENING);
+                if (request.action === 'tabListening') {
+                    if (this.getTabStatus(tabId) === null) {
+                        logger.debug("tab " + tabId + " marked as listening");
+                        this.setTabStatus(tabId, TAB_LISTENING);
+                    }
                 }
             }
         };
